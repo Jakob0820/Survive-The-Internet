@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { use, useState } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -32,6 +32,9 @@ export default function App() {
   const [playerName, setPlayerName] = useState(`Spieler ${currentPlayerIndex + 1}`);
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
   const [isOnline, setOnlineStatus] = useState(false);
+  //Logik für Antwort Setup
+  const [firstAnswers, setFirstAnswer] = useState([]);
+  const [textValue, setTextValue] = useState('');
 
   const resetPlayerSetup = () => {
     setPlayerCount(3);
@@ -88,6 +91,20 @@ export default function App() {
       setCurrentScreen('gameSettings');
     }
   }
+
+  const nextQuestion = () => {
+    const updatedAnswers = [...firstAnswers, textValue];
+    setFirstAnswer(updatedAnswers);
+    
+    setTextValue('');
+
+    if (currentPlayerIndex < playerCount - 1) {
+        setCurrentPlayerIndex(currentPlayerIndex + 1);
+    } else {
+        setCurrentPlayerIndex(0);
+        setCurrentScreen('main');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -166,16 +183,19 @@ export default function App() {
         )}
 
         {currentScreen === 'game' && (
-          <GameScreen
-            onBack={() => {
-              resetPlayerSetup();
-              setCurrentScreen('main');
-            }}
-            duration={duration}
-            players={players}
-            playerCount={playerCount}
-            currentPlayerIndex={currentPlayerIndex}
-          />
+            <GameScreen
+                onBack={() => {
+                    resetPlayerSetup();
+                    setCurrentScreen('main');
+                }}
+                duration={duration}
+                players={players}
+                playerCount={playerCount}
+                currentPlayerIndex={currentPlayerIndex}
+                onNext={nextQuestion} // Ruft die korrigierte Funktion auf
+                textValue={textValue}
+                setTextValue={setTextValue}
+            />
         )}
 
         {/* Weitere Screens hier rendern... */}

@@ -11,6 +11,10 @@ export default function GameScreen({
     players,
     playerCount,
     currentPlayerIndex,
+    onNext,
+    setAnswer,
+    textValue,
+    setTextValue,
 }) {
 
     const [showConfirm, setShowConfirm] = useState(false);
@@ -21,6 +25,9 @@ export default function GameScreen({
 
     const dropdownAnim = useRef(new Animated.Value(0)).current;
 
+    const [isFocused, setIsFocused] = useState(false);
+    const [inputHeight, setInputHeight] = useState(50);
+
     useEffect(() => {
         Animated.parallel([
             Animated.timing(animValue, {
@@ -30,6 +37,13 @@ export default function GameScreen({
             }),
         ]).start();
     }, []);
+
+    useEffect(() => {
+        setIsQuestionOpen(false);
+
+        dropdownAnim.setValue(0);
+
+    }, [currentPlayerIndex]);
 
     const openQuestion = () => {
         if (isQuestionOpen) {
@@ -42,7 +56,7 @@ export default function GameScreen({
                 useNativeDriver: false,
             }).start();
         }
-    }
+    };
 
     const cardWidth = animValue.interpolate({
         inputRange: [0, 1],
@@ -70,8 +84,10 @@ export default function GameScreen({
         outputRange: ['0deg', '180deg'],
     });
 
-    const playerColor = players[currentPlayerIndex]?.color;
-    const lightPlayerColor = tinycolor(playerColor).lighten(35).brighten(20).toHexString();
+    const activePlayer = players[currentPlayerIndex];
+    const playerName = activePlayer?.name || `Spieler ${currentPlayerIndex + 1}`;
+    const playerColor = activePlayer?.color;
+    const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
     return (
         <View style={styles.screenContainer}>
@@ -87,7 +103,7 @@ export default function GameScreen({
             >
                 <View style={styles.topContent}>
                     <Text style={styles.sectionTitle}>
-                        {players[currentPlayerIndex]?.name || `Spieler ${currentPlayerIndex + 1}`} ist dran!
+                        {playerName} ist dran!
                     </Text>
                         <View style={[
                             styles.accordionContainer,
@@ -126,16 +142,62 @@ export default function GameScreen({
                                 ]}
                             >
                                 <View style={styles.dropdownInnerContent}>
-                                    <Text style={styles.questionText}>
-                                        Hier steht die eigentliche Frage oder Aufgabe für den Spieler!
-                                    </Text>
-                                    <View style={{ marginTop: 30 }}>
-                                            <TextInput
-                                                style={styles.textInput}
-                                                placeholder="Was ist deine Antwort auf diese Frage?"
-                                                placeholderTextColor="#8a99ad"
-                                            />
-                                    </View>  
+                                    <View style={styles.topContent}>
+                                        <Text style={styles.questionText}>
+                                            Hier steht die eigentliche Frage oder Aufgabe für den Spieler!
+                                        </Text>
+                                        <View style={{ marginTop: 20 }}>
+                                                <TextInput
+                                                    style={[
+                                                        styles.textInput,
+                                                        {height: Math.max(50, inputHeight)},
+                                                        isFocused && {
+                                                            outlineStyle: 'solid',
+                                                            outlineColor: '#1c1c1e',
+                                                            outlineWidth: 1,
+                                                            outlineOffset: 0,
+                                                            borderColor: '#1c1c1e',
+                                                        }
+                                                    ]}
+                                                    value={textValue}
+                                                    onChangeText={(text) => {
+                                                        const cleanText = text.replace(/[\r\n]/g, '');
+                                                        setTextValue(cleanText);
+                                                    }}
+                                                    placeholder="Gebe einen Kommentar ein"
+                                                    placeholderTextColor="#8a99ad"
+                                                    multiline={true}
+                                                    maxLength={100}
+                                                    scrollEnabled={false}
+
+                                                    blurOnSubmit={true}
+                                                    returnKeyType="done"
+                                                    textAlignVertical="top"
+
+                                                    onFocus={() => setIsFocused(true)}
+                                                    onBlur={() => setIsFocused(false)}
+                                                    
+                                                    onKeyPress={(e) => {
+                                                        if (e.nativeEvent.key === 'Enter') {
+                                                            e.preventDefault();
+                                                        }
+                                                    }}
+                                                    onContentSizeChange={(e) => {
+                                                        setInputHeight(e.nativeEvent.contentSize.height);
+                                                    }}
+                                                />
+                                        </View>
+                                    </View>
+                                    <TouchableOpacity
+                                        style={[styles.btn, styles.btnSecondary,
+                                            { marginTop: 20 }]}
+                                        activeOpacity={0.8}
+                                        onPress={onNext}
+                                    >
+                                        <Text style={styles.btnSecondaryText}>
+                                            {currentPlayerIndex < playerCount - 1 ? 'Nächster Spieler' : 'Fertigstellen'}
+                                        </Text>
+                                    </TouchableOpacity>
                                 </View>
                             </Animated.View>
                         </View>
@@ -257,8 +319,9 @@ const styles = StyleSheet.create({
     dropdownInnerContent: {
         padding: 20,
         flex: 1,
-        alignItems: 'center',
-        height: '100%'
+        alignItems: 'stretch',
+        height: '100%',
+        justifyContent: 'space-between',
     },
     questionBox: {
         backgroundColor: '#ffffff',
@@ -273,23 +336,25 @@ const styles = StyleSheet.create({
         color: '#1c1c1e',
         textAlign: 'center',
         lineHeight: 24,
-        fontWeight: '500',
+        fontWeight: 'bold',
     },
     optionLabel: {
         color: '#1c1c1e',
         fontSize: 16,
         fontWeight: '600',
     },
-    textInput: {
-        backgroundColor: '#f2f2f7',
-        borderWidth: 1,
-        borderColor: '#e5e5ea',
-        borderRadius: 10,
-        paddingHorizontal: 100,
-        alignSelf: 'center',
-        paddingVertical: 12,
-        fontSize: 16,
-        color: '#1c1c1e',
-        fontWeight: '600',
-    },
+        textInput: {
+            backgroundColor: '#ffffff',
+            borderWidth: 1,
+            borderColor: '#e5e5ea',
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            fontSize: 16,
+            color: '#1c1c1e',
+            fontWeight: '600',
+            width: '100%',
+            outlineStyle: 'none',
+            overflow: 'hidden',
+        },
 });

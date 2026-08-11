@@ -3,8 +3,8 @@ export const COLOR_OPTIONS = [
     '#ff8000',
     '#dde01b',
     '#28b428',
-    '#2fa183', 
+    '#37b5d4', 
     '#2e579e',
     '#642590',
-    '#cf93d0',
+    '#c860ca',
 ];
