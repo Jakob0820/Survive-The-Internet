@@ -1,4 +1,4 @@
-import React, { use, useState } from 'react';
+import React, {useState } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -18,6 +18,8 @@ import GameSettingsScreen from './src/screens/GameSettingsScreen';
 import PlayerSetupScreen from './src/screens/PlayerSetupScreen';
 import GameScreen from './src/screens/GameScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
+import { QUESTIONS, ROUND_TYPE } from './src/constants/questions';
+import GameTransitionScreen from './src/screens/GameTransitionScreen';
 
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
@@ -35,6 +37,15 @@ export default function App() {
   //Logik für Antwort Setup
   const [firstAnswers, setFirstAnswer] = useState([]);
   const [textValue, setTextValue] = useState('');
+
+  const [gameRounds, setGameRounds] = useState([]);
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+
+  const currentType = gameRounds[currentRoundIndex];
+  const currentRoundObj = QUESTIONS.find((q) => q.type === currentType);
+  const currentCategoryName = currentRoundObj?.categoryName || 'Nächste Runde';
+  const [currentQuestions, setCurrentQuestions ] = useState([]);
+  
 
   const resetPlayerSetup = () => {
     setPlayerCount(3);
@@ -64,9 +75,15 @@ export default function App() {
     setSelectedColor(nextFreeColor);
     }
     else {
-
+      const rounds = generateGameRounds(5);
+      setGameRounds(rounds);
+      setCurrentRoundIndex(0);
       setCurrentPlayerIndex(0);
-      setCurrentScreen('game')
+
+      const firstRoundQuestion = generateQuestions(rounds[0], playerCount);
+      setCurrentQuestions(firstRoundQuestion);
+
+      setCurrentScreen('transition');
     }
   }
 
@@ -92,6 +109,50 @@ export default function App() {
     }
   }
 
+  const handleNextRound = () => {
+    const nextIndex = currentRoundIndex + 1;
+    if (nextIndex < gameRounds.length){
+      setCurrentRoundIndex(nextIndex);
+      setCurrentPlayerIndex(0);
+
+      const nextRoundType = gameRounds[nextIndex];
+      const nextQuestions = generateQuestions(nextRoundType, playerCount);
+      setCurrentQuestions(nextQuestions);
+
+      setCurrentScreen('transition');
+    } else {
+      setCurrentScreen('main');
+      setcurrentRoundIndex(0);
+      setcurrentPlayerIndex(0);
+      //später results
+    }
+  }
+
+  const generateGameRounds = (count = 5) => {
+    const allTypes = Object.values(ROUND_TYPE);
+    const shuffledTypes = shuffleArray(allTypes);
+    return shuffledTypes.slice(0, count);
+  }
+
+  const generateQuestions = (roundType, count = playerCount) => {
+    const roundObj = QUESTIONS.find((q) => q.type === roundType);
+
+    const availableQuestions = roundObj?.questions || [];
+    const shuffledQuestions = shuffleArray(availableQuestions);
+
+    return shuffledQuestions.slice(0, count);
+
+  }
+
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for(let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
   const nextQuestion = () => {
     const updatedAnswers = [...firstAnswers, textValue];
     setFirstAnswer(updatedAnswers);
@@ -101,8 +162,7 @@ export default function App() {
     if (currentPlayerIndex < playerCount - 1) {
         setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
-        setCurrentPlayerIndex(0);
-        setCurrentScreen('main');
+        handleNextRound();
     }
   };
 
@@ -195,6 +255,14 @@ export default function App() {
                 onNext={nextQuestion} // Ruft die korrigierte Funktion auf
                 textValue={textValue}
                 setTextValue={setTextValue}
+                currentQuestion={currentQuestions[currentPlayerIndex]}
+            />
+        )}
+
+        {currentScreen === 'transition' && (
+            <GameTransitionScreen 
+                onFinish={() => setCurrentScreen('game')}
+                roundName={currentCategoryName} 
             />
         )}
 

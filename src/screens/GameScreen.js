@@ -3,18 +3,19 @@ import { StyleSheet, Text, View, TouchableOpacity, Animated, useWindowDimensions
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
 import { Ionicons } from '@expo/vector-icons';
+import { QUESTIONS } from '../constants/questions';
 
 export default function GameScreen({
     onBack,
-    confirm,
     duration,
     players,
     playerCount,
     currentPlayerIndex,
     onNext,
-    setAnswer,
     textValue,
     setTextValue,
+    currentQuestion,
+
 }) {
 
     const [showConfirm, setShowConfirm] = useState(false);
@@ -144,7 +145,7 @@ export default function GameScreen({
                                 <View style={styles.dropdownInnerContent}>
                                     <View style={styles.topContent}>
                                         <Text style={styles.questionText}>
-                                            Hier steht die eigentliche Frage oder Aufgabe für den Spieler!
+                                            {currentQuestion}
                                         </Text>
                                         <View style={{ marginTop: 20 }}>
                                                 <TextInput
