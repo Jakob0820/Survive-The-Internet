@@ -99,7 +99,7 @@ export default function PlayerSetupScreen({
                 onPress={onPrev}
             >
                 <Text style={styles.btnPrimaryText}>
-                {currentPlayerIndex < playerCount - 1 ? 'ZURÜCK' : '◀ VORHERIGER SPIELER'}
+                {currentPlayerIndex == 0 ? 'ZURÜCK' : '◀ VORHERIGER SPIELER'}
                 </Text>
             </TouchableOpacity>
             </View>
@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
   },
   btnPrimaryText: {
     color: '#ffffff',
+    textAlign: 'center',
     fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 2,

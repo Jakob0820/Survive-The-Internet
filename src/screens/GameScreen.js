@@ -1,3 +1,4 @@
+GameScreen.js
 import React, { useState, useEffect, useRef, useReducer } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Animated, useWindowDimensions, TextInput } from 'react-native';
 import ConfirmationScreen from './ConfirmationScreen';
@@ -72,10 +73,11 @@ export default function GameScreen({
         outputRange: ['100%', '100%'],
     });
 
-    const questionHeight = dropdownAnim.interpolate({
+    /*const questionHeight = dropdownAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [0, screenHeight * 0.64], // Höhe des aufgeklappten Textfelds
-    });
+    });*/
+
     const questionOpacity = dropdownAnim.interpolate({
         inputRange: [0, 0.5, 1],
         outputRange: [0, 0, 1],
@@ -98,7 +100,7 @@ export default function GameScreen({
                     {
                         width: cardWidth,
                         maxWidth: cardMaxWidth,
-                        height: cardHeight,
+                        //height: cardHeight,
                     },
                 ]}
             >
@@ -136,7 +138,8 @@ export default function GameScreen({
                                 style={[
                                     styles.dropdownContainer,
                                     {
-                                    height: questionHeight,
+                                    //height: questionHeight,
+                                    flex: dropdownAnim,
                                     opacity: questionOpacity,
                                     backgroundColor: lightPlayerColor,
                                     },
@@ -148,28 +151,19 @@ export default function GameScreen({
                                             {currentQuestion}
                                         </Text>
                                         <View style={{ marginTop: 20 }}>
-                                                <TextInput
-                                                    style={[
-                                                        styles.textInput,
-                                                        {height: Math.max(50, inputHeight)},
-                                                        isFocused && {
-                                                            outlineStyle: 'solid',
-                                                            outlineColor: '#1c1c1e',
-                                                            outlineWidth: 1,
-                                                            outlineOffset: 0,
-                                                            borderColor: '#1c1c1e',
-                                                        }
-                                                    ]}
+                                               <TextInput
+                                                    style={styles.textInput}
                                                     value={textValue}
-                                                    onChangeText={(text) => {
-                                                        const cleanText = text.replace(/[\r\n]/g, '');
-                                                        setTextValue(cleanText);
-                                                    }}
-                                                    placeholder="Gebe einen Kommentar ein"
+                                                    onChangeText={setTextValue}
+                                                    placeholder="Schreibe einen Kommentar"
                                                     placeholderTextColor="#8a99ad"
-                                                    multiline={true}
                                                     maxLength={100}
+                                                    multiline={true}
                                                     scrollEnabled={false}
+
+                                                    autoCorrect={false}
+                                                    spellCheck={false}
+                                                    autoCapitalize="none"
 
                                                     blurOnSubmit={true}
                                                     returnKeyType="done"
@@ -233,20 +227,21 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20,
+        padding: 10,
         paddingVertical: 30,
         flex: 1,
     },
     accordionContainer: {
         width: '100%',
         borderRadius: 16,
+        flex: 1,
     },
     accordionWrapper: {
         width: '100%',
+        flex: 1,
         },
     card: {
         width: '100%',
-        maxWidth: 380,
         backgroundColor: 'rgba(255, 255, 255, 0.92)',
         borderRadius: 20,
         padding: 28,
@@ -257,7 +252,6 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
         elevation: 8,
         gap: 16,
-        justifyContent: 'space-between',
     },
     sectionTitle: {
         fontSize: 22,
@@ -302,6 +296,7 @@ const styles = StyleSheet.create({
     },
     topContent: {
         width: '100%',
+        flex: 1,
     },
     btnQuestionText: {
         color: '#1c1c1e',
@@ -344,18 +339,18 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-        textInput: {
-            backgroundColor: '#ffffff',
-            borderWidth: 1,
-            borderColor: '#e5e5ea',
-            borderRadius: 12,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            fontSize: 16,
-            color: '#1c1c1e',
-            fontWeight: '600',
-            width: '100%',
-            outlineStyle: 'none',
-            overflow: 'hidden',
-        },
+    textInput: {
+        backgroundColor: '#ffffff',
+        borderWidth: 1,
+        borderColor: '#e5e5ea',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 16,
+        color: '#1c1c1e',
+        fontWeight: '600',
+        width: '100%',
+        outlineStyle: 'none',
+        overflow: 'hidden',
+    },
 });

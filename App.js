@@ -9,8 +9,8 @@ import {
   StatusBar,
   Platform
 } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
-
+import { VideoView, useVideoPlayer } from 'expo-video';
+ 
 import { COLOR_OPTIONS } from './src/constants/colors';
 import MainScreen from './src/screens/MainScreen';
 import OptionsScreen from './src/screens/OptionsScreen';
@@ -20,7 +20,7 @@ import GameScreen from './src/screens/GameScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
 import { QUESTIONS, ROUND_TYPE } from './src/constants/questions';
 import GameTransitionScreen from './src/screens/GameTransitionScreen';
-
+ 
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
   const [currentScreen, setCurrentScreen] = useState('main');
@@ -37,16 +37,26 @@ export default function App() {
   //Logik für Antwort Setup
   const [firstAnswers, setFirstAnswer] = useState([]);
   const [textValue, setTextValue] = useState('');
-
+ 
   const [gameRounds, setGameRounds] = useState([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
-
+ 
   const currentType = gameRounds[currentRoundIndex];
   const currentRoundObj = QUESTIONS.find((q) => q.type === currentType);
   const currentCategoryName = currentRoundObj?.categoryName || 'Nächste Runde';
   const [currentQuestions, setCurrentQuestions ] = useState([]);
   
-
+  const player = useVideoPlayer(
+    require('./assets/background2_fixed.mp4'),
+    player => {
+      player.loop = true;
+    }
+  );
+ 
+  React.useEffect(() => {
+    player.play();
+  }, [player]);
+    
   const resetPlayerSetup = () => {
     setPlayerCount(3);
     setCurrentPlayerIndex(0);
@@ -54,7 +64,7 @@ export default function App() {
     setSelectedColor(COLOR_OPTIONS[0]);
     setPlayers([]);
   }
-
+ 
   const handleNextPlayer = () => {
     const updatedPlayers = [...players];
     updatedPlayers[currentPlayerIndex] = {
@@ -63,15 +73,15 @@ export default function App() {
       color: selectedColor,
     };
     setPlayers(updatedPlayers);
-
+ 
   if (currentPlayerIndex < playerCount - 1) {
     const nextIndex = currentPlayerIndex + 1;
     setCurrentPlayerIndex(nextIndex);
     setPlayerName(`Spieler ${nextIndex + 1}`);
-
+ 
     const usedColors = updatedPlayers.slice(0, nextIndex).map((p) => p.color);
     const nextFreeColor = COLOR_OPTIONS.find((c) => !usedColors.includes(c)) || COLOR_OPTIONS[0];
-
+ 
     setSelectedColor(nextFreeColor);
     }
     else {
@@ -79,14 +89,14 @@ export default function App() {
       setGameRounds(rounds);
       setCurrentRoundIndex(0);
       setCurrentPlayerIndex(0);
-
+ 
       const firstRoundQuestion = generateQuestions(rounds[0], playerCount);
       setCurrentQuestions(firstRoundQuestion);
-
+ 
       setCurrentScreen('transition');
     }
   }
-
+ 
   const handlePrevPlayer = () => {
     const updatedPlayers = [...players];
     updatedPlayers[currentPlayerIndex] = {
@@ -95,7 +105,7 @@ export default function App() {
       color: selectedColor,
     };
     setPlayers(updatedPlayers);
-
+ 
     if (currentPlayerIndex > 0) {
       const prevIndex = currentPlayerIndex - 1;
       setCurrentPlayerIndex(prevIndex);
@@ -103,22 +113,22 @@ export default function App() {
       setPlayerName(prevPlayer.name);
       setSelectedColor(prevPlayer.color);
     } else {
-
+ 
       setCurrentPlayerIndex(0);
       setCurrentScreen('gameSettings');
     }
   }
-
+ 
   const handleNextRound = () => {
     const nextIndex = currentRoundIndex + 1;
     if (nextIndex < gameRounds.length){
       setCurrentRoundIndex(nextIndex);
       setCurrentPlayerIndex(0);
-
+ 
       const nextRoundType = gameRounds[nextIndex];
       const nextQuestions = generateQuestions(nextRoundType, playerCount);
       setCurrentQuestions(nextQuestions);
-
+ 
       setCurrentScreen('transition');
     } else {
       setCurrentScreen('main');
@@ -127,23 +137,23 @@ export default function App() {
       //später results
     }
   }
-
+ 
   const generateGameRounds = (count = 5) => {
     const allTypes = Object.values(ROUND_TYPE);
     const shuffledTypes = shuffleArray(allTypes);
     return shuffledTypes.slice(0, count);
   }
-
+ 
   const generateQuestions = (roundType, count = playerCount) => {
     const roundObj = QUESTIONS.find((q) => q.type === roundType);
-
+ 
     const availableQuestions = roundObj?.questions || [];
     const shuffledQuestions = shuffleArray(availableQuestions);
-
+ 
     return shuffledQuestions.slice(0, count);
-
+ 
   }
-
+ 
   const shuffleArray = (array) => {
     const shuffled = [...array];
     for(let i = shuffled.length - 1; i > 0; i--) {
@@ -152,38 +162,34 @@ export default function App() {
     }
     return shuffled;
   }
-
+ 
   const nextQuestion = () => {
     const updatedAnswers = [...firstAnswers, textValue];
     setFirstAnswer(updatedAnswers);
     
     setTextValue('');
-
+ 
     if (currentPlayerIndex < playerCount - 1) {
         setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
         handleNextRound();
     }
   };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      {/* HINTERGRUND-VIDEO */}
-      <Video
-        source={ 
-          require('./assets/background2.mp4') 
-        }
-        style={StyleSheet.absoluteFillObject}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        isMuted
-      />
-
-      {/* ABDUNKELNDES OVERLAY (für bessere Lesbarkeit des Menüs) */}
+  
+ 
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        
+        <VideoView
+          player={player}
+          style={styles.video}
+          contentFit="cover"
+          nativeControls={false}
+        />
+ 
       <View style={styles.videoOverlay} />
-
+ 
       <View style={styles.screenContainer}>
         {currentScreen === 'main' && (
           <MainScreen
@@ -198,7 +204,7 @@ export default function App() {
             options={() => setCurrentScreen('options')}
           />
         )}
-
+ 
         {currentScreen === 'options' && (
           <OptionsScreen 
             volume={volume} setVolume={setVolume}
@@ -209,7 +215,7 @@ export default function App() {
             }}
           />
         )}
-
+ 
         {currentScreen === 'playerSetup' && (
           <PlayerSetupScreen
             currentPlayerIndex={currentPlayerIndex}
@@ -223,7 +229,7 @@ export default function App() {
             onPrev={handlePrevPlayer}
           />
         )}
-
+ 
         {currentScreen === 'gameSettings' && (
           <GameSettingsScreen
             isOnline={isOnline}
@@ -238,10 +244,10 @@ export default function App() {
               resetPlayerSetup();
               setCurrentScreen('main');
             }}
-
+ 
           />
         )}
-
+ 
         {currentScreen === 'game' && (
             <GameScreen
                 onBack={() => {
@@ -258,29 +264,31 @@ export default function App() {
                 currentQuestion={currentQuestions[currentPlayerIndex]}
             />
         )}
-
+ 
         {currentScreen === 'transition' && (
             <GameTransitionScreen 
                 onFinish={() => setCurrentScreen('game')}
                 roundName={currentCategoryName} 
             />
         )}
-
-        {/* Weitere Screens hier rendern... */}
+ 
       </View>
     </SafeAreaView>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   container:{ 
-    flex: 1, 
-    backgroundColor: 
-    '#3799d1' 
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: '#3799d1', 
   },
-  videoOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.15)' 
+  video: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   screenContainer: {
     flex: 1, justifyContent: 'center',

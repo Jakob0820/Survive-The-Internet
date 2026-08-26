@@ -49,6 +49,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  screenContainer: {
+    alignItems: 'center',
+  },
   title: {
     fontSize: 45,
     fontWeight: '900',
