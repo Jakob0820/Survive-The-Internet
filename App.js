@@ -37,6 +37,7 @@ export default function App() {
   const [isOnline, setOnlineStatus] = useState(false);
   //Logik für Antwort Setup
   const [firstAnswers, setFirstAnswer] = useState([]);
+  const [secoundAnswers, setSecondAnswer] = useState([]);
   const [textValue, setTextValue] = useState('');
  
   const [gameRounds, setGameRounds] = useState([]);
@@ -48,6 +49,7 @@ export default function App() {
   const [currentQuestions, setCurrentQuestions ] = useState([]);
 
   const [answerText, setAnswerText] = useState('');
+  const [shuffledAnswers, setShuffledAnswers] = useState([]);
   
   const player = useVideoPlayer(
     require('./assets/background2_fixed.mp4'),
@@ -63,9 +65,13 @@ export default function App() {
   const resetPlayerSetup = () => {
     setPlayerCount(3);
     setCurrentPlayerIndex(0);
-    setPlayerName(`Spieler ${currentPlayerIndex + 1}`);
+    setPlayerName(`Spieler 1`);
     setSelectedColor(COLOR_OPTIONS[0]);
     setPlayers([]);
+    setFirstAnswer([]);
+    setShuffledAnswers([]);
+    setTextValue('');
+    setAnswerText('');
   }
  
   const handleNextPlayer = () => {
@@ -132,7 +138,7 @@ export default function App() {
       const nextQuestions = generateQuestions(nextRoundType, playerCount);
       setCurrentQuestions(nextQuestions);
  
-      setCurrentScreen('answer');
+      setCurrentScreen('game');
     } else {
       setCurrentScreen('main');
       setcurrentRoundIndex(0);
@@ -165,19 +171,45 @@ export default function App() {
     }
     return shuffled;
   }
+
+  const shuffleAnswers = (array) => {
+    let answerCpy;
+
+    do {
+        answerCpy = shuffleArray(array);
+    } while (answerCpy.some((answer, index) => answer === array[index]));
+
+    return answerCpy;
+  };
+
  
   const nextQuestion = () => {
     const updatedAnswers = [...firstAnswers, textValue];
     setFirstAnswer(updatedAnswers);
-    
     setTextValue('');
  
     if (currentPlayerIndex < playerCount - 1) {
         setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
-        handleNextRound();
+      setShuffledAnswers(shuffleAnswers(updatedAnswers));
+
+      setCurrentPlayerIndex(0);
+      setCurrentScreen('answer');
     }
   };
+
+  const nextAnswer = () => {
+    const updatedResponses = [...secoundAnswers, answerText];
+    setSecondAnswer(updatedResponses);
+    setAnswerText('');
+    
+    if (currentPlayerIndex < playerCount -1) {
+      setCurrentPlayerIndex(currentPlayerIndex + 1);
+    } else {
+      setCurrentPlayerIndex(0);
+      handleNextRound();
+    }
+  }
   
  
     return (
@@ -280,6 +312,8 @@ export default function App() {
             currentPlayerIndex={currentPlayerIndex}
             answerText={answerText}
             setAnswerText={setAnswerText}
+            shuffledAnswers={shuffledAnswers}
+            onNext={nextAnswer}
           />
         )}
  

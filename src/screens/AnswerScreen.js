@@ -13,6 +13,7 @@ export default function AnswerScreen({
     onNext,
     answerText,
     setAnswerText,
+    shuffledAnswers,
 }) {
 
     const [showConfirm, setShowConfirm] = useState(false);
@@ -96,7 +97,7 @@ export default function AnswerScreen({
     const playerColor = activePlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
-    if (isEvaluating) {
+    if (isEvaluating && currentPlayerIndex == 0) {
         return (
             <View style={styles.screenContainer}>
                 <View style={[styles.card, styles.evaluatingCard]}>
@@ -165,7 +166,7 @@ return (
                                             {/* Das schwarze Haupt-Textfeld */}
                                             <View style={styles.bubble}>
                                                 <Text style={styles.text}>
-                                                    test
+                                                    {shuffledAnswers[currentPlayerIndex]}
                                                 </Text>
                                             </View>
                                         </View>
@@ -209,7 +210,7 @@ return (
                                         style={[styles.btn, styles.btnSecondary,
                                             { marginTop: 20 }]}
                                         activeOpacity={0.8}
-                                        //onPress={onNext}
+                                        onPress={onNext}
                                     >
                                         <Text style={styles.btnSecondaryText}>
                                             {currentPlayerIndex < playerCount - 1 ? 'Nächster Spieler' : 'Fertigstellen'}
@@ -412,16 +413,16 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     evaluatingCard: {
-        justifyContent: 'center',    // Zentriert den Text vertikal
-        alignItems: 'center',        // Zentriert den Text horizontal
-        flex: 0,                     // Verhindert das Dehnen über den Bildschirm
-        width: '70%',                // Schmaler machen (z. B. 70% statt 100%)
-        maxWidth: 260,               // Maximale Breite stark verringern (z. B. 260px)
-        height: 120,                 // Kompakte Höhe (z. B. 120px statt 200px)
-        borderRadius: 16,            // Optional: Etwas abgerundeter für den kleinen Look
+        justifyContent: 'center',
+        alignItems: 'center',     
+        flex: 0,                  
+        width: '70%',            
+        maxWidth: 260,   
+        height: 120,              
+        borderRadius: 16,            
     },
     evaluatingText: {
-        fontSize: 26,                // Leicht kleinerer Text (z. B. 20 statt 24)
+        fontSize: 26,
         fontWeight: 'bold',
         color: '#1c1c1e',
         textAlign: 'center',
