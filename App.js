@@ -20,6 +20,7 @@ import GameScreen from './src/screens/GameScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
 import { QUESTIONS, ROUND_TYPE } from './src/constants/questions';
 import GameTransitionScreen from './src/screens/GameTransitionScreen';
+import AnswerScreen from './src/screens/AnswerScreen';
  
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
@@ -45,6 +46,8 @@ export default function App() {
   const currentRoundObj = QUESTIONS.find((q) => q.type === currentType);
   const currentCategoryName = currentRoundObj?.categoryName || 'Nächste Runde';
   const [currentQuestions, setCurrentQuestions ] = useState([]);
+
+  const [answerText, setAnswerText] = useState('');
   
   const player = useVideoPlayer(
     require('./assets/background2_fixed.mp4'),
@@ -129,7 +132,7 @@ export default function App() {
       const nextQuestions = generateQuestions(nextRoundType, playerCount);
       setCurrentQuestions(nextQuestions);
  
-      setCurrentScreen('transition');
+      setCurrentScreen('answer');
     } else {
       setCurrentScreen('main');
       setcurrentRoundIndex(0);
@@ -258,11 +261,26 @@ export default function App() {
                 players={players}
                 playerCount={playerCount}
                 currentPlayerIndex={currentPlayerIndex}
-                onNext={nextQuestion} // Ruft die korrigierte Funktion auf
+                onNext={nextQuestion}
                 textValue={textValue}
                 setTextValue={setTextValue}
                 currentQuestion={currentQuestions[currentPlayerIndex]}
             />
+        )}
+
+        {currentScreen === 'answer' && (
+          <AnswerScreen
+            onBack={() => {
+              resetPlayerSetup();
+              setCurrentScreen('main');
+            }}
+            players = {players}
+            playerCount = {playerCount}
+            duration = {duration}
+            currentPlayerIndex={currentPlayerIndex}
+            answerText={answerText}
+            setAnswerText={setAnswerText}
+          />
         )}
  
         {currentScreen === 'transition' && (
@@ -275,6 +293,7 @@ export default function App() {
       </View>
     </SafeAreaView>
   );
+
 }
  
 const styles = StyleSheet.create({

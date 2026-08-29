@@ -43,7 +43,7 @@ export default function MainScreen ({
               </View>
             </View>
         )
-    }
+  }
 const styles = StyleSheet.create({
     header: {
     alignItems: 'center',

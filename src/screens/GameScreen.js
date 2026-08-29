@@ -73,10 +73,6 @@ export default function GameScreen({
         outputRange: ['100%', '100%'],
     });
 
-    /*const questionHeight = dropdownAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, screenHeight * 0.64], // Höhe des aufgeklappten Textfelds
-    });*/
 
     const questionOpacity = dropdownAnim.interpolate({
         inputRange: [0, 0.5, 1],
@@ -100,7 +96,6 @@ export default function GameScreen({
                     {
                         width: cardWidth,
                         maxWidth: cardMaxWidth,
-                        //height: cardHeight,
                     },
                 ]}
             >
@@ -138,7 +133,6 @@ export default function GameScreen({
                                 style={[
                                     styles.dropdownContainer,
                                     {
-                                    //height: questionHeight,
                                     flex: dropdownAnim,
                                     opacity: questionOpacity,
                                     backgroundColor: lightPlayerColor,
@@ -245,6 +239,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.92)',
         borderRadius: 20,
         padding: 28,
+        maxWidth: 400,
         flex: 1,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
