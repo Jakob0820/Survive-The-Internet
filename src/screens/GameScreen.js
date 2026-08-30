@@ -157,7 +157,6 @@ export default function GameScreen({
 
                                                     autoCorrect={false}
                                                     spellCheck={false}
-                                                    autoCapitalize="none"
 
                                                     blurOnSubmit={true}
                                                     returnKeyType="done"

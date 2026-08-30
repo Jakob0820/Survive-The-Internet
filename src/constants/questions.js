@@ -26,8 +26,9 @@ export const QUESTIONS = [
             'Wie war der letzte Kinofilm, den du gesehen hast?',
             'Schreibe eine Rezension für einen Mietwagen?',
             'Wie war deine letzte Bahnfahrt?',
-            'Wie war dein Traumdate beschreiben?',
-        ]
+            'Wie würdest du dein Traumdate beschreiben?',
+        ],
+        answer: ['wäre eine peinliche Rezension für diesen Standort:'],
     },
     {
         id: 'comment',
@@ -47,7 +48,8 @@ export const QUESTIONS = [
             'Was hälts du von Ananas auf der Pizza?',
             'Was denkst du, was die Regierung wirklich in der geheimnisvollen Area 51 versteckt?',
             'Was antwortest du, wenn dich deine Oma fragt, ob du schon eine/n Freund/in hast?',
-        ]
+        ],
+        answer: ['wäre eine peinliche Antwort auf diesen Kommentar:'],
     },
     {
         id: 'video',
@@ -65,7 +67,8 @@ export const QUESTIONS = [
             'Du triffst dein Idol, was ist das erste, was du ihm/ihr sagst?',
             'Was sagst du, wenn ein Typ dich im Club antanzt?', 
 
-        ]
+        ],
+        answer: ['wäre ein peinlicher Kommentar auf ein Video mit diesem Titel:'],
     },
     /*{
         id: 'photo',
@@ -109,7 +112,8 @@ export const QUESTIONS = [
             'Was macht den weißen Hai so bedrohlich?',
             'Wieso haben alle Angst für Pennywise?',
             'Beschreibe Megan Fox aus Transformers.',
-        ]
+        ],
+        answer: ['wäre eine peinliche Empfehlung für diese Person:'],
     },
     {
         id: 'news',
@@ -129,7 +133,8 @@ export const QUESTIONS = [
             'Was sagst du zu jemandem, der fest davon überzeugt ist, dass Tauben in Wahrheit Spionage-Dronen der Regierung sind?',
             'Wie reagierst du nach deinem ersten Fortnite Sieg?',
             'Was ist dein erster Gedanke, wenn du zum Fallschirmspringen aus dem Flugzeug springst?',
-        ]
+        ],
+        answer: ['wäre ein schrecklicher Kommentar auf diese Schlagzeile:'],
     },
     {
         id: 'forum',
@@ -151,7 +156,8 @@ export const QUESTIONS = [
             'Welchen Tipp würdest du einem Schüler geben der gemobbt wird?',
             'Was ist das erste, was du nach einer geschriebenen Klausur tust?',
             'Was ist dein Tipp gegen Liebeskummer?',
-        ]
+        ],
+        answer: ['wäre eine peinliche Antwort auf diese Frage:'],
     },
     {
         id: 'funding',
@@ -169,7 +175,8 @@ export const QUESTIONS = [
             'Was sagst du zu jemandem, der dir auf einer Party ein pissewarmes Bier anbietet?',
             'Was sagst du zu deiner Tochter, die viel zu freizügig in den Club geht?',
             'Wie beantwortest du einen Bootycall?',
-        ]
+        ],
+        answer: ['wäre ein lustiger Kommentar auf eine Crowdfunding-Kampagne mit diesem namens:'],
     },
     {
         id: 'hashtag',
@@ -186,7 +193,8 @@ export const QUESTIONS = [
             'Was hältst du von Leuten, die Ananas auf ihrer Pizza essen?',
             'Was hältst du von Sendungen wie „Ich bin ein Star - Holt mich hier raus!“ oder „Temptation Island“?',
             'Was hältst du von Leuten, die in den ersten 5 Minuten eines Gesprächs erwähnen, dass sie CrossFit machen?',
-        ]
+        ],
+        answer: ['wäre ein peinlicher Kommentar zu diesem Hashtag:'],
 
     },
     {
@@ -208,6 +216,7 @@ export const QUESTIONS = [
             'Wie hast du gestern Nacht geschlafen?',
             'Welche Konsistenz hatte dein letzter Stuhlgang?',
         
-        ]
+        ],
+        answer: ['wäre eine peinliche Rezension für dieses Produkt:'],
     }
 ]

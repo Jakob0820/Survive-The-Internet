@@ -14,6 +14,7 @@ export default function AnswerScreen({
     answerText,
     setAnswerText,
     shuffledAnswers,
+    answerPrompt,
 }) {
 
     const [showConfirm, setShowConfirm] = useState(false);
@@ -171,7 +172,7 @@ return (
                                             </View>
                                         </View>
                                         <Text style={styles.questionText}>
-                                            Hier kommt die Antwort hin
+                                            {answerPrompt}
                                         </Text>
                                         <View style={{ marginTop: 20 }}>
                                                <TextInput

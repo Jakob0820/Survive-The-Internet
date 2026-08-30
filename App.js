@@ -138,7 +138,7 @@ export default function App() {
       const nextQuestions = generateQuestions(nextRoundType, playerCount);
       setCurrentQuestions(nextQuestions);
  
-      setCurrentScreen('game');
+      setCurrentScreen('transition');
     } else {
       setCurrentScreen('main');
       setcurrentRoundIndex(0);
@@ -314,6 +314,7 @@ export default function App() {
             setAnswerText={setAnswerText}
             shuffledAnswers={shuffledAnswers}
             onNext={nextAnswer}
+            answerPrompt={currentRoundObj?.answer?.[0]}
           />
         )}
  
