@@ -21,6 +21,7 @@ import ConfirmationScreen from './src/screens/ConfirmationScreen';
 import { QUESTIONS, ROUND_TYPE } from './src/constants/questions';
 import GameTransitionScreen from './src/screens/GameTransitionScreen';
 import AnswerScreen from './src/screens/AnswerScreen';
+import EvaluationScreen from './src/screens/EvaluationScreen';
  
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
@@ -137,12 +138,16 @@ export default function App() {
       const nextRoundType = gameRounds[nextIndex];
       const nextQuestions = generateQuestions(nextRoundType, playerCount);
       setCurrentQuestions(nextQuestions);
+
+      setTextValue('');
+      setFirstAnswer([]);
+      setShuffledAnswers([]);
  
       setCurrentScreen('transition');
     } else {
       setCurrentScreen('main');
-      setcurrentRoundIndex(0);
-      setcurrentPlayerIndex(0);
+      setCurrentRoundIndex(0);
+      setCurrentPlayerIndex(0);
       //später results
     }
   }
@@ -203,12 +208,20 @@ export default function App() {
     setSecondAnswer(updatedResponses);
     setAnswerText('');
     
-    if (currentPlayerIndex < playerCount -1) {
+    if (currentPlayerIndex < playerCount - 1) {
       setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
       setCurrentPlayerIndex(0);
-      handleNextRound();
+      setCurrentScreen('evaluation');
     }
+  }
+
+  const nextEvaluation = () => {
+      if(currentPlayerIndex < playerCount - 1) {
+        setCurrentPlayerIndex(currentPlayerIndex + 1);
+      } else {
+        handleNextRound();
+      }
   }
   
  
@@ -224,7 +237,18 @@ export default function App() {
         />
  
       <View style={styles.videoOverlay} />
- 
+      
+      {currentScreen === 'evaluation' && (
+        <EvaluationScreen
+          players = {players}
+          playerCount = {playerCount}
+          currentPlayerIndex = {currentPlayerIndex}
+          onNext = {nextEvaluation}
+          answerText = {answerText}
+          questionText = {shuffledAnswers}
+        />
+      )}
+
       <View style={styles.screenContainer}>
         {currentScreen === 'main' && (
           <MainScreen
