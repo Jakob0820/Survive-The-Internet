@@ -1,3 +1,13 @@
+import googleMapsLogo from '../../assets/googlemaps.png';
+import redditLogo from '../../assets/reddit.png';
+import youtubeLogo from '../../assets/youtube.png';
+import linkedinLogo from '../../assets/linkedin.png';
+import tagesschauLogo from '../../assets/tagesschau.png';
+import gutefrageLogo from '../../assets/gutefrage.png';
+import gofundmeLogo from '../../assets/gofundme.png';
+import twitterLogo from '../../assets/twitter.png';
+import ebayLogo from '../../assets/ebay.png';
+
 export const ROUND_TYPE = {
     GOOGLE_MAPS: 'google_maps',
     REDDIT: 'reddit',
@@ -29,6 +39,12 @@ export const QUESTIONS = [
             'Wie würdest du dein Traumdate beschreiben?',
         ],
         answer: ['wäre eine peinliche Rezension für diesen Standort:'],
+        color: [
+            '#FFFFFF',
+            '#3771cf',
+            '#000000',
+        ],
+        logo: googleMapsLogo,
     },
     {
         id: 'comment',
@@ -50,6 +66,12 @@ export const QUESTIONS = [
             'Was antwortest du, wenn dich deine Oma fragt, ob du schon eine/n Freund/in hast?',
         ],
         answer: ['wäre eine peinliche Antwort auf diesen Kommentar:'],
+        color: [
+            '#FF4500',
+            '#FFFFFF',
+            '#000000',
+        ],
+        logo: redditLogo,
     },
     {
         id: 'video',
@@ -69,6 +91,12 @@ export const QUESTIONS = [
 
         ],
         answer: ['wäre ein peinlicher Kommentar auf ein Video mit diesem Titel:'],
+        color: [
+            '#f70000',
+            '#FFFFFF',
+            '#000000',
+        ],
+        logo: youtubeLogo,
     },
     /*{
         id: 'photo',
@@ -114,6 +142,12 @@ export const QUESTIONS = [
             'Beschreibe Megan Fox aus Transformers.',
         ],
         answer: ['wäre eine peinliche Empfehlung für diese Person:'],
+        color: [
+            '#046fad',
+            '#FFFFFF',
+            '#000000'
+        ],
+        logo: linkedinLogo,
     },
     {
         id: 'news',
@@ -135,6 +169,12 @@ export const QUESTIONS = [
             'Was ist dein erster Gedanke, wenn du zum Fallschirmspringen aus dem Flugzeug springst?',
         ],
         answer: ['wäre ein schrecklicher Kommentar auf diese Schlagzeile:'],
+        color: [
+            '#082f6e',
+            '#FFFFFF',
+            '#000000',
+        ],
+        logo: tagesschauLogo,
     },
     {
         id: 'forum',
@@ -158,6 +198,12 @@ export const QUESTIONS = [
             'Was ist dein Tipp gegen Liebeskummer?',
         ],
         answer: ['wäre eine peinliche Antwort auf diese Frage:'],
+        color: [
+            '#FFFFFF',
+            '#469bc6',
+            '#000000',
+        ],
+        logo:gutefrageLogo,
     },
     {
         id: 'funding',
@@ -177,6 +223,12 @@ export const QUESTIONS = [
             'Wie beantwortest du einen Bootycall?',
         ],
         answer: ['wäre ein lustiger Kommentar auf eine Crowdfunding-Kampagne mit diesem namens:'],
+        color: [
+            '#00ab55',
+            '#FFFFFF',
+            '#000000',
+        ],
+        logo:gofundmeLogo,
     },
     {
         id: 'hashtag',
@@ -195,6 +247,12 @@ export const QUESTIONS = [
             'Was hältst du von Leuten, die in den ersten 5 Minuten eines Gesprächs erwähnen, dass sie CrossFit machen?',
         ],
         answer: ['wäre ein peinlicher Kommentar zu diesem Hashtag:'],
+        color: [
+            '#FFFFFF',
+            '#199def',
+            '#000000',
+        ],
+        logo:twitterLogo,
 
     },
     {
@@ -218,5 +276,12 @@ export const QUESTIONS = [
         
         ],
         answer: ['wäre eine peinliche Rezension für dieses Produkt:'],
+        color: [
+            '#FFFFFF',
+            '#b0e13e',
+            '#000000',
+        ],
+        logo:ebayLogo,
     }
+    
 ]

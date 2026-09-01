@@ -51,6 +51,8 @@ export default function App() {
 
   const [answerText, setAnswerText] = useState('');
   const [shuffledAnswers, setShuffledAnswers] = useState([]);
+
+  const currentLogo = currentRoundObj?.logo;
   
   const player = useVideoPlayer(
     require('./assets/background2_fixed.mp4'),
@@ -246,6 +248,7 @@ export default function App() {
           onNext = {nextEvaluation}
           answerText = {answerText}
           questionText = {shuffledAnswers}
+          currentLogo={currentLogo}
         />
       )}
 

@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     Animated,
     SafeAreaView,
+    Image,
 } from 'react-native';
 
 export default function EvaluationScreen({ 
@@ -16,6 +17,7 @@ export default function EvaluationScreen({
     onNext,
     answerText,
     questionText,
+    currentLogo,
 }) {
 
     const [showResult, setShowResult] = useState(false);
@@ -30,7 +32,7 @@ export default function EvaluationScreen({
         Animated.parallel([
             Animated.timing(cardOpacity, {
                 toValue: 1,
-                duration: 300,
+                duration: 1000,
                 useNativeDriver: true,
             }),
             Animated.spring(cardScale, {
@@ -72,9 +74,11 @@ export default function EvaluationScreen({
                     ]}
                 >
                     <SafeAreaView style={styles.resultContent}>
-                        <Text style={styles.resultText}>
-                            Ergebnis
-                        </Text>
+                        <Image
+                            source={currentLogo}
+                            style={styles.resultLogo}
+                            resizeMode="contain"
+                        />
                     </SafeAreaView>
                 </Animated.View>
             </View>
@@ -115,7 +119,7 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 350,
+        paddingTop: 225,
     },
 
     card: {
@@ -191,5 +195,9 @@ const styles = StyleSheet.create({
         bottom: 0,
 
         backgroundColor: '#ffffff',
+    },
+    resultLogo: {
+        width: 180,
+        height: 180,
     },
 });
