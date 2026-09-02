@@ -18,6 +18,9 @@ export default function EvaluationScreen({
     answerText,
     questionText,
     currentLogo,
+    primaryColor,
+    secondaryColor,
+    textColor,
 }) {
 
     const [showResult, setShowResult] = useState(false);
@@ -32,7 +35,7 @@ export default function EvaluationScreen({
         Animated.parallel([
             Animated.timing(cardOpacity, {
                 toValue: 1,
-                duration: 1000,
+                duration: 400,
                 useNativeDriver: true,
             }),
             Animated.spring(cardScale, {
@@ -63,7 +66,8 @@ export default function EvaluationScreen({
 
     if (showResult) {
         return (
-            <View style={styles.resultContainer}>
+            <View style={[
+                styles.resultContainer, {backgroundColor: primaryColor}]}>
                 <Animated.View
                     style={[
                         styles.resultScreen,
@@ -79,6 +83,8 @@ export default function EvaluationScreen({
                             style={styles.resultLogo}
                             resizeMode="contain"
                         />
+                        <View style={[styles.evaluationBox,{backgroundColor: secondaryColor}]}>
+                        </View>
                     </SafeAreaView>
                 </Animated.View>
             </View>
@@ -119,7 +125,7 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: 225,
+        paddingTop: 100,
     },
 
     card: {
@@ -153,6 +159,32 @@ const styles = StyleSheet.create({
         letterSpacing: 2,
     },
 
+    evaluationBox: {
+        width: '90%',
+        height: 500,
+
+        marginTop: 'auto',
+        marginBottom: 20,
+
+        backgroundColor: '#f2f2f7',
+
+        borderRadius: 30,
+
+        padding: 10,
+
+        justifyContent: 'center',
+        alignItems: 'center',
+
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+        elevation: 5,
+    },
+
     btn: {
         paddingVertical: 16,
         paddingHorizontal: 24,
@@ -180,24 +212,18 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-
         backgroundColor: '#ffffff',
+    },
 
-        justifyContent: 'center',
+    resultContent: {
+        flex: 1,
+        width: '100%',
         alignItems: 'center',
     },
 
-    resultScreen: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-
-        backgroundColor: '#ffffff',
-    },
     resultLogo: {
-        width: 180,
-        height: 180,
+        width: '90%',
+        height: 256,
+
     },
 });

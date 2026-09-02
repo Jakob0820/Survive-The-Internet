@@ -25,7 +25,7 @@ import EvaluationScreen from './src/screens/EvaluationScreen';
  
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
-  const [currentScreen, setCurrentScreen] = useState('main');
+  const [currentScreen, setCurrentScreen] = useState('evaluation');
   const [volume, setVolume] = useState(80);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [duration, setDuration] = useState(60);
@@ -53,6 +53,60 @@ export default function App() {
   const [shuffledAnswers, setShuffledAnswers] = useState([]);
 
   const currentLogo = currentRoundObj?.logo;
+
+
+  //Test Modus
+  const TEST_MODE = true;
+  const TEST_SCREEN = 'evaluation';
+
+  React.useEffect(() => {
+    if (!TEST_MODE) return;
+
+    const testPlayers = [
+        {
+            name: 'Spieler 1',
+            color: COLOR_OPTIONS[0],
+        },
+        {
+            name: 'Spieler 2',
+            color: COLOR_OPTIONS[1],
+        },
+        {
+            name: 'Spieler 3',
+            color: COLOR_OPTIONS[2],
+        },
+    ];
+
+    const testRound = ROUND_TYPE.EBAY;
+
+    setPlayers(testPlayers);
+    setPlayerCount(3);
+    setCurrentPlayerIndex(0);
+
+    setGameRounds([testRound]);
+    setCurrentRoundIndex(0);
+
+    setCurrentQuestions(
+        generateQuestions(testRound, 3)
+    );
+
+    setFirstAnswer([
+        'Das war eine richtig schlechte Bewertung.',
+        'Der Service war absolut katastrophal.',
+        'Ich würde hier nie wieder hingehen.'
+    ]);
+
+    setSecondAnswer([
+        'Interessant',
+        'Geht so',
+        'Ne man lass lieber'
+    ]);
+
+    setCurrentScreen(TEST_SCREEN);
+
+  }, []);
+
+  //Test Modus ende
   
   const player = useVideoPlayer(
     require('./assets/background2_fixed.mp4'),
@@ -249,6 +303,9 @@ export default function App() {
           answerText = {answerText}
           questionText = {shuffledAnswers}
           currentLogo={currentLogo}
+          primaryColor={currentRoundObj?.color[0]}
+          secondaryColor={currentRoundObj?.color[1]}
+          textColor={currentRoundObj?.color[2]}
         />
       )}
 

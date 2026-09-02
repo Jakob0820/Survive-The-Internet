@@ -40,8 +40,8 @@ export const QUESTIONS = [
         ],
         answer: ['wäre eine peinliche Rezension für diesen Standort:'],
         color: [
+            '#79acff',
             '#FFFFFF',
-            '#3771cf',
             '#000000',
         ],
         logo: googleMapsLogo,
@@ -67,7 +67,7 @@ export const QUESTIONS = [
         ],
         answer: ['wäre eine peinliche Antwort auf diesen Kommentar:'],
         color: [
-            '#FF4500',
+            '#ff9772',
             '#FFFFFF',
             '#000000',
         ],
@@ -92,7 +92,7 @@ export const QUESTIONS = [
         ],
         answer: ['wäre ein peinlicher Kommentar auf ein Video mit diesem Titel:'],
         color: [
-            '#f70000',
+            '#f74d4d',
             '#FFFFFF',
             '#000000',
         ],
@@ -143,9 +143,10 @@ export const QUESTIONS = [
         ],
         answer: ['wäre eine peinliche Empfehlung für diese Person:'],
         color: [
-            '#046fad',
+            '#8bd3ff',
+            //'#0d2d41',
             '#FFFFFF',
-            '#000000'
+            '#000000',
         ],
         logo: linkedinLogo,
     },
@@ -170,7 +171,7 @@ export const QUESTIONS = [
         ],
         answer: ['wäre ein schrecklicher Kommentar auf diese Schlagzeile:'],
         color: [
-            '#082f6e',
+            '#6ca2f8',
             '#FFFFFF',
             '#000000',
         ],
@@ -199,8 +200,8 @@ export const QUESTIONS = [
         ],
         answer: ['wäre eine peinliche Antwort auf diese Frage:'],
         color: [
+            '#6cceff',
             '#FFFFFF',
-            '#469bc6',
             '#000000',
         ],
         logo:gutefrageLogo,
@@ -248,8 +249,8 @@ export const QUESTIONS = [
         ],
         answer: ['wäre ein peinlicher Kommentar zu diesem Hashtag:'],
         color: [
+            '#056eaf',
             '#FFFFFF',
-            '#199def',
             '#000000',
         ],
         logo:twitterLogo,
@@ -277,8 +278,8 @@ export const QUESTIONS = [
         ],
         answer: ['wäre eine peinliche Rezension für dieses Produkt:'],
         color: [
+            '#c8f364',
             '#FFFFFF',
-            '#b0e13e',
             '#000000',
         ],
         logo:ebayLogo,
