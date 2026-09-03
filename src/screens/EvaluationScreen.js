@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import tinycolor from 'tinycolor2';
 import {
     StyleSheet,
     Text,
@@ -15,12 +16,13 @@ export default function EvaluationScreen({
     playerCount,
     currentPlayerIndex,
     onNext,
-    answerText,
-    questionText,
+    answers,
+    questions,
     currentLogo,
     primaryColor,
     secondaryColor,
     textColor,
+    gameMode,
 }) {
 
     const [showResult, setShowResult] = useState(false);
@@ -30,6 +32,9 @@ export default function EvaluationScreen({
 
     const resultOpacity = useRef(new Animated.Value(0)).current;
     const resultScale = useRef(new Animated.Value(1.05)).current;
+
+    const playerColor = players[currentPlayerIndex]?.color;
+    const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
     useEffect(() => {
         Animated.parallel([
@@ -63,6 +68,23 @@ export default function EvaluationScreen({
             }),
         ]).start();
     };
+    const getCurrentDateTime = () => {
+        const now = new Date();
+
+        const date = now.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+        });
+
+        const time = now.toLocaleTimeString('de-DE', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+
+        return `${date}, ${time} Uhr`;
+    };
+    
 
     if (showResult) {
         return (
@@ -84,6 +106,80 @@ export default function EvaluationScreen({
                             resizeMode="contain"
                         />
                         <View style={[styles.evaluationBox,{backgroundColor: secondaryColor}]}>
+
+                            {gameMode === 'Google Maps' && (
+                                <View style={styles.googleMapsInterface}>
+                                    
+                                    <View
+                                        style={[
+                                            styles.googleMapsBar,
+                                            { backgroundColor: lightPlayerColor }
+                                        ]}
+                                    />
+
+                                    <View style={styles.googleMapsContent}>
+                                        {/* Text oben */}
+                                        <Text style={styles.evaluatingText}>
+                                            {answers[currentPlayerIndex]}
+                                        </Text>
+
+                                        {/* Datum */}
+                                        <Text style={styles.googleMapsDate}>
+                                            {getCurrentDateTime()}
+                                        </Text>
+
+                                        {/* Eingecheckt bei */}
+                                        <Text style={styles.googleMapsLabel}>
+                                            Eingecheckt bei:
+                                        </Text>
+
+                                        {/* Ort */}
+                                        <Text style={styles.googleMapsLocation}>
+                                            📍{questions[currentPlayerIndex]}
+                                        </Text>
+                                    </View>
+                                </View>
+                            )}
+                            {gameMode === 'Reddit' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test2
+                                </Text>
+                            )}
+                            {gameMode === 'Youtube' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test3
+                                </Text>
+                            )}
+                            {gameMode === 'LinkedIN' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test4
+                                </Text>
+                            )}
+                            {gameMode === 'Tagesschau' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test5
+                                </Text>
+                            )}
+                            {gameMode === 'Gutefrage.net' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test6
+                                </Text>
+                            )}
+                            {gameMode === 'GoFundMe' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test7
+                                </Text>
+                            )}
+                            {gameMode === 'Twitter' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test8
+                                </Text>
+                            )}
+                            {gameMode === 'Ebay' && (
+                                <Text style={styles.evaluatingText}>
+                                    Test9
+                                </Text>
+                            )}
                         </View>
                     </SafeAreaView>
                 </Animated.View>
@@ -152,7 +248,7 @@ const styles = StyleSheet.create({
     },
 
     evaluatingText: {
-        fontSize: 26,
+        fontSize: 32,
         fontWeight: 'bold',
         color: '#1c1c1e',
         textAlign: 'center',
@@ -166,14 +262,16 @@ const styles = StyleSheet.create({
         marginTop: 'auto',
         marginBottom: 20,
 
-        backgroundColor: '#f2f2f7',
+        backgroundColor: '#FFFFFF',
 
         borderRadius: 30,
 
-        padding: 10,
+        padding: 0,
 
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: 'flex-start',
+        alignItems: 'stretch',
+
+        overflow: 'hidden',
 
         shadowColor: '#000',
         shadowOffset: {
@@ -225,5 +323,43 @@ const styles = StyleSheet.create({
         width: '90%',
         height: 256,
 
+    },
+
+    googleMapsInterface: {
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    googleMapsContent: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 30,
+    },
+
+    googleMapsDate: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#AAAAAA',
+        marginTop: 15,
+    },
+
+    googleMapsLabel: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#AAAAAA',
+        marginTop: 25,
+    },
+
+    googleMapsLocation: {
+        fontSize: 36,
+        fontWeight: '900',
+        color: '#000000',
+        marginTop: 5,
+    },
+        googleMapsBar: {
+        width: '100%',
+        height: 80,
     },
 });

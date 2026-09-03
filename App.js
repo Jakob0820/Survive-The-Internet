@@ -77,7 +77,7 @@ export default function App() {
         },
     ];
 
-    const testRound = ROUND_TYPE.EBAY;
+    const testRound = ROUND_TYPE.GOOGLE_MAPS;
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -267,6 +267,7 @@ export default function App() {
     if (currentPlayerIndex < playerCount - 1) {
       setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
+      
       setCurrentPlayerIndex(0);
       setCurrentScreen('evaluation');
     }
@@ -300,12 +301,13 @@ export default function App() {
           playerCount = {playerCount}
           currentPlayerIndex = {currentPlayerIndex}
           onNext = {nextEvaluation}
-          answerText = {answerText}
-          questionText = {shuffledAnswers}
+          answers = {firstAnswers}
+          questions = {secoundAnswers}
           currentLogo={currentLogo}
           primaryColor={currentRoundObj?.color[0]}
           secondaryColor={currentRoundObj?.color[1]}
           textColor={currentRoundObj?.color[2]}
+          gameMode={currentRoundObj?.categoryName}
         />
       )}
 
