@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
+import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
 import {
     StyleSheet,
     Text,
     View,
     TouchableOpacity,
     Animated,
-    SafeAreaView,
     Image,
+    SafeAreaView,
 } from 'react-native';
 
 export default function EvaluationScreen({ 
@@ -33,8 +34,13 @@ export default function EvaluationScreen({
     const resultOpacity = useRef(new Animated.Value(0)).current;
     const resultScale = useRef(new Animated.Value(1.05)).current;
 
-    const playerColor = players[currentPlayerIndex]?.color;
+    const currentPlayer = players[currentPlayerIndex];
+    const playerColor = currentPlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
+
+
+    console.log('AKTUELLER SPIELER:', currentPlayer);
+    console.log('BILD:', currentPlayer?.image);
 
     useEffect(() => {
         Animated.parallel([
@@ -115,13 +121,24 @@ export default function EvaluationScreen({
                                             styles.googleMapsBar,
                                             { backgroundColor: lightPlayerColor }
                                         ]}
-                                    />
+                                    >
+                                        <View style={styles.titleRow}>
+                                            <Image
+                                                source={currentPlayer?.image}
+                                                style={styles.playerImage}
+                                                resizeMode="contain"
+                                            />
+                                            <Text style={[styles.playerName, {color: playerColor}]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+                                        </View>
+                                    </View>
 
                                     <View style={styles.googleMapsContent}>
                                         {/* Text oben */}
-                                        <Text style={styles.evaluatingText}>
-                                            {answers[currentPlayerIndex]}
-                                        </Text>
+                                            <Text style={styles.evaluatingText}>
+                                                {answers[currentPlayerIndex]}
+                                            </Text>
 
                                         {/* Datum */}
                                         <Text style={styles.googleMapsDate}>
@@ -349,17 +366,38 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: '700',
         color: '#AAAAAA',
-        marginTop: 25,
+        marginTop: 10,
     },
 
     googleMapsLocation: {
         fontSize: 36,
         fontWeight: '900',
         color: '#000000',
-        marginTop: 5,
+        marginTop: 20,
     },
         googleMapsBar: {
         width: '100%',
         height: 80,
     },
+
+    titleRow: {
+        width: '100%',
+        flexDirection: 'row',
+        height: 80,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingHorizontal: 10,
+    },
+
+        playerImage: {
+        width: 70,
+        height: 70,
+        marginRight: 10,
+    },
+
+    playerName: {
+        fontSize: 38,
+        fontWeight: 'bold',
+    },
+
 });

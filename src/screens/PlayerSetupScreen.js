@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
-import { COLOR_OPTIONS } from '../constants/colors';
+import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
 
 export default function PlayerSetupScreen({
   currentPlayerIndex,
@@ -39,7 +39,7 @@ export default function PlayerSetupScreen({
             <View style={{ gap: 12, marginVertical: 10 }}>
                 {/* Zeile 1: Erste 4 Farben */}
                 <View style={styles.colorRow}>
-                {COLOR_OPTIONS.slice(0, 4).map((color) => {
+                {COLOR_OPTIONS.slice(0, 4).map((color, index) => {
                     const isTaken = players.slice(0, currentPlayerIndex).some((p) => p.color === color);
                         
                     return(
@@ -48,7 +48,7 @@ export default function PlayerSetupScreen({
                     disabled={isTaken}
                     style={[
                         styles.colorCircle,
-                        { backgroundColor: color },
+                        { backgroundColor: color,},
                         selectedColor === color && styles.colorCircleSelected,
                         isTaken && styles.colorCircleDisabled,
                     ]}
@@ -62,8 +62,8 @@ export default function PlayerSetupScreen({
         
                 {/* Zeile 2: Nächste 4 Farben */}
                 <View style={styles.colorRow}>
-                {COLOR_OPTIONS.slice(4, 8).map((color) => {
-                const isTaken = players.slice(0, currentPlayerIndex).some((p) => p.color === color);
+                {COLOR_OPTIONS.slice(4, 8).map((color, index) => {
+                  const isTaken = players.slice(0, currentPlayerIndex).some((p) => p.color === color);
                         
                 return (
                     <TouchableOpacity

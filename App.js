@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
  
-import { COLOR_OPTIONS } from './src/constants/colors';
+import { COLOR_OPTIONS, COLOR_IMAGES } from './src/constants/colors';
 import MainScreen from './src/screens/MainScreen';
 import OptionsScreen from './src/screens/OptionsScreen';
 import GameSettingsScreen from './src/screens/GameSettingsScreen';
@@ -53,6 +53,7 @@ export default function App() {
   const [shuffledAnswers, setShuffledAnswers] = useState([]);
 
   const currentLogo = currentRoundObj?.logo;
+  const colorIndex = COLOR_OPTIONS.indexOf(selectedColor);
 
 
   //Test Modus
@@ -66,14 +67,17 @@ export default function App() {
         {
             name: 'Spieler 1',
             color: COLOR_OPTIONS[0],
+            image: COLOR_IMAGES[0],
         },
         {
             name: 'Spieler 2',
             color: COLOR_OPTIONS[1],
+            image: COLOR_IMAGES[1],
         },
         {
             name: 'Spieler 3',
             color: COLOR_OPTIONS[2],
+            image: COLOR_IMAGES[2],
         },
     ];
 
@@ -91,13 +95,13 @@ export default function App() {
     );
 
     setFirstAnswer([
-        'Das war eine richtig schlechte Bewertung.',
+        'Voll langweilig, bin fast eingeschlafen',
         'Der Service war absolut katastrophal.',
         'Ich würde hier nie wieder hingehen.'
     ]);
 
     setSecondAnswer([
-        'Interessant',
+        'Pik Dame',
         'Geht so',
         'Ne man lass lieber'
     ]);
@@ -137,6 +141,7 @@ export default function App() {
       ...updatedPlayers[currentPlayerIndex],
       name: playerName.trim() || `Spieler ${currentPlayerIndex + 1}`,
       color: selectedColor,
+      image: COLOR_IMAGES[colorIndex],
     };
     setPlayers(updatedPlayers);
  
