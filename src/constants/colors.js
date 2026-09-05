@@ -6,6 +6,7 @@ import lightbluePlayer from '../../assets/lightbluePlayer.png';
 import bluePlayer from '../../assets/bluePlayer.png';
 import purplePlayer from '../../assets/purplePlayer.png';
 import pinkPlayer from '../../assets/pinkPlayer.png';
+import greyPlayer from '../../assets/greyPlayer.png';
 
 export const COLOR_OPTIONS = [
     '#d40e0e',
@@ -27,4 +28,5 @@ export const COLOR_IMAGES = [
     bluePlayer,
     purplePlayer,
     pinkPlayer,
+    greyPlayer
 ];

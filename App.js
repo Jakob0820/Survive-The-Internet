@@ -101,7 +101,7 @@ export default function App() {
     ]);
 
     setSecondAnswer([
-        'Pik Dame',
+        'Pik Dame ist nicht so mein Ding, also wirklich garnicht',
         'Geht so',
         'Ne man lass lieber'
     ]);

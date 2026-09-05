@@ -162,14 +162,14 @@ export default function EvaluationScreen({
 
                                         <View style={styles.redditHeader}>
                                             <Image
-                                                source={currentPlayer?.image}
+                                                source={COLOR_IMAGES[8]}
                                                 style={styles.redditAvatar}
                                                 resizeMode="contain"
                                             />
 
                                             <View style={styles.redditHeaderText}>
                                                 <Text style={styles.redditUsername}>
-                                                    {currentPlayer?.name}
+                                                    ████
                                                 </Text>
 
                                                 <Text
@@ -200,21 +200,26 @@ export default function EvaluationScreen({
                                     {/* Kommentar */}
                                     <View style={styles.redditComment}>
 
-                                        <View style={styles.redditHeader}>
+                                        <View style={styles.redditSecondaryHeader}>
                                             <Image
                                                 source={currentPlayer?.image}
-                                                style={styles.redditAvatar}
+                                                style={styles.redditSecondaryAvatar}
                                                 resizeMode="contain"
                                             />
+                                            <View style={styles.redditCommentInfo}>
+                                                <Text style={styles.redditSecondaryUsername}>
+                                                    {currentPlayer?.name}
+                                                </Text>
 
-                                            <Text style={styles.redditUsername}>
-                                                {currentPlayer?.name}
-                                            </Text>
+                                                <Text
+                                                    style={styles.redditCommentText}
+                                                    adjustsFontSizeToFit
+                                                    numberOfLines={3}
+                                                >
+                                                    {questions[currentPlayerIndex]}
+                                                </Text>
+                                            </View>
                                         </View>
-
-                                        <Text style={styles.redditCommentText}>
-                                            {questions[currentPlayerIndex]}
-                                        </Text>
 
                                     </View>
                                     </View>
@@ -484,9 +489,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
+    redditSecondaryHeader: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    },
+
     redditAvatar: {
         width: 90,
         height: 90,
+        marginRight: 15,
+    },
+
+    redditSecondaryAvatar: {
+        width: 70,
+        height: 70,
         marginRight: 15,
     },
 
@@ -498,6 +514,12 @@ const styles = StyleSheet.create({
 
     redditUsername: {
         fontSize: 32,
+        fontWeight: '900',
+        color: '#555555',
+    },
+
+    redditSecondaryUsername: {
+        fontSize: 28,
         fontWeight: '900',
         color: '#555555',
     },
@@ -544,16 +566,18 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
 
         paddingHorizontal: 20,
-        paddingTop: 20,
-        paddingBottom: 23,
+        paddingTop: 15,
+    },
+
+    redditCommentInfo: {
+        flex: 1,
+        marginLeft: 5,
     },
 
     redditCommentText: {
-        fontSize: 36,
+        fontSize: 42,
         fontWeight: '900',
         color: '#000000',
-        marginTop: 15,
-        lineHeight: 42,
     },
 
 });
