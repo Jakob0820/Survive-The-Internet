@@ -81,7 +81,7 @@ export default function App() {
         },
     ];
 
-    const testRound = ROUND_TYPE.GOOGLE_MAPS;
+    const testRound = ROUND_TYPE.REDDIT;
 
     setPlayers(testPlayers);
     setPlayerCount(3);

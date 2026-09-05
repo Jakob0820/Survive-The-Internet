@@ -38,10 +38,6 @@ export default function EvaluationScreen({
     const playerColor = currentPlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
-
-    console.log('AKTUELLER SPIELER:', currentPlayer);
-    console.log('BILD:', currentPlayer?.image);
-
     useEffect(() => {
         Animated.parallel([
             Animated.timing(cardOpacity, {
@@ -118,7 +114,7 @@ export default function EvaluationScreen({
                                     
                                     <View
                                         style={[
-                                            styles.googleMapsBar,
+                                            styles.topBar,
                                             { backgroundColor: lightPlayerColor }
                                         ]}
                                     >
@@ -141,7 +137,7 @@ export default function EvaluationScreen({
                                             </Text>
 
                                         {/* Datum */}
-                                        <Text style={styles.googleMapsDate}>
+                                        <Text style={styles.date}>
                                             {getCurrentDateTime()}
                                         </Text>
 
@@ -158,9 +154,72 @@ export default function EvaluationScreen({
                                 </View>
                             )}
                             {gameMode === 'Reddit' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test2
-                                </Text>
+                                <View style={styles.redditInterface}>
+                                    <View style={styles.redditInner}>
+
+                                    {/* Reddit Post */}
+                                    <View style={styles.redditPost}>
+
+                                        <View style={styles.redditHeader}>
+                                            <Image
+                                                source={currentPlayer?.image}
+                                                style={styles.redditAvatar}
+                                                resizeMode="contain"
+                                            />
+
+                                            <View style={styles.redditHeaderText}>
+                                                <Text style={styles.redditUsername}>
+                                                    {currentPlayer?.name}
+                                                </Text>
+
+                                                <Text
+                                                    style={styles.redditDate}
+                                                    numberOfLines={1}
+                                                    adjustsFontSizeToFit={true}
+                                                    minimumFontScale={0.6}
+                                                >
+                                                    {getCurrentDateTime()}
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        <Text style={styles.redditPostTitle}>
+                                            {answers[currentPlayerIndex]}
+                                        </Text>
+
+                                        <View style={styles.redditActions}>
+                                            <Text style={styles.redditAction}>👍 Like</Text>
+                                            <Text style={styles.redditAction}>💬 Kommentar</Text>
+                                            <Text style={styles.redditAction}>↗ Teilen</Text>
+                                        </View>
+
+                                    </View>
+
+                                    <View style={styles.redditDivider} />
+
+                                    {/* Kommentar */}
+                                    <View style={styles.redditComment}>
+
+                                        <View style={styles.redditHeader}>
+                                            <Image
+                                                source={currentPlayer?.image}
+                                                style={styles.redditAvatar}
+                                                resizeMode="contain"
+                                            />
+
+                                            <Text style={styles.redditUsername}>
+                                                {currentPlayer?.name}
+                                            </Text>
+                                        </View>
+
+                                        <Text style={styles.redditCommentText}>
+                                            {questions[currentPlayerIndex]}
+                                        </Text>
+
+                                    </View>
+                                    </View>
+
+                                </View>
                             )}
                             {gameMode === 'Youtube' && (
                                 <Text style={styles.evaluatingText}>
@@ -355,7 +414,7 @@ const styles = StyleSheet.create({
         paddingBottom: 30,
     },
 
-    googleMapsDate: {
+    date: {
         fontSize: 20,
         fontWeight: '700',
         color: '#AAAAAA',
@@ -375,7 +434,7 @@ const styles = StyleSheet.create({
         color: '#000000',
         marginTop: 20,
     },
-        googleMapsBar: {
+    topBar: {
         width: '100%',
         height: 80,
     },
@@ -389,7 +448,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
 
-        playerImage: {
+    playerImage: {
         width: 70,
         height: 70,
         marginRight: 10,
@@ -398,6 +457,103 @@ const styles = StyleSheet.create({
     playerName: {
         fontSize: 38,
         fontWeight: 'bold',
+    },
+
+    redditInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#E5E5E5',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    redditInner: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        overflow: 'hidden',
+    },
+
+    redditPost: {
+        padding: 20,
+    },
+
+    redditHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    redditAvatar: {
+        width: 90,
+        height: 90,
+        marginRight: 15,
+    },
+
+    redditHeaderText: {
+        flex: 1,
+        justifyContent: 'center',
+        minWidth: 0,
+    },
+
+    redditUsername: {
+        fontSize: 32,
+        fontWeight: '900',
+        color: '#555555',
+    },
+
+    redditDate: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#AAAAAA',
+        marginTop: 4,
+        flexShrink: 1,
+        lineHeight: 24,
+    },
+
+    redditPostTitle: {
+        fontSize: 36,
+        fontWeight: '900',
+        color: '#000000',
+        marginTop: 25,
+        lineHeight: 42,
+    },
+
+    redditActions: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 25,
+    },
+
+    redditAction: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#AAAAAA',
+    },
+
+    redditDivider: {
+        width: '100%',
+        height: 10,
+        backgroundColor: '#E5E5E5',
+    },
+
+    redditComment: {
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 23,
+    },
+
+    redditCommentText: {
+        fontSize: 36,
+        fontWeight: '900',
+        color: '#000000',
+        marginTop: 15,
+        lineHeight: 42,
     },
 
 });
