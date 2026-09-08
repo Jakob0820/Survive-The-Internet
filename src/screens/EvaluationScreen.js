@@ -211,13 +211,16 @@ export default function EvaluationScreen({
                                                     {currentPlayer?.name}
                                                 </Text>
 
-                                                <Text
-                                                    style={styles.redditCommentText}
-                                                    adjustsFontSizeToFit
-                                                    numberOfLines={3}
-                                                >
-                                                    {questions[currentPlayerIndex]}
-                                                </Text>
+                                                <View style={styles.redditCommentBox}>
+                                                    <Text
+                                                        style={styles.redditCommentText}
+                                                        adjustsFontSizeToFit={true}
+                                                        numberOfLines={4}
+                                                        minimumFontScale={0.3}
+                                                    >
+                                                        {questions[currentPlayerIndex]}
+                                                    </Text>
+                                                </View>
                                             </View>
                                         </View>
 
@@ -492,6 +495,7 @@ const styles = StyleSheet.create({
     redditSecondaryHeader: {
         flexDirection: 'row',
         alignItems: 'flex-start',
+        flex: 1,
     },
 
     redditAvatar: {
@@ -537,7 +541,7 @@ const styles = StyleSheet.create({
         fontSize: 36,
         fontWeight: '900',
         color: '#000000',
-        marginTop: 25,
+        marginTop: 10,
         lineHeight: 42,
     },
 
@@ -564,9 +568,15 @@ const styles = StyleSheet.create({
     redditComment: {
         width: '100%',
         backgroundColor: '#FFFFFF',
-
         paddingHorizontal: 20,
-        paddingTop: 15,
+        paddingTop: 5,
+        flex: 1,
+    },
+
+    redditCommentBox: {
+        width: '100%',
+        flex: 1,
+        overflow: 'hidden',
     },
 
     redditCommentInfo: {
@@ -575,9 +585,12 @@ const styles = StyleSheet.create({
     },
 
     redditCommentText: {
-        fontSize: 42,
+        width: '100%',
+        height: '100%',
+        fontSize: 100,
         fontWeight: '900',
         color: '#000000',
+        textAlign: 'left',
     },
 
 });
