@@ -92,7 +92,7 @@ export const QUESTIONS = [
         ],
         answer: ['wäre ein peinlicher Kommentar auf ein Video mit diesem Titel:'],
         color: [
-            '#f74d4d',
+            '#ffb8b8',
             '#FFFFFF',
             '#000000',
         ],

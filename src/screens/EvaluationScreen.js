@@ -11,6 +11,38 @@ import {
     SafeAreaView,
 } from 'react-native';
 
+function AutoSizeText({ text, style, minFontSize = 16, maxFontSize = 100 }) {
+    const [containerSize, setContainerSize] = useState(null);
+
+    const onLayout = (e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setContainerSize({ width, height });
+    };
+
+    const fontSize = containerSize
+        ? Math.min(
+              maxFontSize,
+              Math.max(
+                  minFontSize,
+                  Math.sqrt((containerSize.width * containerSize.height * 1.3) / Math.max(text.length, 1))
+              )
+          )
+        : minFontSize;
+
+    return (
+        <View style={{ flex: 1, width: '100%' }} onLayout={onLayout}>
+            <Text
+                style={[style, { fontSize }]}
+                adjustsFontSizeToFit
+                numberOfLines={6}
+                minimumFontScale={0.3}
+            >
+                {text}
+            </Text>
+        </View>
+    );
+}
+
 export default function EvaluationScreen({ 
     onShowResult,
     players, 
@@ -132,9 +164,14 @@ export default function EvaluationScreen({
 
                                     <View style={styles.googleMapsContent}>
                                         {/* Text oben */}
-                                            <Text style={styles.evaluatingText}>
-                                                {answers[currentPlayerIndex]}
-                                            </Text>
+                                        <View style={styles.googleMapsQuestionBox}>
+                                            <AutoSizeText
+                                                text={answers[currentPlayerIndex]}
+                                                style={styles.googleMapsEvaluationText}
+                                                minFontSize={38}
+                                                maxFontSize={52}
+                                            />
+                                        </View>
 
                                         {/* Datum */}
                                         <Text style={styles.date}>
@@ -147,9 +184,19 @@ export default function EvaluationScreen({
                                         </Text>
 
                                         {/* Ort */}
-                                        <Text style={styles.googleMapsLocation}>
-                                            📍{questions[currentPlayerIndex]}
-                                        </Text>
+                                        <View style={styles.googleMapsAnswerBox}>
+                                            <View style={styles.googleMapsLocationRow}>
+                                                <Text style={styles.googleMapsPin}>📍</Text>
+                                                <View style={styles.redditCommentBox}>
+                                                    <AutoSizeText
+                                                        text = {questions[currentPlayerIndex]}
+                                                        style={styles.googleMapsLocation}
+                                                        minFontSize={32}
+                                                        maxFontSize={42}
+                                                    />
+                                                </View>
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
                             )}
@@ -183,9 +230,14 @@ export default function EvaluationScreen({
                                             </View>
                                         </View>
 
-                                        <Text style={styles.redditPostTitle}>
-                                            {answers[currentPlayerIndex]}
-                                        </Text>
+                                        <View style={styles.redditPostTitleBox}>
+                                            <AutoSizeText
+                                                text={questions[currentPlayerIndex]}
+                                                style={styles.redditPostTitle}
+                                                minFontSize={36}
+                                                maxFontSize={42}
+                                            />
+                                        </View>
 
                                         <View style={styles.redditActions}>
                                             <Text style={styles.redditAction}>👍 Like</Text>
@@ -200,7 +252,7 @@ export default function EvaluationScreen({
                                     {/* Kommentar */}
                                     <View style={styles.redditComment}>
 
-                                        <View style={styles.redditSecondaryHeader}>
+                                        <View style={styles.secondaryHeader}>
                                             <Image
                                                 source={currentPlayer?.image}
                                                 style={styles.redditSecondaryAvatar}
@@ -212,14 +264,12 @@ export default function EvaluationScreen({
                                                 </Text>
 
                                                 <View style={styles.redditCommentBox}>
-                                                    <Text
+                                                    <AutoSizeText
+                                                        text = {answers[currentPlayerIndex]}
                                                         style={styles.redditCommentText}
-                                                        adjustsFontSizeToFit={true}
-                                                        numberOfLines={4}
-                                                        minimumFontScale={0.3}
-                                                    >
-                                                        {questions[currentPlayerIndex]}
-                                                    </Text>
+                                                        minFontSize={20}
+                                                        maxFontSize={32}
+                                                    />
                                                 </View>
                                             </View>
                                         </View>
@@ -230,9 +280,65 @@ export default function EvaluationScreen({
                                 </View>
                             )}
                             {gameMode === 'Youtube' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test3
-                                </Text>
+                                <View style={styles.youtubeInterface}>
+
+                                    {/* Video-Leiste mit Fortschrittsbalken */}
+                                    <View style={[styles.youtubeVideoBar, { backgroundColor: lightPlayerColor }]}>
+                                        <Text style={styles.youtubeControlIcon}>⏸</Text>
+                                        <Text style={styles.youtubeControlIcon}>🔊</Text>
+                                        <View style={styles.youtubeProgressTrack}>
+                                            <View style={[styles.youtubeProgressFill, {backgroundColor: playerColor}]} />
+                                            <View style={[styles.youtubeProgressThumb, {backgroundColor: playerColor}]} />
+                                        </View>
+                                    </View>
+
+                                    {/* Titel + Stats */}
+                                    <View style={styles.youtubeTitleSection}>
+                                        <View style={styles.youtubeTitleBox}>
+                                            <AutoSizeText
+                                                text={questions[currentPlayerIndex]}
+                                                style={styles.youtubeTitle}
+                                                minFontSize={42}
+                                                maxFontSize={52}
+                                            />
+                                        </View>
+
+                                        <View style={styles.youtubeStatsRow}>
+                                            <Text style={styles.youtubeStatIcon}>👍</Text>
+                                            <Text style={styles.youtubeStatText}>1658</Text>
+
+                                            <Text style={styles.youtubeStatIcon}>👎</Text>
+                                            <Text style={styles.youtubeStatText}>3623</Text>
+
+                                            <Text style={styles.youtubeViewsText}>95.807 Aufrufe</Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Kanal + Kommentar */}
+                                    <View style={styles.youtubeChannelSection}>
+                                        <Image
+                                            source={currentPlayer?.image}
+                                            style={styles.youtubeChannelAvatar}
+                                            resizeMode="contain"
+                                        />
+
+                                        <View style={styles.youtubeChannelInfo}>
+                                            <Text style={[styles.youtubeChannelName, { color: playerColor }]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+
+                                            <View style={styles.youtubeDescriptionBox}>
+                                                <AutoSizeText
+                                                    text={answers[currentPlayerIndex]}
+                                                    style={styles.youtubeDescription}
+                                                    minFontSize={32}
+                                                    maxFontSize={42}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                </View>
                             )}
                             {gameMode === 'LinkedIN' && (
                                 <Text style={styles.evaluatingText}>
@@ -332,11 +438,10 @@ const styles = StyleSheet.create({
     },
 
     evaluatingText: {
-        fontSize: 32,
-        fontWeight: 'bold',
+        fontSize: 36,
+        fontWeight: '900',
         color: '#1c1c1e',
         textAlign: 'center',
-        letterSpacing: 2,
     },
 
     evaluationBox: {
@@ -419,7 +524,7 @@ const styles = StyleSheet.create({
     googleMapsContent: {
         paddingHorizontal: 20,
         paddingTop: 20,
-        paddingBottom: 30,
+        paddingBottom: 20,
     },
 
     date: {
@@ -437,11 +542,42 @@ const styles = StyleSheet.create({
     },
 
     googleMapsLocation: {
-        fontSize: 36,
         fontWeight: '900',
         color: '#000000',
-        marginTop: 20,
     },
+
+    googleMapsQuestionBox: {
+        width: '100%',
+        height: 160,
+        overflow: 'hidden',
+    },
+
+    googleMapsAnswerBox: {
+        width: '100%',
+        height: 150,
+        overflow: 'hidden',
+    },
+
+    googleMapsLocationRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        height: '100%',
+        marginTop: 10,
+        marginBottom: 10,
+    },
+
+    googleMapsEvaluationText: {
+        fontSize: 42,
+        fontWeight: '900',
+        color: '#1c1c1e',
+        textAlign: 'left',
+    },
+
+    googleMapsPin: {
+        fontSize: 36,
+        marginRight: 10,
+    },
+
     topBar: {
         width: '100%',
         height: 80,
@@ -492,7 +628,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    redditSecondaryHeader: {
+    secondaryHeader: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         flex: 1,
@@ -505,9 +641,10 @@ const styles = StyleSheet.create({
     },
 
     redditSecondaryAvatar: {
-        width: 70,
-        height: 70,
-        marginRight: 15,
+        paddingTop: 5,
+        width: 65,
+        height: 65,
+        marginRight: 10,
     },
 
     redditHeaderText: {
@@ -523,7 +660,7 @@ const styles = StyleSheet.create({
     },
 
     redditSecondaryUsername: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: '900',
         color: '#555555',
     },
@@ -538,11 +675,16 @@ const styles = StyleSheet.create({
     },
 
     redditPostTitle: {
-        fontSize: 36,
+        fontSize: '42',
         fontWeight: '900',
         color: '#000000',
         marginTop: 10,
-        lineHeight: 42,
+    },
+
+    redditPostTitleBox: {
+        width: '100%',
+        height: 120,
+        overflow: 'hidden',
     },
 
     redditActions: {
@@ -570,6 +712,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         paddingHorizontal: 20,
         paddingTop: 5,
+        paddingBottom: 10,
         flex: 1,
     },
 
@@ -587,10 +730,143 @@ const styles = StyleSheet.create({
     redditCommentText: {
         width: '100%',
         height: '100%',
-        fontSize: 100,
+        fontSize: 32,
         fontWeight: '900',
         color: '#000000',
         textAlign: 'left',
+    },
+
+    youtubeInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    youtubeVideoBar: {
+        width: '100%',
+        height: 80,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+    },
+
+    youtubeControlIcon: {
+        fontSize: 28,
+        color: '#FFFFFF',
+        marginRight: 15,
+    },
+
+    youtubeProgressTrack: {
+        flex: 1,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: 'rgba(0,0,0,0.25)',
+        marginLeft: 10,
+        justifyContent: 'center',
+    },
+
+    youtubeProgressFill: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: '75%',
+        borderRadius: 3,
+    },
+
+    youtubeProgressThumb: {
+        position: 'absolute',
+        left: '75%',
+        marginLeft: -10,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+    },
+
+    youtubeTitleSection: {
+        width: '100%',
+        paddingHorizontal: 15,
+        paddingTop: 15,
+        paddingBottom: 15,
+        borderBottomWidth: 8,
+        borderBottomColor: '#E5E5E5',
+    },
+
+    youtubeTitleBox: {
+        width: '100%',
+        height: 160,
+        overflow: 'hidden',
+    },
+
+    youtubeTitle: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    youtubeStatsRow: {
+        width: '100%',
+        height: 40,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    youtubeStatIcon: {
+        fontSize: 22,
+        marginRight: 4,
+    },
+
+    youtubeStatText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#555555',
+        marginRight: 15,
+    },
+
+    youtubeViewsText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#AAAAAA',
+        marginLeft: 'auto',
+    },
+
+    youtubeChannelSection: {
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingHorizontal: 15,
+        paddingTop: 15,
+    },
+
+    youtubeChannelAvatar: {
+        width: 60,
+        height: 60,
+        marginRight: 15,
+        borderRadius: 8,
+    },
+
+    youtubeChannelInfo: {
+        height: '100%',
+        flex: 1,
+        minWidth: 0,
+    },
+
+    youtubeChannelName: {
+        fontSize: 26,
+        fontWeight: '900',
+    },
+
+    youtubeDescriptionBox: {
+        width: '100%',
+        height: 120,
+        marginTop: 5,
+        overflow: 'hidden',
+    },
+
+    youtubeDescription: {
+        fontWeight: '900',
+        color: '#000000',
     },
 
 });

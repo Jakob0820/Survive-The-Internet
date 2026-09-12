@@ -81,7 +81,7 @@ export default function App() {
         },
     ];
 
-    const testRound = ROUND_TYPE.REDDIT;
+    const testRound = ROUND_TYPE.YOUTUBE;
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -95,13 +95,13 @@ export default function App() {
     );
 
     setFirstAnswer([
-        'Voll langweilig, bin fast eingeschlafen',
+        'Voll langweilig, ich bin fast eingeschlafen',
         'Der Service war absolut katastrophal.',
         'Ich würde hier nie wieder hingehen.'
     ]);
 
     setSecondAnswer([
-        'Pik Dame ist dumm und du auch du Dummkopf und du stinkst',
+        'Pik Dame ist dumm und du auch',
         'Geht so',
         'Ne man lass lieber'
     ]);
