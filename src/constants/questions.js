@@ -171,7 +171,7 @@ export const QUESTIONS = [
         ],
         answer: ['wäre ein schrecklicher Kommentar auf diese Schlagzeile:'],
         color: [
-            '#6ca2f8',
+            '#adccff',
             '#FFFFFF',
             '#000000',
         ],

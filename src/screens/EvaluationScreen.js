@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import tinycolor from 'tinycolor2';
 import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
+import { Ionicons } from '@expo/vector-icons';
 import {
     StyleSheet,
     Text,
@@ -118,6 +119,13 @@ export default function EvaluationScreen({
 
         return `${date}, ${time} Uhr`;
     };
+
+    function generateRandomNumber(clicks) {
+        if (clicks){
+            return Math.floor(Math.random() * (99999 - 20000 + 1)) + 20000;
+        }
+        return Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
+    }
     
 
     if (showResult) {
@@ -283,12 +291,12 @@ export default function EvaluationScreen({
                                 <View style={styles.youtubeInterface}>
 
                                     {/* Video-Leiste mit Fortschrittsbalken */}
-                                    <View style={[styles.youtubeVideoBar, { backgroundColor: lightPlayerColor }]}>
-                                        <Text style={styles.youtubeControlIcon}>⏸</Text>
-                                        <Text style={styles.youtubeControlIcon}>🔊</Text>
+                                    <View style={[styles.youtubeVideoBar, { backgroundColor: playerColor }]}>
+                                        <Ionicons name="pause" size={28} color="#FFFFFF" paddingHorizontal='5' />
+                                        <Ionicons name="volume-high" size={28} color="#FFFFFF" paddingHorizontal='5' />
                                         <View style={styles.youtubeProgressTrack}>
-                                            <View style={[styles.youtubeProgressFill, {backgroundColor: playerColor}]} />
-                                            <View style={[styles.youtubeProgressThumb, {backgroundColor: playerColor}]} />
+                                            <View style={[styles.youtubeProgressFill, {backgroundColor: lightPlayerColor}]} />
+                                            <View style={[styles.youtubeProgressThumb, {backgroundColor: lightPlayerColor}]} />
                                         </View>
                                     </View>
 
@@ -305,12 +313,12 @@ export default function EvaluationScreen({
 
                                         <View style={styles.youtubeStatsRow}>
                                             <Text style={styles.youtubeStatIcon}>👍</Text>
-                                            <Text style={styles.youtubeStatText}>1658</Text>
+                                            <Text style={styles.youtubeStatText}>{generateRandomNumber(false)}</Text>
 
                                             <Text style={styles.youtubeStatIcon}>👎</Text>
-                                            <Text style={styles.youtubeStatText}>3623</Text>
+                                            <Text style={styles.youtubeStatText}>{generateRandomNumber(false)}</Text>
 
-                                            <Text style={styles.youtubeViewsText}>95.807 Aufrufe</Text>
+                                            <Text style={styles.youtubeViewsText}>{generateRandomNumber(true)} Aufrufe</Text>
                                         </View>
                                     </View>
 
@@ -341,14 +349,115 @@ export default function EvaluationScreen({
                                 </View>
                             )}
                             {gameMode === 'LinkedIN' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test4
-                                </Text>
+                                <View style={styles.linkedinInterface}>
+
+                                    {/* Header: Avatar + Name + "empfiehlt" + empfohlene Person/Sache */}
+                                    <View style={styles.linkedinHeader}>
+                                        <Image
+                                            source={currentPlayer?.image}
+                                            style={styles.linkedinAvatar}
+                                            resizeMode="contain"
+                                        />
+
+                                        <View style={styles.linkedinHeaderText}>
+                                            <Text style={[styles.linkedinName, { color: playerColor }]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+                                            <Text style={styles.linkedinRecommends}>
+                                                empfiehlt
+                                            </Text>
+
+                                            <View style={styles.linkedinSubjectBox}>
+                                                <AutoSizeText
+                                                    text={questions[currentPlayerIndex]}
+                                                    style={styles.linkedinSubject}
+                                                    minFontSize={32}
+                                                    maxFontSize={64}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    {/* Zitat-Box */}
+                                    <View style={[styles.linkedinQuoteBox, { backgroundColor: playerColor }]}>
+                                        <Text style={styles.linkedinQuoteMark}>❝</Text>
+
+                                        <View style={styles.linkedinQuoteTextBox}>
+                                            <AutoSizeText
+                                                text={answers[currentPlayerIndex]}
+                                                style={styles.linkedinQuoteText}
+                                                minFontSize={26}
+                                                maxFontSize={40}
+                                            />
+                                        </View>
+
+                                        <Text style={[styles.linkedinQuoteMark, styles.linkedinQuoteMarkEnd]}>❞</Text>
+                                    </View>
+
+                                </View>
                             )}
                             {gameMode === 'Tagesschau' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test5
-                                </Text>
+                                <View style={styles.tagesschauInterface}>
+
+                                    {/* Navigationsleiste */}
+                                    <View style={styles.tagesschauNavBar}>
+                                        <View style={[styles.tagesschauLogoBox, { backgroundColor: lightPlayerColor }]}>
+                                            <Text style={[styles.tagesschauLogoNews, { color: playerColor }]}>
+                                                NEWS
+                                            </Text>
+                                            <Text style={styles.tagesschauLogoToday}>
+                                                Today
+                                            </Text>
+                                        </View>
+
+                                        <View style={[styles.tagesschauNavItems, { backgroundColor: playerColor }]}>
+                                            <Text style={styles.tagesschauNavItem}>Welt</Text>
+                                            <Text style={styles.tagesschauNavItem}>Geld</Text>
+                                            <Text style={styles.tagesschauNavItem}>Essen</Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Schlagzeile + Datum */}
+                                    <View style={styles.tagesschauHeadlineSection}>
+                                        <View style={styles.tagesschauHeadlineBox}>
+                                            <AutoSizeText
+                                                text={questions[currentPlayerIndex]}
+                                                style={styles.tagesschauHeadline}
+                                                minFontSize={54}
+                                                maxFontSize={72}
+                                            />
+                                        </View>
+
+                                        <Text style={styles.tagesschauDate}>
+                                            {getCurrentDateTime()}
+                                        </Text>
+                                    </View>
+
+                                    {/* Kommentar */}
+                                    <View style={styles.tagesschauCommentSection}>
+                                        <Image
+                                            source={currentPlayer?.image}
+                                            style={styles.tagesschauAvatar}
+                                            resizeMode="contain"
+                                        />
+
+                                        <View style={styles.tagesschauCommentInfo}>
+                                            <Text style={[styles.tagesschauUsername, { color: playerColor }]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+
+                                            <View style={styles.tagesschauCommentBox}>
+                                                <AutoSizeText
+                                                    text={answers[currentPlayerIndex]}
+                                                    style={styles.tagesschauCommentText}
+                                                    minFontSize={26}
+                                                    maxFontSize={36}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                </View>
                             )}
                             {gameMode === 'Gutefrage.net' && (
                                 <Text style={styles.evaluatingText}>
@@ -404,8 +513,8 @@ export default function EvaluationScreen({
     );
 }
 
-const styles = StyleSheet.create({
-
+// ── Shared / Grundgerüst ─────────────────────────────
+const sharedStyles = {
     screenContainer: {
         flex: 1,
         width: '100%',
@@ -511,9 +620,11 @@ const styles = StyleSheet.create({
     resultLogo: {
         width: '90%',
         height: 256,
-
     },
+};
 
+// ── Google Maps ──────────────────────────────────────
+const googleMapsStyles = {
     googleMapsInterface: {
         width: '100%',
         backgroundColor: '#FFFFFF',
@@ -602,7 +713,10 @@ const styles = StyleSheet.create({
         fontSize: 38,
         fontWeight: 'bold',
     },
+};
 
+// ── Reddit ───────────────────────────────────────────
+const redditStyles = {
     redditInterface: {
         width: '100%',
         height: '100%',
@@ -735,7 +849,10 @@ const styles = StyleSheet.create({
         color: '#000000',
         textAlign: 'left',
     },
+};
 
+// ── YouTube ──────────────────────────────────────────
+const youtubeStyles = {
     youtubeInterface: {
         width: '100%',
         height: '100%',
@@ -868,5 +985,224 @@ const styles = StyleSheet.create({
         fontWeight: '900',
         color: '#000000',
     },
+};
 
+// ── LinkedIn ─────────────────────────────────────────
+const linkedinStyles = {
+    linkedinInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    linkedinHeader: {
+        width: '100%',
+        height: 200,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 20,
+    },
+
+    linkedinAvatar: {
+        width: 90,
+        height: 90,
+        marginRight: 20,
+    },
+
+    linkedinHeaderText: {
+        flex: 1,
+        height: '100%',
+        minWidth: 0,
+    },
+
+    linkedinName: {
+        fontSize: 28,
+        fontWeight: '900',
+    },
+
+    linkedinRecommends: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#000000',
+        marginTop: 2,
+    },
+
+    linkedinSubjectBox: {
+        width: '100%',
+        flex: 1,
+        marginTop: 5,
+        overflow: 'hidden',
+    },
+
+    linkedinSubject: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    linkedinQuoteBox: {
+        width: '90%',
+        flex: 1,
+        paddingHorizontal: 25,
+        paddingVertical: 20,
+        justifyContent: 'center',
+        alignSelf: 'center',
+        borderRadius: 20,
+        marginTop: 0,
+        marginBottom: 20,
+    },
+
+    linkedinQuoteMark: {
+        fontSize: 50,
+        color: 'rgba(255,255,255,0.4)',
+        fontWeight: '900',
+    },
+
+    linkedinQuoteMarkEnd: {
+        alignSelf: 'flex-end',
+    },
+
+    linkedinQuoteTextBox: {
+        width: '100%',
+        flex: 1,
+        marginVertical: 5,
+        overflow: 'hidden',
+    },
+
+    linkedinQuoteText: {
+        fontWeight: '700',
+        color: '#FFFFFF',
+        textAlign: 'center',
+    },
+};
+
+// ── Tagesschau ───────────────────────────────────────
+const tagesschauStyles = {
+    tagesschauInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    tagesschauNavBar: {
+        width: '100%',
+        height: 70,
+        flexDirection: 'row',
+        alignItems: 'stretch',
+    },
+
+    tagesschauLogoBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+    },
+
+    tagesschauLogoNews: {
+        fontSize: 26,
+        fontWeight: '900',
+        marginRight: 6,
+    },
+
+    tagesschauLogoToday: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+
+    tagesschauNavItems: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        minWidth: 0,
+        paddingHorizontal: 10,
+    },
+
+    tagesschauNavItem: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+
+    tagesschauHeadlineSection: {
+        width: '100%',
+        height: 250,
+        paddingHorizontal: 20,
+        paddingTop: 15,
+        paddingBottom: 15,
+        borderBottomWidth: 8,
+        borderBottomColor: '#E5E5E5',
+    },
+
+    tagesschauHeadlineBox: {
+        width: '100%',
+        height: 180,
+        overflow: 'hidden',
+    },
+
+    tagesschauHeadline: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    tagesschauDate: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#AAAAAA',
+        marginTop: 10,
+        marginBottom: 15,
+    },
+
+    tagesschauCommentSection: {
+        width: '100%',
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        paddingTop: 15,
+    },
+
+    tagesschauAvatar: {
+        width: 60,
+        height: 60,
+        marginRight: 15,
+    },
+
+    tagesschauCommentInfo: {
+        flex: 1,
+        height: '100%',
+        minWidth: 0,
+    },
+
+    tagesschauUsername: {
+        fontSize: 26,
+        fontWeight: '900',
+    },
+
+    tagesschauCommentBox: {
+        width: '100%',
+        height: 130,
+        marginTop: 5,
+        overflow: 'hidden',
+    },
+
+    tagesschauCommentText: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+};
+
+// ── Zusammenführen ───────────────────────────────────
+const styles = StyleSheet.create({
+    ...sharedStyles,
+    ...googleMapsStyles,
+    ...redditStyles,
+    ...youtubeStyles,
+    ...linkedinStyles,
+    ...tagesschauStyles,
 });

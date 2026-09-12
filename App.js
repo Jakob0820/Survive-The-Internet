@@ -25,7 +25,7 @@ import EvaluationScreen from './src/screens/EvaluationScreen';
  
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
-  const [currentScreen, setCurrentScreen] = useState('evaluation');
+  const [currentScreen, setCurrentScreen] = useState('main');
   const [volume, setVolume] = useState(80);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [duration, setDuration] = useState(60);
@@ -57,7 +57,7 @@ export default function App() {
 
 
   //Test Modus
-  const TEST_MODE = true;
+  const TEST_MODE = false;
   const TEST_SCREEN = 'evaluation';
 
   React.useEffect(() => {
@@ -66,8 +66,8 @@ export default function App() {
     const testPlayers = [
         {
             name: 'Spieler 1',
-            color: COLOR_OPTIONS[0],
-            image: COLOR_IMAGES[0],
+            color: COLOR_OPTIONS[5],
+            image: COLOR_IMAGES[5],
         },
         {
             name: 'Spieler 2',
@@ -81,7 +81,7 @@ export default function App() {
         },
     ];
 
-    const testRound = ROUND_TYPE.YOUTUBE;
+    const testRound = ROUND_TYPE.TAGESSCHAU;
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -95,13 +95,13 @@ export default function App() {
     );
 
     setFirstAnswer([
-        'Voll langweilig, ich bin fast eingeschlafen',
+        'Krass, damit hätte ich niemals gerechnet!',
         'Der Service war absolut katastrophal.',
         'Ich würde hier nie wieder hingehen.'
     ]);
 
     setSecondAnswer([
-        'Pik Dame ist dumm und du auch',
+        'Vier Katzen tod bei Hausbrand',
         'Geht so',
         'Ne man lass lieber'
     ]);
