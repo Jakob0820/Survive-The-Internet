@@ -249,7 +249,7 @@ export const QUESTIONS = [
         ],
         answer: ['wäre ein peinlicher Kommentar zu diesem Hashtag:'],
         color: [
-            '#056eaf',
+            '#ade0ff',
             '#FFFFFF',
             '#000000',
         ],

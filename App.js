@@ -50,7 +50,7 @@ export default function App() {
   const [currentQuestions, setCurrentQuestions ] = useState([]);
 
   const [answerText, setAnswerText] = useState('');
-  const [shuffledAnswers, setShuffledAnswers] = useState([]);
+  const [shuffledFirstAnswers, setShuffledFirstAnswers] = useState([]);
 
   const currentLogo = currentRoundObj?.logo;
   const colorIndex = COLOR_OPTIONS.indexOf(selectedColor);
@@ -66,8 +66,8 @@ export default function App() {
     const testPlayers = [
         {
             name: 'Spieler 1',
-            color: COLOR_OPTIONS[5],
-            image: COLOR_IMAGES[5],
+            color: COLOR_OPTIONS[6],
+            image: COLOR_IMAGES[6],
         },
         {
             name: 'Spieler 2',
@@ -81,7 +81,7 @@ export default function App() {
         },
     ];
 
-    const testRound = ROUND_TYPE.TAGESSCHAU;
+    const testRound = ROUND_TYPE.EBAY;
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -94,14 +94,15 @@ export default function App() {
         generateQuestions(testRound, 3)
     );
 
-    setFirstAnswer([
-        'Krass, damit hätte ich niemals gerechnet!',
+    setShuffledFirstAnswers([
+        'Ultra geil. Macht vor allem bock das in der Badewanne zu benutzen',
         'Der Service war absolut katastrophal.',
         'Ich würde hier nie wieder hingehen.'
     ]);
 
+
     setSecondAnswer([
-        'Vier Katzen tod bei Hausbrand',
+        'Turbo Thrustmaster 5000x mit extra Vibrationsfunktion',
         'Geht so',
         'Ne man lass lieber'
     ]);
@@ -130,7 +131,7 @@ export default function App() {
     setSelectedColor(COLOR_OPTIONS[0]);
     setPlayers([]);
     setFirstAnswer([]);
-    setShuffledAnswers([]);
+    setShuffledFirstAnswers([]);
     setTextValue('');
     setAnswerText('');
   }
@@ -202,7 +203,7 @@ export default function App() {
 
       setTextValue('');
       setFirstAnswer([]);
-      setShuffledAnswers([]);
+      setShuffledFirstAnswers([]);
  
       setCurrentScreen('transition');
     } else {
@@ -257,7 +258,11 @@ export default function App() {
     if (currentPlayerIndex < playerCount - 1) {
         setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
-      setShuffledAnswers(shuffleAnswers(updatedAnswers));
+      const indices = updatedAnswers.map((_, i) => i);
+      const shuffledIndices = shuffleAnswers(indices);
+
+      setShuffleOrder(shuffledIndices);
+      setShuffledFirstAnswers(shuffledIndices.map((i) => updatedAnswers[i]));
 
       setCurrentPlayerIndex(0);
       setCurrentScreen('answer');
@@ -306,7 +311,7 @@ export default function App() {
           playerCount = {playerCount}
           currentPlayerIndex = {currentPlayerIndex}
           onNext = {nextEvaluation}
-          answers = {firstAnswers}
+          answers = {shuffledFirstAnswers}
           questions = {secoundAnswers}
           currentLogo={currentLogo}
           primaryColor={currentRoundObj?.color[0]}
@@ -403,7 +408,7 @@ export default function App() {
             currentPlayerIndex={currentPlayerIndex}
             answerText={answerText}
             setAnswerText={setAnswerText}
-            shuffledAnswers={shuffledAnswers}
+            shuffledAnswers={shuffledFirstAnswers}
             onNext={nextAnswer}
             answerPrompt={currentRoundObj?.answer?.[0]}
           />

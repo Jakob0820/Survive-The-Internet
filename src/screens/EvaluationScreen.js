@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import tinycolor from 'tinycolor2';
 import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,6 +71,8 @@ export default function EvaluationScreen({
     const playerColor = currentPlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
+    const starRating = useMemo(() => Math.floor(Math.random() * 5) + 1, [currentPlayerIndex]);
+
     useEffect(() => {
         Animated.parallel([
             Animated.timing(cardOpacity, {
@@ -126,6 +128,7 @@ export default function EvaluationScreen({
         }
         return Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
     }
+
     
 
     if (showResult) {
@@ -240,7 +243,7 @@ export default function EvaluationScreen({
 
                                         <View style={styles.redditPostTitleBox}>
                                             <AutoSizeText
-                                                text={questions[currentPlayerIndex]}
+                                                text = {answers[currentPlayerIndex]}
                                                 style={styles.redditPostTitle}
                                                 minFontSize={36}
                                                 maxFontSize={42}
@@ -273,7 +276,7 @@ export default function EvaluationScreen({
 
                                                 <View style={styles.redditCommentBox}>
                                                     <AutoSizeText
-                                                        text = {answers[currentPlayerIndex]}
+                                                        text={questions[currentPlayerIndex]}
                                                         style={styles.redditCommentText}
                                                         minFontSize={20}
                                                         maxFontSize={32}
@@ -460,24 +463,274 @@ export default function EvaluationScreen({
                                 </View>
                             )}
                             {gameMode === 'Gutefrage.net' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test6
-                                </Text>
+                                <View style={styles.gutefrageInterface}>
+
+                                    {/* Header */}
+                                    <View style={[styles.gutefrageHeader, { backgroundColor: playerColor }]}>
+                                        <Text style={[styles.gutefrageHeaderTitle, {color: lightPlayerColor}]}>
+                                            Frag {currentPlayer?.name} etwas!
+                                        </Text>
+                                    </View>
+
+                                    {/* Frage-Box */}
+                                    <View style={styles.gutefrageQuestionCard}>
+                                        <View style={[styles.gutefrageTimeBar, { backgroundColor: lightPlayerColor }]}>
+                                            <Text style={styles.gutefrageTimeText}>
+                                                Vor {Math.floor(Math.random() * (22 - 3 + 1)) + 3} Stunden gestellt
+                                            </Text>
+                                        </View>
+
+                                        <View style={styles.gutefrageQuestionRow}>
+                                            <View style={styles.gutefrageVotes}>
+                                                <Ionicons name="thumbs-up" size={26} color="#AAAAAA" style={{ marginBottom: 10 }} />
+                                                <Text style={styles.gutefrageVoteCount}>{generateRandomNumber(false)}</Text>
+                                                <Ionicons name="thumbs-down" size={26} color="#AAAAAA" style={{ marginTop: 10 }} />
+                                            </View>
+
+                                            <View style={styles.gutefrageQuestionBox}>
+                                                <AutoSizeText
+                                                    text={questions[currentPlayerIndex]}
+                                                    style={styles.gutefrageQuestionText}
+                                                    minFontSize={28}
+                                                    maxFontSize={48}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    {/* Antwort */}
+                                    <View style={styles.gutefrageAnswerSection}>
+                                        <Image
+                                            source={currentPlayer?.image}
+                                            style={styles.gutefrageAvatar}
+                                            resizeMode="contain"
+                                        />
+
+                                        <View style={styles.gutefrageAnswerInfo}>
+                                            <Text style={[styles.gutefrageAnswerName, { color: playerColor }]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+
+                                            <View style={styles.gutefrageAnswerBox}>
+                                                <AutoSizeText
+                                                    text={answers[currentPlayerIndex]}
+                                                    style={styles.gutefrageAnswerText}
+                                                    minFontSize={32}
+                                                    maxFontSize={44}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                </View>
                             )}
                             {gameMode === 'GoFundMe' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test7
-                                </Text>
+                                <View style={styles.gofundmeInterface}>
+
+                                    {/* Header */}
+                                    <View style={[styles.gofundmeHeader, { backgroundColor: playerColor }]}>
+                                        <View style={styles.gofundmeLogoBox}>
+                                            <Text style={styles.gofundmeLogoGo}>Go</Text>
+                                            <Text style={styles.gofundmeLogoFundMe}>FundMe</Text>
+                                        </View>
+
+                                        <Ionicons name="menu" size={30} color="#FFFFFF" />
+                                    </View>
+
+                                    {/* Titel */}
+                                    <View style={styles.gofundmeTitleSection}>
+                                        <View style={styles.gofundmeTitleBox}>
+                                            <AutoSizeText
+                                                text={questions[currentPlayerIndex]}
+                                                style={styles.gofundmeTitle}
+                                                minFontSize={20}
+                                                maxFontSize={44}
+                                            />
+                                        </View>
+                                    </View>
+
+                                    {/* Stats + Button */}
+                                    <View style={styles.gofundmeStatsRow}>
+                                        <View style={styles.gofundmeStatBlock}>
+                                            <Text style={[styles.gofundmeStatValue, { color: playerColor }]}>
+                                                {generateRandomNumber(true)}€
+                                            </Text>
+                                            <Text style={styles.gofundmeStatLabel}>
+                                                Bisher gesammelt
+                                            </Text>
+                                        </View>
+
+                                        <View style={styles.gofundmeStatBlock}>
+                                            <Text style={[styles.gofundmeStatValue, { color: playerColor }]}>
+                                                {generateRandomNumber(false)}
+                                            </Text>
+                                            <Text style={styles.gofundmeStatLabel}>
+                                                Unterstützer
+                                            </Text>
+                                        </View>
+
+                                        <View style={[styles.gofundmeButton, { backgroundColor: lightPlayerColor }]}>
+                                            <Text style={styles.gofundmeButtonText}>
+                                                JETZT{'\n'}HELFEN
+                                            </Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Kommentar */}
+                                    <View style={styles.gofundmeCommentSection}>
+                                        <Image
+                                            source={currentPlayer?.image}
+                                            style={styles.gofundmeAvatar}
+                                            resizeMode="contain"
+                                        />
+
+                                        <View style={styles.gofundmeCommentInfo}>
+                                            <Text style={[styles.gofundmeName, { color: playerColor }]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+
+                                            <View style={styles.gofundmeCommentBox}>
+                                                <AutoSizeText
+                                                    text={answers[currentPlayerIndex]}
+                                                    style={styles.gofundmeCommentText}
+                                                    minFontSize={24}
+                                                    maxFontSize={42}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                </View>
                             )}
                             {gameMode === 'Twitter' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test8
-                                </Text>
+                                <View style={styles.twitterInterface}>
+
+                                    {/* Header: Avatar + Name + Text */}
+                                    <View style={styles.twitterHeader}>
+                                        <Image
+                                            source={currentPlayer?.image}
+                                            style={styles.twitterAvatar}
+                                            resizeMode="contain"
+                                        />
+
+                                        <View style={styles.twitterHeaderInfo}>
+                                            <Text style={[styles.twitterName, { color: playerColor }]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+
+                                            <View style={styles.twitterTextBox}>
+                                                <AutoSizeText
+                                                    text={answers[currentPlayerIndex]}
+                                                    style={styles.twitterText}
+                                                    minFontSize={30}
+                                                    maxFontSize={35}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                    {/* Hashtag */}
+                                    <View style={styles.twitterHashtagBox}>
+                                        <AutoSizeText
+                                            text={questions[currentPlayerIndex]}
+                                            style={[styles.twitterHashtag, { color: playerColor }]}
+                                            minFontSize={30}
+                                            maxFontSize={48}
+                                        />
+                                    </View>
+
+                                    {/* Stats */}
+                                    <View style={styles.twitterStatsRow}>
+                                        <View style={styles.twitterStatBlock}>
+                                            <Ionicons name="arrow-undo-outline" size={22} color="#AAAAAA" />
+                                            <Text style={styles.twitterStatText}>{Math.floor(Math.random() * (999 - 50 + 1)) + 50}</Text>
+                                        </View>
+
+                                        <View style={styles.twitterStatBlock}>
+                                            <Ionicons name="repeat-outline" size={22} color="#AAAAAA" />
+                                            <Text style={styles.twitterStatText}>{Math.floor(Math.random() * (999 - 50 + 1)) + 50}</Text>
+                                        </View>
+
+                                        <View style={styles.twitterStatBlock}>
+                                            <Ionicons name="heart-outline" size={22} color="#AAAAAA" />
+                                            <Text style={styles.twitterStatText}>{generateRandomNumber(false)}</Text>
+                                        </View>
+                                    </View>
+
+                                </View>
                             )}
                             {gameMode === 'Ebay' && (
-                                <Text style={styles.evaluatingText}>
-                                    Test9
-                                </Text>
+                                <View style={styles.ebayInterface}>
+
+                                    {/* Suchleiste */}
+                                    <View style={[styles.ebaySearchBar, { backgroundColor: playerColor }]}>
+                                        <View style={styles.ebaySearchInput}>
+                                            <Text style={styles.ebaySearchPlaceholder}>Wonach suchst du?</Text>
+
+                                            <View style={[styles.ebaySearchButton, {backgroundColor: lightPlayerColor}]}>
+                                                <Ionicons name="search" size={20} color="#FFFFFF" />
+                                            </View>
+                                        </View>
+
+                                        <Ionicons name="cart-outline" size={30} color="#FFFFFF" style={{ marginLeft: 15 }} />
+                                    </View>
+
+                                    {/* Titel */}
+                                    <View style={styles.ebayTitleSection}>
+                                        <View style={styles.ebayTitleBox}>
+                                            <AutoSizeText
+                                                text={questions[currentPlayerIndex]}
+                                                style={styles.ebayTitle}
+                                                minFontSize={32}
+                                                maxFontSize={52}
+                                            />
+                                        </View>
+                                    </View>
+
+                                    {/* Sterne + Menge + Warenkorb-Button */}
+                                    <View style={styles.ebayActionRow}>
+                                        <View style={styles.ebayStars}>
+                                            {[1, 2, 3, 4, 5].map((i) => (
+                                                <Ionicons
+                                                    key={i}
+                                                    name={i <= starRating ? 'star' : 'star-outline'}
+                                                    size={22}
+                                                    color={i <= starRating ? '#F5C518' : '#CCCCCC'}
+                                                    style={{ marginRight: 2 }}
+                                                />
+                                            ))}
+                                        </View>
+
+                                        <View style={styles.ebayCartButton}>
+                                            <Text style={styles.ebayCartButtonText}>IN DEN WARENKORB</Text>
+                                        </View>
+                                    </View>
+
+                                    {/* Kommentar */}
+                                    <View style={styles.ebayCommentSection}>
+                                        <Image
+                                            source={currentPlayer?.image}
+                                            style={styles.ebayAvatar}
+                                            resizeMode="contain"
+                                        />
+
+                                        <View style={styles.ebayCommentInfo}>
+                                            <Text style={[styles.ebayName, { color: playerColor }]}>
+                                                {currentPlayer?.name}
+                                            </Text>
+
+                                            <View style={styles.ebayCommentBox}>
+                                                <AutoSizeText
+                                                    text={answers[currentPlayerIndex]}
+                                                    style={styles.ebayCommentText}
+                                                    minFontSize={26}
+                                                    maxFontSize={42}
+                                                />
+                                            </View>
+                                        </View>
+                                    </View>
+
+                                </View>
                             )}
                         </View>
                     </SafeAreaView>
@@ -1197,6 +1450,484 @@ const tagesschauStyles = {
     },
 };
 
+// ── Gutefrage.net ────────────────────────────────────
+const gutefrageStyles = {
+    gutefrageInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    gutefrageHeader: {
+        width: '100%',
+        height: 90,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+
+    gutefrageHeaderTitle: {
+        flex: 1,
+        fontSize: 28,
+        fontWeight: '900',
+        color: '#FFFFFF',
+        minWidth: 0,
+    },
+
+    gutefrageQuestionCard: {
+        width: '100%',
+        height: 230,
+        paddingHorizontal: 20,
+        paddingTop: 15,
+    },
+
+    gutefrageTimeBar: {
+        width: '100%',
+        height: 36,
+        justifyContent: 'center',
+        paddingHorizontal: 12,
+    },
+
+    gutefrageTimeText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#FFFFFF',
+    },
+
+    gutefrageQuestionRow: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#DDDDDD',
+        borderTopWidth: 0,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+    },
+
+    gutefrageVotes: {
+        width: 60,
+        alignItems: 'center',
+        marginRight: 15,
+    },
+
+    gutefrageVoteCount: {
+        fontSize: 20,
+        fontWeight: '900',
+        color: '#000000',
+        marginVertical: 2,
+    },
+
+    gutefrageQuestionBox: {
+        flex: 1,
+        height: '100%',
+        overflow: 'hidden',
+        minWidth: 0,
+    },
+
+    gutefrageQuestionText: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    gutefrageAnswerSection: {
+        width: '100%',
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        paddingTop: 15,
+    },
+
+    gutefrageAvatar: {
+        width: 80,
+        height: 80,
+        marginRight: 15,
+    },
+
+    gutefrageAnswerInfo: {
+        flex: 1,
+        height: '100%',
+        minWidth: 0,
+    },
+
+    gutefrageAnswerName: {
+        fontSize: 26,
+        fontWeight: '900',
+    },
+
+    gutefrageAnswerBox: {
+        width: '100%',
+        flex: 1,
+        marginTop: 5,
+        overflow: 'hidden',
+    },
+
+    gutefrageAnswerText: {
+        fontWeight: '700',
+        color: '#000000',
+    },
+};
+
+// ── GoFundMe ─────────────────────────────────────────
+const gofundmeStyles = {
+    gofundmeInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    gofundmeHeader: {
+        width: '100%',
+        height: 70,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+    },
+
+    gofundmeLogoBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    gofundmeLogoGo: {
+        fontSize: 26,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.6)',
+    },
+
+    gofundmeLogoFundMe: {
+        fontSize: 26,
+        fontWeight: '900',
+        color: '#FFFFFF',
+    },
+
+    gofundmeTitleSection: {
+        width: '100%',
+        height: 150,
+        paddingHorizontal: 20,
+        paddingTop: 15,
+    },
+
+    gofundmeTitleBox: {
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+    },
+
+    gofundmeTitle: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    gofundmeStatsRow: {
+        width: '100%',
+        height: 80,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        borderBottomWidth: 8,
+        borderBottomColor: '#E5E5E5',
+    },
+
+    gofundmeStatBlock: {
+        marginRight: 15,
+    },
+
+    gofundmeStatValue: {
+        fontSize: 24,
+        fontWeight: '900',
+    },
+
+    gofundmeStatLabel: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#AAAAAA',
+        marginTop: 2,
+    },
+
+    gofundmeButton: {
+        marginLeft: 'auto',
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    gofundmeButtonText: {
+        fontSize: 14,
+        fontWeight: '900',
+        color: '#FFFFFF',
+        textAlign: 'center',
+    },
+
+    gofundmeCommentSection: {
+        width: '100%',
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        paddingTop: 15,
+    },
+
+    gofundmeAvatar: {
+        width: 70,
+        height: 70,
+        marginRight: 15,
+    },
+
+    gofundmeCommentInfo: {
+        flex: 1,
+        height: '100%',
+        minWidth: 0,
+    },
+
+    gofundmeName: {
+        fontSize: 24,
+        fontWeight: '900',
+    },
+
+    gofundmeCommentBox: {
+        width: '100%',
+        flex: 1,
+        marginTop: 0,
+        marginBottom: 5,
+        overflow: 'hidden',
+    },
+
+    gofundmeCommentText: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+};
+
+// ── Twitter ──────────────────────────────────────────
+const twitterStyles = {
+    twitterInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    twitterHeader: {
+        width: '100%',
+        height: 180,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        overflow: 'hidden',
+    },
+
+    twitterAvatar: {
+        width: 70,
+        height: 70,
+        marginRight: 15,
+    },
+
+    twitterHeaderInfo: {
+        flex: 1,
+        height: '100%',
+        minWidth: 0,
+    },
+
+    twitterName: {
+        fontSize: 28,
+        fontWeight: '900',
+    },
+
+    twitterTextBox: {
+        width: '100%',
+        flex: 1,
+        marginTop: 4,
+        overflow: 'hidden',
+    },
+
+    twitterText: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    twitterHashtagBox: {
+        width: '100%',
+        flex: 1,
+        marginTop: 5,
+        paddingHorizontal: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+
+    twitterHashtag: {
+        fontWeight: '900',
+        textAlign: 'left',
+    },
+
+    twitterStatsRow: {
+        width: '100%',
+        height: 70,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        paddingHorizontal: 20,
+    },
+
+    twitterStatBlock: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    twitterStatText: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#AAAAAA',
+        marginLeft: 8,
+    },
+};
+
+// ── Ebay ─────────────────────────────────────────────
+const ebayStyles = {
+    ebayInterface: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 30,
+        overflow: 'hidden',
+    },
+
+    ebaySearchBar: {
+        width: '100%',
+        height: 70,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+    },
+
+    ebaySearchInput: {
+        width: 280,
+        height: 40,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingLeft: 12,
+        minWidth: 0,
+        overflow: 'hidden',
+    },
+
+    ebaySearchPlaceholder: {
+        flex: 1,
+        fontSize: 16,
+        color: '#999999',
+        minWidth: 0,
+    },
+
+    ebaySearchIconWrapper: {
+        marginLeft: 8,
+    },
+
+    ebayTitleSection: {
+        width: '100%',
+        height: 160,
+        paddingHorizontal: 20,
+        paddingTop: 15,
+        paddingBottom: 10,
+    },
+
+    ebayTitleBox: {
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+    },
+
+    ebayTitle: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    ebayActionRow: {
+        width: '100%',
+        height: 60,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        borderBottomWidth: 8,
+        borderBottomColor: '#E5E5E5',
+    },
+
+    ebayStars: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    ebayCartButton: {
+        backgroundColor: '#AAAAAA',
+        borderRadius: 6,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+    },
+
+    ebayCartButtonText: {
+        fontSize: 14,
+        fontWeight: '900',
+        color: '#FFFFFF',
+    },
+
+    ebayCommentSection: {
+        width: '100%',
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        paddingHorizontal: 20,
+        paddingTop: 15,
+    },
+
+    ebayAvatar: {
+        width: 70,
+        height: 70,
+        marginRight: 15,
+    },
+
+    ebayCommentInfo: {
+        flex: 1,
+        height: '100%',
+        minWidth: 0,
+    },
+
+    ebayName: {
+        fontSize: 26,
+        fontWeight: '900',
+    },
+
+    ebayCommentBox: {
+        width: '100%',
+        height: 150,
+        marginTop: 5,
+        overflow: 'hidden',
+    },
+
+    ebayCommentText: {
+        fontWeight: '900',
+        color: '#000000',
+    },
+
+    ebaySearchButton: {
+        height: '100%',
+        width: 45,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+};
+
 // ── Zusammenführen ───────────────────────────────────
 const styles = StyleSheet.create({
     ...sharedStyles,
@@ -1205,4 +1936,8 @@ const styles = StyleSheet.create({
     ...youtubeStyles,
     ...linkedinStyles,
     ...tagesschauStyles,
+    ...gutefrageStyles,
+    ...gofundmeStyles,
+    ...twitterStyles,
+    ...ebayStyles,
 });
