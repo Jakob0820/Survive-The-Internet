@@ -51,6 +51,9 @@ export default function App() {
 
   const [answerText, setAnswerText] = useState('');
   const [shuffledFirstAnswers, setShuffledFirstAnswers] = useState([]);
+  const [shuffledIndices, setShuffledIndices] = useState([]);
+  const [evaluationData, setEvaluationData] = useState([]);
+  const [evaluationOrder, setEvaluationOrder] = useState([]);
 
   const currentLogo = currentRoundObj?.logo;
   const colorIndex = COLOR_OPTIONS.indexOf(selectedColor);
@@ -134,6 +137,9 @@ export default function App() {
     setShuffledFirstAnswers([]);
     setTextValue('');
     setAnswerText('');
+    setShuffledIndices([]);
+    setEvaluationData([]);
+
   }
  
   const handleNextPlayer = () => {
@@ -254,15 +260,15 @@ export default function App() {
     const updatedAnswers = [...firstAnswers, textValue];
     setFirstAnswer(updatedAnswers);
     setTextValue('');
- 
+
     if (currentPlayerIndex < playerCount - 1) {
-        setCurrentPlayerIndex(currentPlayerIndex + 1);
+      setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
       const indices = updatedAnswers.map((_, i) => i);
-      const shuffledIndices = shuffleAnswers(indices);
+      const newShuffledIndices = shuffleAnswers(indices);
 
-      setShuffleOrder(shuffledIndices);
-      setShuffledFirstAnswers(shuffledIndices.map((i) => updatedAnswers[i]));
+      setShuffledIndices(newShuffledIndices);
+      setShuffledFirstAnswers(newShuffledIndices.map((i) => updatedAnswers[i]));
 
       setCurrentPlayerIndex(0);
       setCurrentScreen('answer');
@@ -273,15 +279,25 @@ export default function App() {
     const updatedResponses = [...secoundAnswers, answerText];
     setSecondAnswer(updatedResponses);
     setAnswerText('');
-    
+
     if (currentPlayerIndex < playerCount - 1) {
       setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
-      
+      const combined = shuffledIndices.map((originalIndex, i) => ({
+        originalIndex,
+        originalAnswer: shuffledFirstAnswers[i],
+        response: updatedResponses[i],
+      }));
+
+      setEvaluationData(combined);
+
+      const order = shuffleArray(combined.map((_, i) => i));
+      setEvaluationOrder(order);
+
       setCurrentPlayerIndex(0);
       setCurrentScreen('evaluation');
     }
-  }
+  };
 
   const nextEvaluation = () => {
       if(currentPlayerIndex < playerCount - 1) {
@@ -311,8 +327,8 @@ export default function App() {
           playerCount = {playerCount}
           currentPlayerIndex = {currentPlayerIndex}
           onNext = {nextEvaluation}
-          answers = {shuffledFirstAnswers}
-          questions = {secoundAnswers}
+          evaluationData = {evaluationData}
+          evaluationOrder= {evaluationOrder}
           currentLogo={currentLogo}
           primaryColor={currentRoundObj?.color[0]}
           secondaryColor={currentRoundObj?.color[1]}

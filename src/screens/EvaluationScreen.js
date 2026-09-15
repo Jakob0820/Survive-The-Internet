@@ -10,6 +10,7 @@ import {
     Animated,
     Image,
     SafeAreaView,
+    Dimensions,
 } from 'react-native';
 
 function AutoSizeText({ text, style, minFontSize = 16, maxFontSize = 100 }) {
@@ -50,8 +51,8 @@ export default function EvaluationScreen({
     playerCount,
     currentPlayerIndex,
     onNext,
-    answers,
-    questions,
+    evaluationData,
+    evaluationOrder,
     currentLogo,
     primaryColor,
     secondaryColor,
@@ -61,13 +62,19 @@ export default function EvaluationScreen({
 
     const [showResult, setShowResult] = useState(false);
 
+    const SCREEN_HEIGHT = Dimensions.get('window').height;
+    const resultTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
     const cardOpacity = useRef(new Animated.Value(0)).current;
     const cardScale = useRef(new Animated.Value(0.9)).current;
 
     const resultOpacity = useRef(new Animated.Value(0)).current;
     const resultScale = useRef(new Animated.Value(1.05)).current;
 
-    const currentPlayer = players[currentPlayerIndex];
+    const currentPlayer = players[evaluationData[evaluationOrder[currentPlayerIndex]].originalIndex];
+    const currentAnswer = evaluationData[evaluationOrder[currentPlayerIndex]].originalAnswer;
+    const currentResponse = evaluationData[evaluationOrder[currentPlayerIndex]].response;
+
     const playerColor = currentPlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
@@ -89,22 +96,33 @@ export default function EvaluationScreen({
         ]).start();
     }, []);
 
+    useEffect(() => {
+        if (!showResult) return;
+        if (currentPlayerIndex >= playerCount - 1) return;
+
+        const timer = setTimeout(() => {
+            onNext();
+        }, 7000);
+
+        return () => clearTimeout(timer);
+    }, [showResult, currentPlayerIndex, playerCount, onNext]);
+
+    useEffect(() => {
+        if (!showResult) return;
+
+        resultTranslateY.setValue(SCREEN_HEIGHT);
+
+        Animated.timing(resultTranslateY, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+        }).start();
+    }, [showResult, currentPlayerIndex]);
+
     const handleShowResult = () => {
         setShowResult(true);
-
-        Animated.parallel([
-            Animated.timing(resultOpacity, {
-                toValue: 1,
-                duration: 400,
-                useNativeDriver: true,
-            }),
-            Animated.timing(resultScale, {
-                toValue: 1,
-                duration: 400,
-                useNativeDriver: true,
-            }),
-        ]).start();
     };
+
     const getCurrentDateTime = () => {
         const now = new Date();
 
@@ -133,24 +151,21 @@ export default function EvaluationScreen({
 
     if (showResult) {
         return (
-            <View style={[
-                styles.resultContainer, {backgroundColor: primaryColor}]}>
-                <Animated.View
-                    style={[
-                        styles.resultScreen,
-                        {
-                            opacity: resultOpacity,
-                            transform: [{ scale: resultScale }],
-                        },
-                    ]}
-                >
+            <View style={[styles.resultContainer, { backgroundColor: primaryColor }]}>
+                <View style={styles.resultScreen}>
                     <SafeAreaView style={styles.resultContent}>
                         <Image
                             source={currentLogo}
                             style={styles.resultLogo}
                             resizeMode="contain"
                         />
-                        <View style={[styles.evaluationBox,{backgroundColor: secondaryColor}]}>
+                        <Animated.View
+                            style={[
+                                styles.evaluationBox,
+                                { backgroundColor: secondaryColor },
+                                { transform: [{ translateY: resultTranslateY }] },
+                            ]}
+                        >
 
                             {gameMode === 'Google Maps' && (
                                 <View style={styles.googleMapsInterface}>
@@ -177,7 +192,7 @@ export default function EvaluationScreen({
                                         {/* Text oben */}
                                         <View style={styles.googleMapsQuestionBox}>
                                             <AutoSizeText
-                                                text={answers[currentPlayerIndex]}
+                                                text={currentAnswer}
                                                 style={styles.googleMapsEvaluationText}
                                                 minFontSize={38}
                                                 maxFontSize={52}
@@ -200,7 +215,7 @@ export default function EvaluationScreen({
                                                 <Text style={styles.googleMapsPin}>📍</Text>
                                                 <View style={styles.redditCommentBox}>
                                                     <AutoSizeText
-                                                        text = {questions[currentPlayerIndex]}
+                                                        text = {currentResponse}
                                                         style={styles.googleMapsLocation}
                                                         minFontSize={32}
                                                         maxFontSize={42}
@@ -243,7 +258,7 @@ export default function EvaluationScreen({
 
                                         <View style={styles.redditPostTitleBox}>
                                             <AutoSizeText
-                                                text = {answers[currentPlayerIndex]}
+                                                text = {currentResponse}
                                                 style={styles.redditPostTitle}
                                                 minFontSize={36}
                                                 maxFontSize={42}
@@ -276,7 +291,7 @@ export default function EvaluationScreen({
 
                                                 <View style={styles.redditCommentBox}>
                                                     <AutoSizeText
-                                                        text={questions[currentPlayerIndex]}
+                                                        text={currentAnswer}
                                                         style={styles.redditCommentText}
                                                         minFontSize={20}
                                                         maxFontSize={32}
@@ -307,7 +322,7 @@ export default function EvaluationScreen({
                                     <View style={styles.youtubeTitleSection}>
                                         <View style={styles.youtubeTitleBox}>
                                             <AutoSizeText
-                                                text={questions[currentPlayerIndex]}
+                                                text={currentResponse}
                                                 style={styles.youtubeTitle}
                                                 minFontSize={42}
                                                 maxFontSize={52}
@@ -340,7 +355,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.youtubeDescriptionBox}>
                                                 <AutoSizeText
-                                                    text={answers[currentPlayerIndex]}
+                                                    text={currentAnswer}
                                                     style={styles.youtubeDescription}
                                                     minFontSize={32}
                                                     maxFontSize={42}
@@ -372,7 +387,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.linkedinSubjectBox}>
                                                 <AutoSizeText
-                                                    text={questions[currentPlayerIndex]}
+                                                    text={currentResponse}
                                                     style={styles.linkedinSubject}
                                                     minFontSize={32}
                                                     maxFontSize={64}
@@ -387,7 +402,7 @@ export default function EvaluationScreen({
 
                                         <View style={styles.linkedinQuoteTextBox}>
                                             <AutoSizeText
-                                                text={answers[currentPlayerIndex]}
+                                                text={currentAnswer}
                                                 style={styles.linkedinQuoteText}
                                                 minFontSize={26}
                                                 maxFontSize={40}
@@ -424,7 +439,7 @@ export default function EvaluationScreen({
                                     <View style={styles.tagesschauHeadlineSection}>
                                         <View style={styles.tagesschauHeadlineBox}>
                                             <AutoSizeText
-                                                text={questions[currentPlayerIndex]}
+                                                text={currentResponse}
                                                 style={styles.tagesschauHeadline}
                                                 minFontSize={54}
                                                 maxFontSize={72}
@@ -451,7 +466,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.tagesschauCommentBox}>
                                                 <AutoSizeText
-                                                    text={answers[currentPlayerIndex]}
+                                                    text={currentAnswer}
                                                     style={styles.tagesschauCommentText}
                                                     minFontSize={26}
                                                     maxFontSize={36}
@@ -489,7 +504,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.gutefrageQuestionBox}>
                                                 <AutoSizeText
-                                                    text={questions[currentPlayerIndex]}
+                                                    text={currentResponse}
                                                     style={styles.gutefrageQuestionText}
                                                     minFontSize={28}
                                                     maxFontSize={48}
@@ -513,7 +528,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.gutefrageAnswerBox}>
                                                 <AutoSizeText
-                                                    text={answers[currentPlayerIndex]}
+                                                    text={currentAnswer}
                                                     style={styles.gutefrageAnswerText}
                                                     minFontSize={32}
                                                     maxFontSize={44}
@@ -541,7 +556,7 @@ export default function EvaluationScreen({
                                     <View style={styles.gofundmeTitleSection}>
                                         <View style={styles.gofundmeTitleBox}>
                                             <AutoSizeText
-                                                text={questions[currentPlayerIndex]}
+                                                text={currentResponse}
                                                 style={styles.gofundmeTitle}
                                                 minFontSize={20}
                                                 maxFontSize={44}
@@ -591,7 +606,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.gofundmeCommentBox}>
                                                 <AutoSizeText
-                                                    text={answers[currentPlayerIndex]}
+                                                    text={currentAnswer}
                                                     style={styles.gofundmeCommentText}
                                                     minFontSize={24}
                                                     maxFontSize={42}
@@ -620,7 +635,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.twitterTextBox}>
                                                 <AutoSizeText
-                                                    text={answers[currentPlayerIndex]}
+                                                    text={currentAnswer}
                                                     style={styles.twitterText}
                                                     minFontSize={30}
                                                     maxFontSize={35}
@@ -632,8 +647,8 @@ export default function EvaluationScreen({
                                     {/* Hashtag */}
                                     <View style={styles.twitterHashtagBox}>
                                         <AutoSizeText
-                                            text={questions[currentPlayerIndex]}
-                                            style={[styles.twitterHashtag, { color: playerColor }]}
+                                            text={currentResponse}
+                                            style={[styles.twitterHashtag, { color: playerColor}]}
                                             minFontSize={30}
                                             maxFontSize={48}
                                         />
@@ -679,7 +694,7 @@ export default function EvaluationScreen({
                                     <View style={styles.ebayTitleSection}>
                                         <View style={styles.ebayTitleBox}>
                                             <AutoSizeText
-                                                text={questions[currentPlayerIndex]}
+                                                text={currentResponse}
                                                 style={styles.ebayTitle}
                                                 minFontSize={32}
                                                 maxFontSize={52}
@@ -721,7 +736,7 @@ export default function EvaluationScreen({
 
                                             <View style={styles.ebayCommentBox}>
                                                 <AutoSizeText
-                                                    text={answers[currentPlayerIndex]}
+                                                    text={currentAnswer}
                                                     style={styles.ebayCommentText}
                                                     minFontSize={26}
                                                     maxFontSize={42}
@@ -732,9 +747,9 @@ export default function EvaluationScreen({
 
                                 </View>
                             )}
-                        </View>
+                        </Animated.View>
                     </SafeAreaView>
-                </Animated.View>
+                </View>
             </View>
         );
     }
@@ -753,6 +768,7 @@ export default function EvaluationScreen({
                 <Text style={styles.evaluatingText}>
                     Auswertung
                 </Text>
+                
 
                 <TouchableOpacity
                     style={[styles.btn, styles.btnSecondary]}
