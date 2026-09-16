@@ -60,7 +60,7 @@ export default function App() {
 
 
   //Test Modus
-  const TEST_MODE = false;
+  const TEST_MODE = true;
   const TEST_SCREEN = 'evaluation';
 
   React.useEffect(() => {
@@ -97,22 +97,34 @@ export default function App() {
         generateQuestions(testRound, 3)
     );
 
-    setShuffledFirstAnswers([
+    const testFirstAnswers = [
         'Ultra geil. Macht vor allem bock das in der Badewanne zu benutzen',
-        'Der Service war absolut katastrophal.',
-        'Ich würde hier nie wieder hingehen.'
-    ]);
+        'Wofür hast du die benutzt?',
+        'Hat nicht funktioniert, muss jetzt Künstlich beatmet werden.'
+    ];
 
-
-    setSecondAnswer([
+    const testResponses = [
         'Turbo Thrustmaster 5000x mit extra Vibrationsfunktion',
-        'Geht so',
-        'Ne man lass lieber'
-    ]);
+        'VR Brille mit cumstains',
+        'Asthmaspray'
+    ];
+
+    setShuffledFirstAnswers(testFirstAnswers);
+    setSecondAnswer(testResponses);
+
+    // NEU: evaluationData + evaluationOrder für den Test befüllen
+    const testCombined = [0, 1, 2].map((originalIndex, i) => ({
+        originalIndex,
+        originalAnswer: testFirstAnswers[i],
+        response: testResponses[i],
+    }));
+
+    setEvaluationData(testCombined);
+    setEvaluationOrder(shuffleArray([0, 1, 2]));
 
     setCurrentScreen(TEST_SCREEN);
 
-  }, []);
+}, []);
 
   //Test Modus ende
   

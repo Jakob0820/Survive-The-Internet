@@ -62,6 +62,14 @@ export default function EvaluationScreen({
 
     const [showResult, setShowResult] = useState(false);
 
+    const [allRevealed, setAllRevealed] = useState(false);
+
+    const logoHeight = useRef(new Animated.Value(256)).current;
+    const logoOpacity = useRef(new Animated.Value(1)).current;
+
+    const votingBarTranslateY = useRef(new Animated.Value(-300)).current;
+    const voteButtonTranslateY = useRef(new Animated.Value(300)).current;
+
     const SCREEN_HEIGHT = Dimensions.get('window').height;
     const resultTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
@@ -102,12 +110,12 @@ export default function EvaluationScreen({
 
         const timer = setTimeout(() => {
             onNext();
-        }, 7000);
+        }, 700);
 
         return () => clearTimeout(timer);
     }, [showResult, currentPlayerIndex, playerCount, onNext]);
 
-    useEffect(() => {
+   useEffect(() => {
         if (!showResult) return;
 
         resultTranslateY.setValue(SCREEN_HEIGHT);
@@ -116,12 +124,68 @@ export default function EvaluationScreen({
             toValue: 0,
             duration: 500,
             useNativeDriver: true,
-        }).start();
+        }).start(({ finished }) => {
+            if (finished && currentPlayerIndex >= playerCount - 1) {
+                const waitTimer = setTimeout(() => {
+                    setAllRevealed(true);
+                }, 7000);
+            }
+        });
     }, [showResult, currentPlayerIndex]);
 
     const handleShowResult = () => {
         setShowResult(true);
     };
+
+    useEffect(() => {
+        if (!allRevealed) return;
+
+        Animated.parallel([
+            Animated.timing(logoOpacity, {
+                toValue: 0,
+                duration: 600,
+                useNativeDriver: false,
+            }),
+            Animated.timing(logoHeight, {
+                toValue: 120,
+                duration: 600,
+                useNativeDriver: false,
+            }),
+        ]).start();
+
+        // Voting-Bar von oben
+        Animated.sequence([
+            Animated.delay(400),
+            Animated.spring(votingBarTranslateY, {
+                toValue: 0,
+                tension: 70,
+                friction: 9,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        // Abstimmen-Button von unten
+        Animated.sequence([
+            Animated.delay(600),
+            Animated.spring(voteButtonTranslateY, {
+                toValue: 0,
+                tension: 70,
+                friction: 9,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+    }, [allRevealed]);
+
+    useEffect(() => {
+        if (!showResult) {
+            setAllRevealed(false);
+            logoHeight.setValue(256);
+            logoOpacity.setValue(1);
+            votingBarTranslateY.setValue(-300);
+            voteButtonTranslateY.setValue(300);
+        }
+    }, [showResult]);
 
     const getCurrentDateTime = () => {
         const now = new Date();
@@ -153,12 +217,30 @@ export default function EvaluationScreen({
         return (
             <View style={[styles.resultContainer, { backgroundColor: primaryColor }]}>
                 <View style={styles.resultScreen}>
+                    {allRevealed && (
+                        <Animated.View
+                            style={[
+                                styles.votingBar,
+                                {
+                                    transform: [
+                                        { translateY: votingBarTranslateY }
+                                    ],
+                                },
+                            ]}
+                        >
+                            <Text style={styles.votingBarText}>
+                                Wähle für den Spieler, der am lächerlichsten aussieht!
+                            </Text>
+                        </Animated.View>
+                    )}
                     <SafeAreaView style={styles.resultContent}>
-                        <Image
-                            source={currentLogo}
-                            style={styles.resultLogo}
-                            resizeMode="contain"
-                        />
+                        <Animated.View style={{ width: '90%', height: logoHeight, opacity: logoOpacity, overflow: 'hidden' }}>
+                            <Image
+                                source={currentLogo}
+                                style={{ width: '100%', height: 256 }}
+                                resizeMode="contain"
+                            />
+                        </Animated.View>
                         <Animated.View
                             style={[
                                 styles.evaluationBox,
@@ -750,6 +832,34 @@ export default function EvaluationScreen({
                         </Animated.View>
                     </SafeAreaView>
                 </View>
+                {allRevealed && (
+                    <Animated.View
+                        style={[
+                            styles.voteButtonContainer,
+                            {
+                                transform: [
+                                    { translateY: voteButtonTranslateY }
+                                ],
+                            },
+                        ]}
+                    >
+                        <TouchableOpacity
+                            style={[styles.voteBtn, {backgroundColor: playerColor}]}
+                            activeOpacity={0.8}
+                            onPress={() => {}}
+                        >
+                            <Text style={styles.voteBtnText}>ABSTIMMEN</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={styles.continueBtn}
+                            activeOpacity={0.8}
+                            onPress={() => {}}
+                        >
+                            <Text style={styles.continueBtnText}>WEITER</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
             </View>
         );
     }
@@ -889,6 +999,84 @@ const sharedStyles = {
     resultLogo: {
         width: '90%',
         height: 256,
+    },
+
+    votingBar: {
+        position: 'absolute',
+        top: 80,
+        left: 0,
+        right: 0,
+        height: 90,
+
+        backgroundColor: '#000000',
+
+        justifyContent: 'center',
+        alignItems: 'center',
+
+
+        zIndex: 100,
+        elevation: 10,
+
+        borderBottomWidth: 6,
+        borderTopWidth: 6,
+        borderColor: '#E5E5E5'
+    },
+
+    votingBarText: {
+        color: '#FFFFFF',
+        fontSize: 26,
+        fontWeight: '900',
+        textAlign: 'center',
+    },
+
+    voteButtonContainer: {
+        position: 'absolute',
+        bottom: 35,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        zIndex: 100,
+        elevation: 10,
+    },
+
+    voteBtn: {
+        width: '90%',
+        paddingVertical: 20,
+
+        borderRadius: 12,
+
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    voteBtnText: {
+        color: '#ffffff',
+        fontSize: 22,
+        fontWeight: 'bold',
+        letterSpacing: 2,
+        textAlign: 'center',
+    },
+
+    continueBtn: {
+        width: '90%',
+        paddingVertical: 20,
+
+        backgroundColor: '#ffffff',
+
+        borderRadius: 12,
+
+        alignItems: 'center',
+        justifyContent: 'center',
+
+        marginTop: 10,
+    },
+
+    continueBtnText: {
+        color: '#000000',
+        fontSize: 22,
+        fontWeight: 'bold',
+        letterSpacing: 2,
+        textAlign: 'center',
     },
 };
 
