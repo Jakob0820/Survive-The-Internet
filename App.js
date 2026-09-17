@@ -7,7 +7,7 @@ import {
   TextInput, 
   SafeAreaView, 
   StatusBar,
-  Platform
+  Platform,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
  
@@ -60,7 +60,7 @@ export default function App() {
 
 
   //Test Modus
-  const TEST_MODE = true;
+  const TEST_MODE = false;
   const TEST_SCREEN = 'evaluation';
 
   React.useEffect(() => {
@@ -69,8 +69,8 @@ export default function App() {
     const testPlayers = [
         {
             name: 'Spieler 1',
-            color: COLOR_OPTIONS[6],
-            image: COLOR_IMAGES[6],
+            color: COLOR_OPTIONS[0],
+            image: COLOR_IMAGES[0],
         },
         {
             name: 'Spieler 2',
@@ -79,8 +79,8 @@ export default function App() {
         },
         {
             name: 'Spieler 3',
-            color: COLOR_OPTIONS[2],
-            image: COLOR_IMAGES[2],
+            color: COLOR_OPTIONS[6],
+            image: COLOR_IMAGES[6],
         },
     ];
 
@@ -312,11 +312,19 @@ export default function App() {
   };
 
   const nextEvaluation = () => {
-      if(currentPlayerIndex < playerCount - 1) {
-        setCurrentPlayerIndex(currentPlayerIndex + 1);
-      } else {
-        handleNextRound();
-      }
+    if(currentPlayerIndex < playerCount - 1) {
+      setCurrentPlayerIndex(currentPlayerIndex + 1);
+    } else {
+      return;
+    }
+  }
+
+  const previousEvaluation = () => {
+    if(currentPlayerIndex > 0) {
+      setCurrentPlayerIndex(currentPlayerIndex - 1);
+    } else {
+      return;
+    }
   }
   
  
@@ -335,10 +343,12 @@ export default function App() {
       
       {currentScreen === 'evaluation' && (
         <EvaluationScreen
+          onShowResult={handleNextRound}
           players = {players}
           playerCount = {playerCount}
           currentPlayerIndex = {currentPlayerIndex}
           onNext = {nextEvaluation}
+          onPrev = {previousEvaluation}
           evaluationData = {evaluationData}
           evaluationOrder= {evaluationOrder}
           currentLogo={currentLogo}

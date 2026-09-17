@@ -11,6 +11,7 @@ import {
     Image,
     SafeAreaView,
     Dimensions,
+    PanResponder,
 } from 'react-native';
 
 function AutoSizeText({ text, style, minFontSize = 16, maxFontSize = 100 }) {
@@ -51,6 +52,7 @@ export default function EvaluationScreen({
     playerCount,
     currentPlayerIndex,
     onNext,
+    onPrev,
     evaluationData,
     evaluationOrder,
     currentLogo,
@@ -58,11 +60,13 @@ export default function EvaluationScreen({
     secondaryColor,
     textColor,
     gameMode,
+    
 }) {
 
     const [showResult, setShowResult] = useState(false);
 
     const [allRevealed, setAllRevealed] = useState(false);
+    const [isVoting, setIsVoting] = useState(false);
 
     const logoHeight = useRef(new Animated.Value(256)).current;
     const logoOpacity = useRef(new Animated.Value(1)).current;
@@ -71,7 +75,10 @@ export default function EvaluationScreen({
     const voteButtonTranslateY = useRef(new Animated.Value(300)).current;
 
     const SCREEN_HEIGHT = Dimensions.get('window').height;
-    const resultTranslateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+    const SCREEN_WIDTH = Dimensions.get('window').width;
+    const resultTranslateY = useRef(new Animated.Value(-SCREEN_HEIGHT)).current;
+    const resultTranslateX = useRef(new Animated.Value(0)).current;
+    const [swipeDirection, setSwipeDirection] = useState(null);
 
     const cardOpacity = useRef(new Animated.Value(0)).current;
     const cardScale = useRef(new Animated.Value(0.9)).current;
@@ -103,40 +110,65 @@ export default function EvaluationScreen({
             }),
         ]).start();
     }, []);
-
+    //Anfangsanimation
     useEffect(() => {
         if (!showResult) return;
-        if (currentPlayerIndex >= playerCount - 1) return;
+        if (allRevealed) return;
 
-        const timer = setTimeout(() => {
-            onNext();
-        }, 700);
+        // Neue Box links außerhalb des Screens starten
+        resultTranslateX.setValue(SCREEN_WIDTH);
 
-        return () => clearTimeout(timer);
-    }, [showResult, currentPlayerIndex, playerCount, onNext]);
-
-   useEffect(() => {
-        if (!showResult) return;
-
-        resultTranslateY.setValue(SCREEN_HEIGHT);
-
-        Animated.timing(resultTranslateY, {
+        // Von links nach innen animieren
+        Animated.timing(resultTranslateX, {
             toValue: 0,
             duration: 500,
             useNativeDriver: true,
-        }).start(({ finished }) => {
-            if (finished && currentPlayerIndex >= playerCount - 1) {
-                const waitTimer = setTimeout(() => {
-                    setAllRevealed(true);
-                }, 7000);
+        }).start();
+
+    }, [showResult, currentPlayerIndex, allRevealed]);
+    //Animation für das Showcase
+    useEffect(() => {
+        if (!showResult) return;
+        if (allRevealed) return;
+        if (isVoting) return;
+
+        const timer = setTimeout(() => {
+
+            if (currentPlayerIndex >= playerCount - 1) {
+                setAllRevealed(true);
+                return;
             }
-        });
-    }, [showResult, currentPlayerIndex]);
+
+            Animated.timing(resultTranslateX, {
+                toValue: -SCREEN_WIDTH,
+                duration: 350,
+                useNativeDriver: true,
+            }).start(({ finished }) => {
+
+                if (finished) {
+                    resultTranslateX.setValue(-SCREEN_WIDTH);
+                    onNext();
+                }
+
+            });
+
+        }, 7000);
+
+        return () => clearTimeout(timer);
+
+    }, [
+        showResult,
+        allRevealed,
+        isVoting,
+        currentPlayerIndex,
+        playerCount,
+        onNext
+    ]);
 
     const handleShowResult = () => {
         setShowResult(true);
     };
-
+    //Logo raus, VotingBar , VotingButton und WeiterButton rein.
     useEffect(() => {
         if (!allRevealed) return;
 
@@ -176,6 +208,144 @@ export default function EvaluationScreen({
         ]).start();
 
     }, [allRevealed]);
+
+    const isSwiping = useRef(false);
+
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => {
+                    return allRevealed && !isSwiping.current;
+                },
+
+                onMoveShouldSetPanResponder: (_, gestureState) => {
+                    if (!allRevealed || isSwiping.current) {
+                        return false;
+                    }
+
+                    return (
+                        Math.abs(gestureState.dx) >
+                        Math.abs(gestureState.dy)
+                    );
+                },
+
+                onPanResponderMove: (_, gestureState) => {
+                    if (!allRevealed || isSwiping.current) return;
+
+                    let dx = gestureState.dx;
+
+                    if (currentPlayerIndex === 0 && dx > 0) {
+                        dx = dx * 0.25;
+                    }
+
+                    if (currentPlayerIndex === playerCount - 1 && dx < 0) {
+                        dx = dx * 0.25;
+                    }
+
+                    resultTranslateX.setValue(dx);
+                },
+
+                onPanResponderRelease: (_, gestureState) => {
+                    if (!allRevealed || isSwiping.current) return;
+
+                    const SWIPE_THRESHOLD = 100;
+
+                    // Nach links → nächster Spieler
+                    if (gestureState.dx < -SWIPE_THRESHOLD) {
+
+                        // Letzter Spieler → ungültig, zurückfedern
+                        if (currentPlayerIndex === playerCount - 1) {
+                            Animated.spring(resultTranslateX, {
+                                toValue: 0,
+                                friction: 6,
+                                tension: 80,
+                                useNativeDriver: true,
+                            }).start();
+
+                            return;
+                        }
+
+                        isSwiping.current = true;
+
+                        Animated.timing(resultTranslateX, {
+                            toValue: -SCREEN_WIDTH,
+                            duration: 250,
+                            useNativeDriver: true,
+                        }).start(({ finished }) => {
+                            if (!finished) {
+                                isSwiping.current = false;
+                                return;
+                            }
+
+                            setSwipeDirection('left');
+                            onNext();
+                        });
+
+                    // Nach rechts → vorheriger Spieler
+                    } else if (gestureState.dx > SWIPE_THRESHOLD) {
+
+                        // Erster Spieler → ungültig, zurückfedern
+                        if (currentPlayerIndex === 0) {
+                            Animated.spring(resultTranslateX, {
+                                toValue: 0,
+                                friction: 6,
+                                tension: 80,
+                                useNativeDriver: true,
+                            }).start();
+
+                            return;
+                        }
+
+                        isSwiping.current = true;
+
+                        Animated.timing(resultTranslateX, {
+                            toValue: SCREEN_WIDTH,
+                            duration: 250,
+                            useNativeDriver: true,
+                        }).start(({ finished }) => {
+                            if (!finished) {
+                                isSwiping.current = false;
+                                return;
+                            }
+
+                            setSwipeDirection('right');
+                            onPrev();
+                        });
+
+                    } else {
+                        // Kein ausreichender Swipe → zurückfedern
+                        Animated.spring(resultTranslateX, {
+                            toValue: 0,
+                            friction: 7,
+                            tension: 60,
+                            useNativeDriver: true,
+                        }).start();
+                    }
+                },
+            }),
+        [allRevealed, onNext, onPrev]
+    );
+
+    useEffect(() => {
+        if (!allRevealed || !swipeDirection) return;
+
+        const startPosition =
+            swipeDirection === 'left'
+                ? SCREEN_WIDTH
+                : -SCREEN_WIDTH;
+
+        resultTranslateX.setValue(startPosition);
+
+        // Neue Karte reinschieben
+        Animated.timing(resultTranslateX, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+        }).start(() => {
+            isSwiping.current = false;
+            setSwipeDirection(null);
+        });
+    }, [currentPlayerIndex, swipeDirection, allRevealed]);
 
     useEffect(() => {
         if (!showResult) {
@@ -242,10 +412,15 @@ export default function EvaluationScreen({
                             />
                         </Animated.View>
                         <Animated.View
+                            {...(allRevealed ? panResponder.panHandlers : {})}
                             style={[
                                 styles.evaluationBox,
                                 { backgroundColor: secondaryColor },
-                                { transform: [{ translateY: resultTranslateY }] },
+                                {
+                                    transform: [
+                                        { translateX: resultTranslateX },
+                                    ],
+                                },
                             ]}
                         >
 
@@ -854,7 +1029,7 @@ export default function EvaluationScreen({
                         <TouchableOpacity
                             style={styles.continueBtn}
                             activeOpacity={0.8}
-                            onPress={() => {}}
+                            onPress={onShowResult}
                         >
                             <Text style={styles.continueBtnText}>WEITER</Text>
                         </TouchableOpacity>
