@@ -22,6 +22,7 @@ import { QUESTIONS, ROUND_TYPE } from './src/constants/questions';
 import GameTransitionScreen from './src/screens/GameTransitionScreen';
 import AnswerScreen from './src/screens/AnswerScreen';
 import EvaluationScreen from './src/screens/EvaluationScreen';
+import { createFakeStats } from './src/constants/stats';
  
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
@@ -58,6 +59,9 @@ export default function App() {
   const currentLogo = currentRoundObj?.logo;
   const colorIndex = COLOR_OPTIONS.indexOf(selectedColor);
 
+  const [voteCount, setVoteCount] = useState([]);
+  const [burnCount, setBurnCount] = useState([]);
+
 
   //Test Modus
   const TEST_MODE = false;
@@ -90,6 +94,9 @@ export default function App() {
     setPlayerCount(3);
     setCurrentPlayerIndex(0);
 
+    setVoteCount([0, 0, 0]);
+    setBurnCount([0, 0, 0]);
+
     setGameRounds([testRound]);
     setCurrentRoundIndex(0);
 
@@ -117,6 +124,7 @@ export default function App() {
         originalIndex,
         originalAnswer: testFirstAnswers[i],
         response: testResponses[i],
+        stats: createFakeStats(),
     }));
 
     setEvaluationData(testCombined);
@@ -151,6 +159,8 @@ export default function App() {
     setAnswerText('');
     setShuffledIndices([]);
     setEvaluationData([]);
+    setVoteCount([]);
+    setBurnCount([]);
 
   }
  
@@ -179,6 +189,8 @@ export default function App() {
       setGameRounds(rounds);
       setCurrentRoundIndex(0);
       setCurrentPlayerIndex(0);
+      setVoteCount(Array(playerCount).fill(0));
+      setBurnCount(Array(playerCount).fill(0));
  
       const firstRoundQuestion = generateQuestions(rounds[0], playerCount);
       setCurrentQuestions(firstRoundQuestion);
@@ -219,9 +231,12 @@ export default function App() {
       const nextQuestions = generateQuestions(nextRoundType, playerCount);
       setCurrentQuestions(nextQuestions);
 
-      setTextValue('');
       setFirstAnswer([]);
       setShuffledFirstAnswers([]);
+      setTextValue('');
+      setAnswerText('');
+      setShuffledIndices([]);
+      setEvaluationData([]);
  
       setCurrentScreen('transition');
     } else {
@@ -299,6 +314,7 @@ export default function App() {
         originalIndex,
         originalAnswer: shuffledFirstAnswers[i],
         response: updatedResponses[i],
+        stats: createFakeStats(),
       }));
 
       setEvaluationData(combined);
@@ -326,6 +342,31 @@ export default function App() {
       return;
     }
   }
+
+  const handleVote = (entryIndex) => {
+    const entry = evaluationData[entryIndex];
+    const votedPlayer = entryIndex; // Name auf der Karte (originalAnswer)
+    const burner = entry.originalIndex;               // Autor der response
+
+    setVoteCount((prev) => prev.map((v, i) => (i === votedPlayer ? v + 1 : v)));
+    setBurnCount((prev) => prev.map((v, i) => (i === burner ? v + 1 : v)));
+  };
+
+  //Vote Test
+
+  /*React.useEffect(() => {
+    const totalVotes = voteCount.reduce((a, b) => a + b, 0);
+    const totalBurns = burnCount.reduce((a, b) => a + b, 0);
+
+    // Nur loggen, wenn alle Stimmen einer Runde verbraucht sind
+    if (totalVotes === 0 || totalVotes % playerCount !== 0) return;
+
+    console.log('--- Alle Stimmen verbraucht ---');
+    players.forEach((p, i) => {
+        console.log(`${p.name}: ${voteCount[i]} Votes, ${burnCount[i]} Burns`);
+    });
+    console.log(`Summe Votes: ${totalVotes}, Summe Burns: ${totalBurns}`);
+  }, [voteCount, burnCount]); */
   
  
     return (
@@ -354,8 +395,8 @@ export default function App() {
           currentLogo={currentLogo}
           primaryColor={currentRoundObj?.color[0]}
           secondaryColor={currentRoundObj?.color[1]}
-          textColor={currentRoundObj?.color[2]}
           gameMode={currentRoundObj?.categoryName}
+          onVote={handleVote}
         />
       )}
 
