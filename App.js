@@ -88,7 +88,8 @@ export default function App() {
         },
     ];
 
-    const testRound = ROUND_TYPE.EBAY;
+    const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
+    const testRounds = [ROUND_TYPE.YOUTUBE, ...shuffleArray(otherRounds).slice(0, 2)];
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -97,11 +98,11 @@ export default function App() {
     setVoteCount([0, 0, 0]);
     setBurnCount([0, 0, 0]);
 
-    setGameRounds([testRound]);
+    setGameRounds(testRounds);
     setCurrentRoundIndex(0);
 
     setCurrentQuestions(
-        generateQuestions(testRound, 3)
+        generateQuestions(testRounds[0], 3)
     );
 
     const testFirstAnswers = [
@@ -345,8 +346,8 @@ export default function App() {
 
   const handleVote = (entryIndex) => {
     const entry = evaluationData[entryIndex];
-    const votedPlayer = entryIndex; // Name auf der Karte (originalAnswer)
-    const burner = entry.originalIndex;               // Autor der response
+    const votedPlayer = entryIndex;
+    const burner = entry.originalIndex;
 
     setVoteCount((prev) => prev.map((v, i) => (i === votedPlayer ? v + 1 : v)));
     setBurnCount((prev) => prev.map((v, i) => (i === burner ? v + 1 : v)));

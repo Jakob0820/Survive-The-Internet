@@ -12,6 +12,7 @@ Image,
 SafeAreaView,
 Dimensions,
 PanResponder,
+Pressable,
 } from 'react-native';
 
 function AutoSizeText({ text, style, minFontSize = 16, maxFontSize = 100 }) {
@@ -67,13 +68,58 @@ const [showResult, setShowResult] = useState(false);
 
 const [allRevealed, setAllRevealed] = useState(false);
 const [revealIndex, setRevealIndex] = useState(0);
+
 const [isVoting, setIsVoting] = useState(false);
 const [votesLeft, setVotesLeft] = useState(playerCount);
+const votingDone = votesLeft <= 0;
+const votesCast = playerCount - votesLeft;
+const voter = players[Math.min(votesCast, playerCount - 1)];
+
+const stampScale = useRef(new Animated.Value(0.3)).current;
+const stampOpacity = useRef(new Animated.Value(0)).current;
+const pressScale = useRef(new Animated.Value(1)).current;
+const voteAnim = useRef(null);
+
+const playVoteFeedback = () => {
+    // laufende Animation stoppen, falls jemand schnell mehrfach tippt
+    voteAnim.current?.stop();
+    stampScale.setValue(0.3);
+    stampOpacity.setValue(0);
+    pressScale.setValue(1);
+
+    voteAnim.current = Animated.parallel([
+        // Stempel poppt auf
+        Animated.spring(stampScale, {
+            toValue: 1,
+            friction: 4,
+            tension: 120,
+            useNativeDriver: true,
+        }),
+        // Stempel ein- und wieder ausblenden
+        Animated.sequence([
+            Animated.timing(stampOpacity, { toValue: 1, duration: 120, useNativeDriver: true }),
+            Animated.delay(450),
+            Animated.timing(stampOpacity, { toValue: 0, duration: 250, useNativeDriver: true }),
+        ]),
+        // Karte drückt sich kurz ein
+        Animated.sequence([
+            Animated.timing(pressScale, { toValue: 0.96, duration: 80, useNativeDriver: true }),
+            Animated.spring(pressScale, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }),
+        ]),
+
+    ]);
+    voteAnim.current.start();
+};
 
 const handleVote = () => {
     if (isSwiping.current || votesLeft <= 0) return;
+    if (isOwnCard) {
+        playDenyFeedback();
+        return;
+    }
     onVote(evaluationOrder[displayIndex]);
     setVotesLeft((v) => v - 1);
+    playVoteFeedback();
 };
 
 const logoHeight = useRef(new Animated.Value(256)).current;
@@ -91,6 +137,7 @@ const cardOpacity = useRef(new Animated.Value(0)).current;
 const cardScale = useRef(new Animated.Value(0.9)).current;
 
 const displayIndex = allRevealed ? revealIndex : currentPlayerIndex;
+const isOwnCard = !votingDone && evaluationOrder[displayIndex] === votesCast;
 
 const currentPlayer = players[evaluationData[evaluationOrder[displayIndex]].originalIndex];
 const playerColor = currentPlayer?.color;
@@ -102,12 +149,28 @@ const SWIPE_THRESHOLD = 100;
 const scrollX = useRef(new Animated.Value(0)).current;
 const revealIndexRef = useRef(0);
 const isSwiping = useRef(false);
+const shakeX = useRef(new Animated.Value(0)).current;
 
 const cardX = useMemo(
     () => evaluationOrder.map((_, i) => Animated.add(scrollX, i * STEP)),
     [evaluationOrder.length, scrollX]
 );
 
+const playDenyFeedback = () => {
+    shakeX.setValue(0);
+    Animated.sequence([
+        Animated.timing(shakeX, { toValue: 10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: -10, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: 6, duration: 50, useNativeDriver: true }),
+        Animated.timing(shakeX, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+};
+//Vote beendet
+useEffect(() => {
+    if (!votingDone) return;
+    const t = setTimeout(onShowResult, 900);
+    return () => clearTimeout(t);
+}, [votingDone]);
 
 useEffect(() => {
     Animated.parallel([
@@ -176,7 +239,7 @@ useEffect(() => {
 
         });
 
-    }, 7000);
+    }, 1000);
 
     return () => clearTimeout(timer);
 
@@ -900,22 +963,6 @@ if (showResult) {
     return (
         <View style={[styles.resultContainer, { backgroundColor: primaryColor }]}>
             <View style={styles.resultScreen}>
-                {allRevealed && (
-                    <Animated.View
-                        style={[
-                            styles.votingBar,
-                            {
-                                transform: [
-                                    { translateY: votingBarTranslateY }
-                                ],
-                            },
-                        ]}
-                    >
-                        <Text style={styles.votingBarText}>
-                            Wähle für den Spieler, der am lächerlichsten aussieht!
-                        </Text>
-                    </Animated.View>
-                )}
                 <SafeAreaView style={styles.resultContent}>
                     <Animated.View style={{ width: '90%', height: logoHeight, opacity: logoOpacity, overflow: 'hidden' }}>
                         <Image
@@ -942,52 +989,103 @@ if (showResult) {
                                         styles.carouselCard,
                                         {
                                             backgroundColor: secondaryColor,
-                                            transform: [{ translateX: allRevealed ? cardX[i] : resultTranslateX }],
+                                            transform: [
+                                                { translateX: allRevealed ? cardX[i] : resultTranslateX },
+                                                { scale: pressScale },
+                                                { translateX: shakeX },
+                                            ],
                                         },
                                     ]}
                                 >
-                                    {renderCardContent(evaluationData[orderIdx])}
+                                    <Pressable
+                                        style={{ width: '100%', height: '100%' }}
+                                        disabled={!allRevealed || votingDone || i !== revealIndex}
+                                        onPress={handleVote}
+                                    >
+                                        {renderCardContent(evaluationData[orderIdx])}
+                                    </Pressable>
+
                                 </Animated.View>
                             );
                         })}
+                        <Animated.View
+                            pointerEvents="none"
+                            style={[
+                                styles.voteStamp,
+                                {
+                                    opacity: stampOpacity,
+                                    transform: [
+                                        { scale: stampScale },
+                                        { rotate: '-10deg' },
+                                    ],
+                                },
+                            ]}
+                        >
+                            <Text style={styles.voteStampEmoji}>🔥</Text>
+                            <View style={styles.voteStampLabelBox}>
+                                <Text style={styles.voteStampLabel}>ABGESTIMMT!</Text>
+                            </View>
+                        </Animated.View>
                     </View>
                 </SafeAreaView>
             </View>
-            {allRevealed && (
-                <Animated.View
-                    style={[
-                        styles.voteButtonContainer,
-                        {
-                            transform: [
-                                { translateY: voteButtonTranslateY }
-                            ],
-                        },
-                    ]}
-                >
-                    <TouchableOpacity
+                {allRevealed && (
+                    <Animated.View
                         style={[
-                            styles.voteBtn,
-                            { backgroundColor: playerColor },
-                            votesLeft <= 0 && styles.voteBtnDisabled,
+                            styles.votingBar,
+                            {
+                                transform: [
+                                    { translateY: votingBarTranslateY },
+                                ],
+                            },
                         ]}
-                        activeOpacity={0.8}
-                        disabled={votesLeft <= 0}
-                        onPress={handleVote}
                     >
-                        <Text style={styles.voteBtnText}>
-                            {votesLeft > 0 ? `ABSTIMMEN (${votesLeft})` : 'KEINE STIMMEN MEHR'}
+                        <Text style={styles.votingBarText}>
+                            Wähle für den Spieler, der am lächerlichsten aussieht!
                         </Text>
-                    </TouchableOpacity>
+                    </Animated.View>
+                )}
+                {allRevealed && (
+                    <Animated.View style={[styles.voteButtonContainer, { transform: [
+                        { translateY: voteButtonTranslateY },
+                    ]}]}>
+                        <View style={styles.voterBox}>
+                            <Image
+                                source={voter?.image}
+                                style={styles.voterAvatar}
+                                resizeMode="contain"
+                            />
 
-                    <TouchableOpacity
-                        style={styles.continueBtn}
-                        activeOpacity={0.8}
-                        onPress={onShowResult}
-                    >
-                        <Text style={styles.continueBtnText}>WEITER</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-            )}
+                            <View style={styles.voterInfo}>
+                                <Text style={styles.voterLabel} numberOfLines={1}>
+                                    {votingDone
+                                        ? 'Alle Stimmen vergeben!'
+                                        : isOwnCard
+                                            ? 'Das ist deine Karte – wisch weiter!'
+                                            : 'Am Zug – Karte antippen'}
+                                </Text>
+                                <Text
+                                    style={[styles.voterName, { color: voter?.color }]}
+                                    numberOfLines={1}
+                                >
+                                    {voter?.name}
+                                </Text>
+
+                                <View style={styles.fireRow}>
+                                    {Array.from({ length: playerCount }).map((_, i) => (
+                                        <Text
+                                            key={i}
+                                            style={[styles.fireToken, i < votesCast && styles.fireTokenUsed]}
+                                        >
+                                            🔥
+                                        </Text>
+                                    ))}
+                                </View>
+                            </View>
+                        </View>
+                    </Animated.View>
+                )}
+
         </View>
     );
 }
@@ -1168,49 +1266,82 @@ voteButtonContainer: {
     elevation: 10,
 },
 
-voteBtn: {
+voterBox: {
     width: '90%',
-    paddingVertical: 20,
-
-    borderRadius: 12,
-
+    minHeight: 112,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 20,
+    flexDirection: 'row',
     alignItems: 'center',
+},
+
+voterAvatar: {
+    width: 56,
+    height: 56,
+    marginRight: 12,
+},
+
+voterInfo: {
+    flex: 1,
+    minWidth: 0,
+},
+
+voterLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#AAAAAA',
+},
+
+voterName: {
+    fontSize: 24,
+    fontWeight: '900',
+},
+
+voteStamp: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
-},
-
-voteBtnText: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    textAlign: 'center',
-},
-
-voteBtnDisabled: {
-    opacity: 1,
-    backgroundColor: '#373737',
-},
-
-continueBtn: {
-    width: '90%',
-    paddingVertical: 20,
-
-    backgroundColor: '#ffffff',
-
-    borderRadius: 12,
-
     alignItems: 'center',
-    justifyContent: 'center',
-
-    marginTop: 10,
 },
 
-continueBtnText: {
-    color: '#000000',
-    fontSize: 22,
-    fontWeight: 'bold',
+voteStampEmoji: {
+    fontSize: 140,
+},
+
+voteStampLabelBox: {
+    backgroundColor: '#000000',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    marginTop: 4,
+},
+
+voteStampLabel: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: '900',
     letterSpacing: 2,
-    textAlign: 'center',
+},
+
+fireRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 4,
+},
+
+fireToken: {
+    fontSize: 20,
+    marginRight: 3,
+},
+
+fireTokenUsed: {
+    opacity: 0.2,
 },
 
 carouselWrapper: {
