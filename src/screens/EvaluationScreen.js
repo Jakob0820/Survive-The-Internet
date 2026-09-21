@@ -118,9 +118,29 @@ const handleVote = () => {
         return;
     }
     onVote(evaluationOrder[displayIndex]);
+    setCardVotes((prev) =>
+        prev.map((v, i) => (i === evaluationOrder[displayIndex] ? v + 1 : v))
+    );
     setVotesLeft((v) => v - 1);
     playVoteFeedback();
 };
+
+const POINTS_RESPONSE = 100;
+const POINTS_ANSWER = 50;  
+
+const [cardVotes, setCardVotes] = useState(() => Array(playerCount).fill(0));
+const [tallyActive, setTallyActive] = useState(false);
+const [tallyIndex, setTallyIndex] = useState(-1);
+const tallyOrderIdx = evaluationOrder[tallyIndex];
+const tallyVotes = cardVotes[tallyOrderIdx] ?? 0;
+const tallyResponseAuthor = players[tallyOrderIdx];
+const tallyAnswerAuthor = players[evaluationData[tallyOrderIdx]?.originalIndex];
+
+const flameScales = useRef(
+    Array.from({ length: playerCount }, () => new Animated.Value(0))
+).current;
+const pointsAnim = useRef(new Animated.Value(0)).current;
+const tallyTimer = useRef(null);
 
 const logoHeight = useRef(new Animated.Value(256)).current;
 const logoOpacity = useRef(new Animated.Value(1)).current;
@@ -165,12 +185,71 @@ const playDenyFeedback = () => {
         Animated.timing(shakeX, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start();
 };
-//Vote beendet
+
+const playTallyReveal = (votes, onDone) => {
+    flameScales.forEach((v) => v.setValue(0));
+    pointsAnim.setValue(0);
+
+    Animated.sequence([
+        // Flammen poppen nacheinander auf
+        Animated.stagger(
+            180,
+            flameScales.slice(0, votes).map((v) =>
+                Animated.spring(v, { toValue: 1, friction: 4, tension: 140, useNativeDriver: true })
+            )
+        ),
+        // danach fährt die Punkteleiste ein
+        Animated.timing(pointsAnim, { toValue: 1, duration: 350, useNativeDriver: true }),
+    ]).start(({ finished }) => finished && onDone());
+};
+
+const runTally = (k) => {
+    setTallyIndex(k);
+    playTallyReveal(cardVotes[evaluationOrder[k]], () => {
+        // Karte kurz stehen lassen, dann weiter
+        tallyTimer.current = setTimeout(() => {
+            if (k >= evaluationOrder.length - 1) {
+                onShowResult();
+                return;
+            }
+            Animated.parallel([
+                Animated.timing(pointsAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
+                Animated.timing(scrollX, {
+                    toValue: -(k + 1) * STEP,
+                    duration: 350,
+                    useNativeDriver: true,
+                }),
+            ]).start(({ finished }) => {
+                if (finished) runTally(k + 1);
+            });
+        }, 3000);
+    });
+};
+
+const startTally = () => {
+    setTallyActive(true);
+
+    // zu Karte 0 zurückspulen
+    Animated.timing(scrollX, {
+        toValue: 0,
+        duration: revealIndexRef.current === 0 ? 0 : 500,
+        useNativeDriver: true,
+    }).start(({ finished }) => {
+        if (!finished) return;
+        revealIndexRef.current = 0;
+        setRevealIndex(0);
+        runTally(0);
+    });
+};
+
 useEffect(() => {
     if (!votingDone) return;
-    const t = setTimeout(onShowResult, 900);
+    const t = setTimeout(startTally, 900);
     return () => clearTimeout(t);
 }, [votingDone]);
+
+useEffect(() => () => clearTimeout(tallyTimer.current), []);
+
 
 useEffect(() => {
     Animated.parallel([
@@ -187,6 +266,7 @@ useEffect(() => {
         }),
     ]).start();
 }, []);
+
 useEffect(() => {
     Animated.timing(scrollX, {
         toValue: 0,
@@ -239,7 +319,7 @@ useEffect(() => {
 
         });
 
-    }, 1000);
+    }, 7000);
 
     return () => clearTimeout(timer);
 
@@ -266,7 +346,7 @@ useEffect(() => {
             useNativeDriver: false,
         }),
         Animated.timing(logoHeight, {
-            toValue: 120,
+            toValue: 130,
             duration: 600,
             useNativeDriver: false,
         }),
@@ -959,6 +1039,35 @@ const renderCardContent = (entry) => {
     );
 };
 
+const renderTallyOverlay = (orderIdx) => {
+    const votes = cardVotes[orderIdx];
+
+    return (
+        <View pointerEvents="none" style={styles.tallyFlames}>
+            <View style={styles.tallyFlamesPill}>
+                {votes === 0 ? (
+                    <Text style={styles.tallyNoVotes}>Keine Stimmen</Text>
+                ) : (
+                    Array.from({ length: votes }).map((_, j) => (
+                        <Animated.Text
+                            key={j}
+                            style={[
+                                styles.tallyFlame,
+                                {
+                                    opacity: flameScales[j],
+                                    transform: [{ scale: flameScales[j] }],
+                                },
+                            ]}
+                        >
+                            🔥
+                        </Animated.Text>
+                    ))
+                )}
+            </View>
+        </View>
+    );
+};
+
 if (showResult) {
     return (
         <View style={[styles.resultContainer, { backgroundColor: primaryColor }]}>
@@ -972,12 +1081,12 @@ if (showResult) {
                         />
                     </Animated.View>
                     <View
-                        {...(allRevealed ? panResponder.panHandlers : {})}
+                        {...(allRevealed && !tallyActive ? panResponder.panHandlers : {})}
                         style={styles.carouselWrapper}
                     >
                         {evaluationOrder.map((orderIdx, i) => {
                             const visible = allRevealed
-                                ? Math.abs(i - revealIndex) <= 1
+                                ? tallyActive || Math.abs(i - revealIndex) <= 1
                                 : i === currentPlayerIndex;
                             if (!visible) return null;
 
@@ -1008,6 +1117,17 @@ if (showResult) {
                                 </Animated.View>
                             );
                         })}
+                        {tallyActive && tallyIndex >= 0 && (
+                            <Animated.View
+                                pointerEvents="none"
+                                style={[
+                                    styles.tallyOverlay,
+                                    { transform: [{ translateX: cardX[tallyIndex] }] },
+                                ]}
+                            >
+                                {renderTallyOverlay(evaluationOrder[tallyIndex])}
+                            </Animated.View>
+                        )}
                         <Animated.View
                             pointerEvents="none"
                             style={[
@@ -1041,7 +1161,9 @@ if (showResult) {
                         ]}
                     >
                         <Text style={styles.votingBarText}>
-                            Wähle für den Spieler, der am lächerlichsten aussieht!
+                            {tallyActive
+                                ? 'Die Stimmen sind ausgezählt!'
+                                : 'Wähle für den Spieler, der am lächerlichsten aussieht!'}
                         </Text>
                     </Animated.View>
                 )}
@@ -1049,6 +1171,65 @@ if (showResult) {
                     <Animated.View style={[styles.voteButtonContainer, { transform: [
                         { translateY: voteButtonTranslateY },
                     ]}]}>
+                        {tallyActive ? (
+                            <Animated.View
+                                style={[
+                                    styles.tallyPointsBox,
+                                    {
+                                        opacity: pointsAnim,
+                                        transform: [{
+                                            translateY: pointsAnim.interpolate({
+                                                inputRange: [0, 1],
+                                                outputRange: [30, 0],
+                                            }),
+                                        }],
+                                    },
+                                ]}
+                            >
+                                {/* Einmalige Überschrift */}
+                                <Text style={styles.tallyLabel}>
+                                    PUNKTZAHL
+                                </Text>
+
+                                {/* Spieler */}
+                                {[
+                                    {
+                                        player: tallyResponseAuthor,
+                                        points: tallyVotes * POINTS_RESPONSE,
+                                        primary: true,
+                                    },
+                                    {
+                                        player: tallyAnswerAuthor,
+                                        points: tallyVotes * POINTS_ANSWER,
+                                        primary: false,
+                                    },
+                                ].map(({ player, points, primary }, k) => (
+                                    <View key={k} style={styles.tallyChip}>
+                                        <Text
+                                            style={[
+                                                primary
+                                                    ? styles.tallyChipNamePrimary
+                                                    : styles.tallyChipNameSecondary,
+                                                { color: player?.color },
+                                            ]}
+                                            numberOfLines={1}
+                                        >
+                                            {player?.name}
+                                        </Text>
+
+                                        <Text
+                                            style={
+                                                primary
+                                                    ? styles.tallyChipPointsPrimary
+                                                    : styles.tallyChipPointsSecondary
+                                            }
+                                        >
+                                            +{points}
+                                        </Text>
+                                    </View>
+                                ))}
+                            </Animated.View>
+                        ) : (
                         <View style={styles.voterBox}>
                             <Image
                                 source={voter?.image}
@@ -1061,7 +1242,7 @@ if (showResult) {
                                     {votingDone
                                         ? 'Alle Stimmen vergeben!'
                                         : isOwnCard
-                                            ? 'Das ist deine Karte – wisch weiter!'
+                                            ? 'Deine eigene Karte - Wische Weiter!'
                                             : 'Am Zug – Karte antippen'}
                                 </Text>
                                 <Text
@@ -1083,6 +1264,7 @@ if (showResult) {
                                 </View>
                             </View>
                         </View>
+                        )}
                     </Animated.View>
                 )}
 
@@ -1350,7 +1532,7 @@ carouselWrapper: {
     marginTop: 'auto',
     marginBottom: 20,
     position: 'relative',
-    overflow: 'hidden',
+    overflow: 'visible',
 },
 
 carouselCard: {
@@ -1361,6 +1543,102 @@ carouselCard: {
     height: '100%',
     marginTop: 0,
     marginBottom: 0,
+},
+
+tallyOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: '5%',
+    width: '90%',
+    height: '100%',
+},
+
+tallyFlames: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+},
+
+tallyFlamesPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgb(255, 255, 255)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+},
+
+tallyFlame: {
+    fontSize: 30,
+    marginHorizontal: 2,
+},
+
+tallyNoVotes: {
+    color: '#000000',
+    fontSize: 18,
+    fontWeight: '900',
+},
+
+tallyPointsBox: {
+    width: '90%',
+    height: 130,
+
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    justifyContent: 'center',
+
+    overflow: 'hidden',
+},
+
+tallyChip: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+
+    paddingHorizontal: 14,
+    paddingVertical: 2,
+},
+
+tallyChipNamePrimary: {
+    flex: 1,
+    fontSize: 32,
+    fontWeight: '900',
+},
+
+tallyChipNameSecondary: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '900',
+},
+
+tallyChipPointsPrimary: {
+    fontSize: 38,
+    fontWeight: '900',
+    color: '#000000',
+},
+
+tallyChipPointsSecondary: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#000000',
+},
+
+tallyLabel: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#999999',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    textAlign: 'left',
+    marginLeft: 14,
+    marginTop: 5,
 },
 
 };
