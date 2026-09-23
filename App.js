@@ -23,6 +23,7 @@ import GameTransitionScreen from './src/screens/GameTransitionScreen';
 import AnswerScreen from './src/screens/AnswerScreen';
 import EvaluationScreen from './src/screens/EvaluationScreen';
 import { createFakeStats } from './src/constants/stats';
+import ResultScreen from './src/screens/ResultScreen';
  
 export default function App() {
   // Screen Steuerung: 'main', 'options', oder 'game'
@@ -64,7 +65,7 @@ export default function App() {
 
 
   //Test Modus
-  const TEST_MODE = false;
+  const TEST_MODE = true;
   const TEST_SCREEN = 'evaluation';
 
   React.useEffect(() => {
@@ -89,7 +90,7 @@ export default function App() {
     ];
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
-    const testRounds = [ROUND_TYPE.YOUTUBE, ...shuffleArray(otherRounds).slice(0, 2)];
+    const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -385,7 +386,7 @@ export default function App() {
       
       {currentScreen === 'evaluation' && (
         <EvaluationScreen
-          onShowResult={handleNextRound}
+          onShowResult={() => setCurrentScreen('result')}
           players = {players}
           playerCount = {playerCount}
           currentPlayerIndex = {currentPlayerIndex}
@@ -491,6 +492,15 @@ export default function App() {
             shuffledAnswers={shuffledFirstAnswers}
             onNext={nextAnswer}
             answerPrompt={currentRoundObj?.answer?.[0]}
+          />
+        )}
+
+        {currentScreen === 'result' && (
+          <ResultScreen
+            voteCount={voteCount}
+            burnCount={burnCount}
+            players={players}
+
           />
         )}
  

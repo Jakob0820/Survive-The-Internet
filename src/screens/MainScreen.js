@@ -7,43 +7,43 @@ export default function MainScreen ({
   options,
 }) 
 {
-    return (
-            <View style={styles.screenContainer}>
-              {/* Titel-Header */}
-              <View style={styles.header}>
-                <Text style={styles.title}>{'SURVIVE THE\nINTERNET'}</Text>
-                <Text style={styles.subtitle}>GOONER EDITION</Text>
-              </View>
-    
-              {/* Menü-Karte mit Buttons */}
-              <View style={styles.card}>
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnPrimary]}
-                  activeOpacity={0.8}
-                  onPress={local}
-                >
-                  <Text style={styles.btnPrimaryText}>▶   LOKALES SPIEL</Text>
-                </TouchableOpacity>
-    
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnPrimary]}
-                  activeOpacity={0.8}
-                  onPress={online}
-                >
-                  <Text style={styles.btnPrimaryText}>▶   ONLINE</Text>
-                </TouchableOpacity>
-    
-                <TouchableOpacity
-                  style={[styles.btn, styles.btnSecondary]}
-                  activeOpacity={0.8}
-                  onPress={options}
-                >
-                  <Text style={styles.btnSecondaryText}>⚙   OPTIONEN</Text>
-                </TouchableOpacity>
-              </View>
+  return (
+          <View style={styles.screenContainer}>
+            {/* Titel-Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>{'SURVIVE THE\nINTERNET'}</Text>
+              <Text style={styles.subtitle}>GOONER EDITION</Text>
             </View>
-        )
-  }
+  
+            {/* Menü-Karte mit Buttons */}
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={[styles.btn, styles.btnPrimary]}
+                activeOpacity={0.8}
+                onPress={local}
+              >
+                <Text style={styles.btnPrimaryText}>▶   LOKALES SPIEL</Text>
+              </TouchableOpacity>
+  
+              <TouchableOpacity
+                style={[styles.btn, styles.btnPrimary]}
+                activeOpacity={0.8}
+                onPress={online}
+              >
+                <Text style={styles.btnPrimaryText}>▶   ONLINE</Text>
+              </TouchableOpacity>
+  
+              <TouchableOpacity
+                style={[styles.btn, styles.btnSecondary]}
+                activeOpacity={0.8}
+                onPress={options}
+              >
+                <Text style={styles.btnSecondaryText}>⚙   OPTIONEN</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+    )
+}
 const styles = StyleSheet.create({
     header: {
     alignItems: 'center',

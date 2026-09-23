@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState, useMemo, useLayoutEffect, use } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import tinycolor from 'tinycolor2';
-import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
+import {COLOR_IMAGES } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import {
 StyleSheet,
@@ -69,7 +69,6 @@ const [showResult, setShowResult] = useState(false);
 const [allRevealed, setAllRevealed] = useState(false);
 const [revealIndex, setRevealIndex] = useState(0);
 
-const [isVoting, setIsVoting] = useState(false);
 const [votesLeft, setVotesLeft] = useState(playerCount);
 const votingDone = votesLeft <= 0;
 const votesCast = playerCount - votesLeft;
@@ -148,9 +147,7 @@ const logoOpacity = useRef(new Animated.Value(1)).current;
 const votingBarTranslateY = useRef(new Animated.Value(-300)).current;
 const voteButtonTranslateY = useRef(new Animated.Value(300)).current;
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const resultTranslateY = useRef(new Animated.Value(-SCREEN_HEIGHT)).current;
 const resultTranslateX = useRef(new Animated.Value(0)).current;
 
 const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -158,10 +155,6 @@ const cardScale = useRef(new Animated.Value(0.9)).current;
 
 const displayIndex = allRevealed ? revealIndex : currentPlayerIndex;
 const isOwnCard = !votingDone && evaluationOrder[displayIndex] === votesCast;
-
-const currentPlayer = players[evaluationData[evaluationOrder[displayIndex]].originalIndex];
-const playerColor = currentPlayer?.color;
-const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
 const STEP = SCREEN_WIDTH;
 const SWIPE_THRESHOLD = 100;
@@ -294,7 +287,6 @@ useEffect(() => {
 useEffect(() => {
     if (!showResult) return;
     if (allRevealed) return;
-    if (isVoting) return;
 
     const timer = setTimeout(() => {
 
@@ -319,14 +311,13 @@ useEffect(() => {
 
         });
 
-    }, 7000);
+    }, 1000);
 
     return () => clearTimeout(timer);
 
 }, [
     showResult,
     allRevealed,
-    isVoting,
     currentPlayerIndex,
     playerCount,
     onNext
@@ -573,7 +564,7 @@ const renderCardContent = (entry) => {
                                 resizeMode="contain"
                             />
                             <View style={styles.redditCommentInfo}>
-                                <Text style={styles.redditSecondaryUsername}>
+                                <Text style={[styles.redditSecondaryUsername, {color: pColor}]}>
                                     {player?.name}
                                 </Text>
 
@@ -1073,101 +1064,116 @@ if (showResult) {
         <View style={[styles.resultContainer, { backgroundColor: primaryColor }]}>
             <View style={styles.resultScreen}>
                 <SafeAreaView style={styles.resultContent}>
-                    <Animated.View style={{ width: '90%', height: logoHeight, opacity: logoOpacity, overflow: 'hidden' }}>
+
+                    <Animated.View
+                        style={{
+                            width: '90%',
+                            height: logoHeight,
+                            opacity: logoOpacity,
+                            overflow: 'hidden',
+                        }}
+                    >
                         <Image
                             source={currentLogo}
                             style={{ width: '100%', height: 256 }}
                             resizeMode="contain"
                         />
                     </Animated.View>
-                    <View
-                        {...(allRevealed && !tallyActive ? panResponder.panHandlers : {})}
-                        style={styles.carouselWrapper}
-                    >
-                        {evaluationOrder.map((orderIdx, i) => {
-                            const visible = allRevealed
-                                ? tallyActive || Math.abs(i - revealIndex) <= 1
-                                : i === currentPlayerIndex;
-                            if (!visible) return null;
 
-                            return (
+
+                    {/* Evaluation + voterBox als EINEN unteren Block */}
+                    <View style={styles.bottomContent}>
+
+                        <View
+                            {...(allRevealed && !tallyActive ? panResponder.panHandlers : {})}
+                            style={styles.carouselWrapper}
+                        >
+                            {evaluationOrder.map((orderIdx, i) => {
+                                const visible = allRevealed
+                                    ? tallyActive || Math.abs(i - revealIndex) <= 1
+                                    : i === currentPlayerIndex;
+
+                                if (!visible) return null;
+
+                                return (
+                                    <Animated.View
+                                        key={i}
+                                        style={[
+                                            styles.evaluationBox,
+                                            styles.carouselCard,
+                                            {
+                                                backgroundColor: secondaryColor,
+                                                transform: [
+                                                    {
+                                                        translateX: allRevealed
+                                                            ? cardX[i]
+                                                            : resultTranslateX
+                                                    },
+                                                    { scale: pressScale },
+                                                    { translateX: shakeX },
+                                                ],
+                                            },
+                                        ]}
+                                    >
+                                        <Pressable
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                            }}
+                                            disabled={
+                                                !allRevealed ||
+                                                votingDone ||
+                                                i !== revealIndex
+                                            }
+                                            onPress={handleVote}
+                                        >
+                                            {renderCardContent(evaluationData[orderIdx])}
+                                        </Pressable>
+                                    </Animated.View>
+                                );
+                            })}
+
+                            {tallyActive && tallyIndex >= 0 && (
                                 <Animated.View
-                                    key={i}
+                                    pointerEvents="none"
                                     style={[
-                                        styles.evaluationBox,
-                                        styles.carouselCard,
+                                        styles.tallyOverlay,
                                         {
-                                            backgroundColor: secondaryColor,
                                             transform: [
-                                                { translateX: allRevealed ? cardX[i] : resultTranslateX },
-                                                { scale: pressScale },
-                                                { translateX: shakeX },
+                                                { translateX: cardX[tallyIndex] }
                                             ],
                                         },
                                     ]}
                                 >
-                                    <Pressable
-                                        style={{ width: '100%', height: '100%' }}
-                                        disabled={!allRevealed || votingDone || i !== revealIndex}
-                                        onPress={handleVote}
-                                    >
-                                        {renderCardContent(evaluationData[orderIdx])}
-                                    </Pressable>
-
+                                    {renderTallyOverlay(
+                                        evaluationOrder[tallyIndex]
+                                    )}
                                 </Animated.View>
-                            );
-                        })}
-                        {tallyActive && tallyIndex >= 0 && (
+                            )}
+
                             <Animated.View
                                 pointerEvents="none"
                                 style={[
-                                    styles.tallyOverlay,
-                                    { transform: [{ translateX: cardX[tallyIndex] }] },
+                                    styles.voteStamp,
+                                    {
+                                        opacity: stampOpacity,
+                                        transform: [
+                                            { scale: stampScale },
+                                            { rotate: '-10deg' },
+                                        ],
+                                    },
                                 ]}
                             >
-                                {renderTallyOverlay(evaluationOrder[tallyIndex])}
+                                <Text style={styles.voteStampEmoji}>🔥</Text>
+
+                                <View style={styles.voteStampLabelBox}>
+                                    <Text style={styles.voteStampLabel}>
+                                        ABGESTIMMT!
+                                    </Text>
+                                </View>
                             </Animated.View>
-                        )}
-                        <Animated.View
-                            pointerEvents="none"
-                            style={[
-                                styles.voteStamp,
-                                {
-                                    opacity: stampOpacity,
-                                    transform: [
-                                        { scale: stampScale },
-                                        { rotate: '-10deg' },
-                                    ],
-                                },
-                            ]}
-                        >
-                            <Text style={styles.voteStampEmoji}>🔥</Text>
-                            <View style={styles.voteStampLabelBox}>
-                                <Text style={styles.voteStampLabel}>ABGESTIMMT!</Text>
-                            </View>
-                        </Animated.View>
-                    </View>
-                </SafeAreaView>
-            </View>
-                {allRevealed && (
-                    <Animated.View
-                        style={[
-                            styles.votingBar,
-                            {
-                                transform: [
-                                    { translateY: votingBarTranslateY },
-                                ],
-                            },
-                        ]}
-                    >
-                        <Text style={styles.votingBarText}>
-                            {tallyActive
-                                ? 'Die Stimmen sind ausgezählt!'
-                                : 'Wähle für den Spieler, der am lächerlichsten aussieht!'}
-                        </Text>
-                    </Animated.View>
-                )}
-                {allRevealed && (
+                        </View>
+                        {allRevealed && (
                     <Animated.View style={[styles.voteButtonContainer, { transform: [
                         { translateY: voteButtonTranslateY },
                     ]}]}>
@@ -1268,6 +1274,28 @@ if (showResult) {
                     </Animated.View>
                 )}
 
+                    </View>
+
+                </SafeAreaView>
+            </View>
+                {allRevealed && (
+                    <Animated.View
+                        style={[
+                            styles.votingBar,
+                            {
+                                transform: [
+                                    { translateY: votingBarTranslateY },
+                                ],
+                            },
+                        ]}
+                    >
+                        <Text style={styles.votingBarText}>
+                            {tallyActive
+                                ? 'Die Stimmen sind ausgezählt!'
+                                : 'Wähle für den Spieler, der am lächerlichsten aussieht!'}
+                        </Text>
+                    </Animated.View>
+                )}
         </View>
     );
 }
@@ -1343,10 +1371,6 @@ evaluatingText: {
 
 evaluationBox: {
     width: '90%',
-    height: 500,
-
-    marginTop: 'auto',
-    marginBottom: 20,
 
     backgroundColor: '#FFFFFF',
 
@@ -1390,6 +1414,7 @@ btnText: {
     textAlign: 'center',
 },
 
+
 resultContainer: {
     position: 'absolute',
     top: 0,
@@ -1405,9 +1430,16 @@ resultContent: {
     alignItems: 'center',
 },
 
-resultLogo: {
-    width: '90%',
-    height: 256,
+resultScreen: {
+    flex: 1,
+    width: '100%',
+},
+
+bottomContent: {
+    width: '100%',
+    alignItems: 'center',
+
+    marginTop: 5,
 },
 
 votingBar: {
@@ -1439,25 +1471,27 @@ votingBarText: {
 },
 
 voteButtonContainer: {
-    position: 'absolute',
-    bottom: 35,
-    left: 0,
-    right: 0,
+    width: '100%',
     alignItems: 'center',
-    zIndex: 100,
-    elevation: 10,
+    flexShrink: 0,
 },
 
 voterBox: {
     width: '90%',
-    minHeight: 112,
+    height: 100,
+
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
+
+    marginTop: 20,
+
     paddingHorizontal: 16,
     paddingVertical: 14,
-    marginBottom: 20,
+
     flexDirection: 'row',
     alignItems: 'center',
+
+    flexShrink: 0,
 },
 
 voterAvatar: {
@@ -1472,8 +1506,8 @@ voterInfo: {
 },
 
 voterLabel: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
     color: '#AAAAAA',
 },
 
@@ -1529,10 +1563,11 @@ fireTokenUsed: {
 carouselWrapper: {
     width: '100%',
     height: 500,
-    marginTop: 'auto',
-    marginBottom: 20,
+
     position: 'relative',
     overflow: 'visible',
+
+    flexShrink: 0,
 },
 
 carouselCard: {
@@ -1562,7 +1597,7 @@ tallyFlames: {
 tallyFlamesPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgb(255, 255, 255)',
+    backgroundColor: 'rgb(83, 83, 83)',
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -1574,19 +1609,20 @@ tallyFlame: {
 },
 
 tallyNoVotes: {
-    color: '#000000',
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 22,
     fontWeight: '900',
 },
 
 tallyPointsBox: {
     width: '90%',
-    height: 130,
+    height: 120,
+    marginTop: 20,
 
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
 
-    paddingVertical: 14,
+    paddingVertical: 8,
     paddingHorizontal: 10,
 
     flexDirection: 'column',
@@ -1608,7 +1644,7 @@ tallyChip: {
 
 tallyChipNamePrimary: {
     flex: 1,
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '900',
 },
 
@@ -1619,7 +1655,7 @@ tallyChipNameSecondary: {
 },
 
 tallyChipPointsPrimary: {
-    fontSize: 38,
+    fontSize: 36,
     fontWeight: '900',
     color: '#000000',
 },
@@ -1631,7 +1667,7 @@ tallyChipPointsSecondary: {
 },
 
 tallyLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
     color: '#999999',
     textTransform: 'uppercase',
@@ -1876,11 +1912,11 @@ redditCommentText: {
 // ── YouTube ──────────────────────────────────────────
 const youtubeStyles = {
 youtubeInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
 },
 
 youtubeVideoBar: {
@@ -1889,12 +1925,6 @@ youtubeVideoBar: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
-},
-
-youtubeControlIcon: {
-    fontSize: 28,
-    color: '#FFFFFF',
-    marginRight: 15,
 },
 
 youtubeProgressTrack: {
@@ -2571,11 +2601,11 @@ twitterStatText: {
 // ── Ebay ─────────────────────────────────────────────
 const ebayStyles = {
 ebayInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
 },
 
 ebaySearchBar: {
@@ -2603,10 +2633,6 @@ ebaySearchPlaceholder: {
     fontSize: 16,
     color: '#999999',
     minWidth: 0,
-},
-
-ebaySearchIconWrapper: {
-    marginLeft: 8,
 },
 
 ebayTitleSection: {
