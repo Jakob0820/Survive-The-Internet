@@ -500,6 +500,7 @@ export default function App() {
             voteCount={voteCount}
             burnCount={burnCount}
             players={players}
+            onNext={handleNextRound}
 
           />
         )}

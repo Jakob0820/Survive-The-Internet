@@ -15,6 +15,7 @@ export default function ResultScreen({
     voteCount,
     burnCount,
     players,
+    onNext,
 }) {
     const ranking = useMemo(() => {
         return players
