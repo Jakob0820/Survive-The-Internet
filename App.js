@@ -65,7 +65,7 @@ export default function App() {
 
 
   //Test Modus
-  const TEST_MODE = true;
+  const TEST_MODE = false;
   const TEST_SCREEN = 'evaluation';
 
   React.useEffect(() => {
@@ -152,6 +152,7 @@ export default function App() {
   const resetPlayerSetup = () => {
     setPlayerCount(3);
     setCurrentPlayerIndex(0);
+    setCurrentRoundIndex(0);
     setPlayerName(`Spieler 1`);
     setSelectedColor(COLOR_OPTIONS[0]);
     setPlayers([]);
@@ -161,6 +162,7 @@ export default function App() {
     setAnswerText('');
     setShuffledIndices([]);
     setEvaluationData([]);
+    setEvaluationOrder([]);
     setVoteCount([]);
     setBurnCount([]);
 
@@ -235,16 +237,17 @@ export default function App() {
 
       setFirstAnswer([]);
       setShuffledFirstAnswers([]);
+      setSecondAnswer([]);
       setTextValue('');
       setAnswerText('');
       setShuffledIndices([]);
+      setEvaluationOrder([]);
       setEvaluationData([]);
  
       setCurrentScreen('transition');
     } else {
+      resetPlayerSetup();
       setCurrentScreen('main');
-      setCurrentRoundIndex(0);
-      setCurrentPlayerIndex(0);
       //später results
     }
   }
