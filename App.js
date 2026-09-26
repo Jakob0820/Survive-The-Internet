@@ -65,7 +65,7 @@ export default function App() {
 
 
   //Test Modus
-  const TEST_MODE = false;
+  const TEST_MODE = true;
   const TEST_SCREEN = 'evaluation';
 
   React.useEffect(() => {
@@ -90,7 +90,8 @@ export default function App() {
     ];
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
-    const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
+    //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
+    const testRounds = [ROUND_TYPE.REDDIT, ROUND_TYPE.YOUTUBE]
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -246,9 +247,26 @@ export default function App() {
  
       setCurrentScreen('transition');
     } else {
-      resetPlayerSetup();
-      setCurrentScreen('main');
-      //später results
+        setFirstAnswer([]);
+        setShuffledFirstAnswers([]);
+        setSecondAnswer([]);
+        setTextValue('');
+        setAnswerText('');
+        setShuffledIndices([]);
+        setEvaluationOrder([]);
+        setEvaluationData([]);
+        setVoteCount(Array(playerCount).fill(0));
+        setBurnCount(Array(playerCount).fill(0));
+
+        const rounds = generateGameRounds(5);
+        setGameRounds(rounds);
+        setCurrentRoundIndex(0);
+
+        const firstRoundQuestion = generateQuestions(rounds[0], playerCount);
+        setCurrentQuestions(firstRoundQuestion);
+
+        setCurrentPlayerIndex(0);
+        setCurrentScreen('transition');
     }
   }
  
@@ -356,6 +374,12 @@ export default function App() {
     setVoteCount((prev) => prev.map((v, i) => (i === votedPlayer ? v + 1 : v)));
     setBurnCount((prev) => prev.map((v, i) => (i === burner ? v + 1 : v)));
   };
+
+  const isLastRound = () => {
+    if(currentRoundIndex < gameRounds.length - 1) {
+      return false;
+    } else return true;
+  }
 
   //Vote Test
 
@@ -504,6 +528,11 @@ export default function App() {
             burnCount={burnCount}
             players={players}
             onNext={handleNextRound}
+            isLastRound={isLastRound()}
+            onBack={() => {
+              resetPlayerSetup();
+              setCurrentScreen('main');            
+            }}
 
           />
         )}

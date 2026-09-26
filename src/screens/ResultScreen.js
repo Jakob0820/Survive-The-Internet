@@ -19,6 +19,8 @@ export default function ResultScreen({
     burnCount,
     players,
     onNext,
+    onBack,
+    isLastRound,
 }) {
     const ranking = useMemo(() => {
         return players
@@ -75,8 +77,21 @@ export default function ResultScreen({
                         activeOpacity={0.8}
                         onPress={onNext}
                     >
-                        <Text style={styles.btnPrimaryText}>NÄCHSTE RUNDE</Text>
+                        <Text style={styles.btnPrimaryText}>
+                            {isLastRound == true ? 'NOCHMAL SPIELEN' : 'NÄCHSTE RUNDE' }
+                        </Text>
                     </TouchableOpacity>
+                    {isLastRound && (
+                        <TouchableOpacity
+                            style={[styles.btn, styles.btnPrimary, {marginTop: 10}]}
+                            activeOpacity={0.8}
+                            onPress={onBack}
+                        >
+                            <Text style={styles.btnPrimaryText}>
+                                HAUTPMENÜ
+                            </Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         </View>
@@ -192,7 +207,7 @@ const styles = StyleSheet.create({
 
     btnPrimaryText: {
         color: '#ffffff',
-        fontSize: 25,
+        fontSize: 20,
         fontWeight: 'bold',
         letterSpacing: 2,
         marginVertical: 5,

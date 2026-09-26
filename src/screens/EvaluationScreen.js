@@ -311,7 +311,7 @@ useEffect(() => {
 
         });
 
-    }, 7000);
+    }, 1000);
 
     return () => clearTimeout(timer);
 
