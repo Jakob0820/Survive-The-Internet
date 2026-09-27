@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
 
     headerText: {
         color: '#FFFFFF',
-        fontSize: 32,
+        fontSize: 28,
         fontWeight: '900',
         letterSpacing: 1,
         textAlign: 'center',
