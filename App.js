@@ -65,8 +65,8 @@ export default function App() {
 
 
   //Test Modus
-  const TEST_MODE = true;
-  const TEST_SCREEN = 'evaluation';
+  const TEST_MODE = false;
+  const TEST_SCREEN = 'result';
 
   React.useEffect(() => {
     if (!TEST_MODE) return;
@@ -87,18 +87,44 @@ export default function App() {
             color: COLOR_OPTIONS[6],
             image: COLOR_IMAGES[6],
         },
+        {
+            name: 'Spieler 4',
+            color: COLOR_OPTIONS[2],
+            image: COLOR_IMAGES[2],
+        },
+        /*
+        {
+            name: 'Spieler 5',
+            color: COLOR_OPTIONS[3],
+            image: COLOR_IMAGES[3],
+        },
+        {
+            name: 'Spieler 6',
+            color: COLOR_OPTIONS[4],
+            image: COLOR_IMAGES[4],
+        },
+        {
+            name: 'Spieler 7',
+            color: COLOR_OPTIONS[5],
+            image: COLOR_IMAGES[5],
+        },
+        {
+            name: 'Spieler 8',
+            color: COLOR_OPTIONS[7],
+            image: COLOR_IMAGES[7],
+        }, */
     ];
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
     //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.REDDIT, ROUND_TYPE.YOUTUBE]
+    const testRounds = [ROUND_TYPE.GOOGLE_MAPS]
 
     setPlayers(testPlayers);
     setPlayerCount(3);
     setCurrentPlayerIndex(0);
 
-    setVoteCount([0, 0, 0]);
-    setBurnCount([0, 0, 0]);
+    setVoteCount([1, 2, 3, 2, 3, 1, 2, 1]);
+    setBurnCount([3, 2, 1, 1, 2, 4, 0, 0]);
 
     setGameRounds(testRounds);
     setCurrentRoundIndex(0);
@@ -403,13 +429,13 @@ export default function App() {
         <StatusBar barStyle="light-content" />
         
         <VideoView
-          player={player}
-          style={styles.video}
-          contentFit="cover"
-          nativeControls={false}
+            player={player}
+            style={styles.video}
+            contentFit="cover"
+            nativeControls={false}
         />
- 
-      <View style={styles.videoOverlay} />
+
+        <View style={styles.videoOverlay} />
       
       {currentScreen === 'evaluation' && (
         <EvaluationScreen
@@ -426,6 +452,21 @@ export default function App() {
           secondaryColor={currentRoundObj?.color[1]}
           gameMode={currentRoundObj?.categoryName}
           onVote={handleVote}
+        />
+      )}
+
+      {currentScreen === 'result' && (
+        <ResultScreen
+          voteCount={voteCount}
+          burnCount={burnCount}
+          players={players}
+          onNext={handleNextRound}
+          isLastRound={isLastRound()}
+          onBack={() => {
+            resetPlayerSetup();
+            setCurrentScreen('main');            
+          }}
+
         />
       )}
 
@@ -519,21 +560,6 @@ export default function App() {
             shuffledAnswers={shuffledFirstAnswers}
             onNext={nextAnswer}
             answerPrompt={currentRoundObj?.answer?.[0]}
-          />
-        )}
-
-        {currentScreen === 'result' && (
-          <ResultScreen
-            voteCount={voteCount}
-            burnCount={burnCount}
-            players={players}
-            onNext={handleNextRound}
-            isLastRound={isLastRound()}
-            onBack={() => {
-              resetPlayerSetup();
-              setCurrentScreen('main');            
-            }}
-
           />
         )}
  
