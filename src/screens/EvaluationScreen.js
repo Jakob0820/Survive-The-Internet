@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import tinycolor from 'tinycolor2';
 import {COLOR_IMAGES } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
+import thumbsUp from '../../assets/Thumbs up.json';
 import {
 StyleSheet,
 Text,
@@ -15,37 +17,120 @@ PanResponder,
 Pressable,
 } from 'react-native';
 
-function AutoSizeText({ text, style, minFontSize = 16, maxFontSize = 100 }) {
-const [containerSize, setContainerSize] = useState(null);
+const splitWords = str => str.split(/\s+/).filter(Boolean);
 
-const onLayout = (e) => {
-    const { width, height } = e.nativeEvent.layout;
-    setContainerSize({ width, height });
-};
+function fitsInBox(lines, text, box) {
+    // 1. Höhe
+    const height = lines.reduce((sum, l) => sum + l.height, 0);
+    if (height > box.height) return false;
 
-const fontSize = containerSize
-    ? Math.min(
-          maxFontSize,
-          Math.max(
-              minFontSize,
-              Math.sqrt((containerSize.width * containerSize.height * 1.3) / Math.max(text.length, 1))
-          )
-      )
-    : minFontSize;
+    // 2. Breite
+    const widest = lines.reduce((m, l) => Math.max(m, l.width), 0);
+    if (widest > box.width + 0.5) return false;
 
-return (
-    <View style={{ flex: 1, width: '100%' }} onLayout={onLayout}>
-        <Text
-            style={[style, { fontSize }]}
-            adjustsFontSizeToFit
-            numberOfLines={6}
-            minimumFontScale={0.3}
+    // 3. Kein Wort darf mitten drin umgebrochen sein
+    const original = splitWords(text);
+    const rendered = lines.flatMap(l => splitWords(l.text));
+    return (
+        original.length === rendered.length &&
+        original.every((w, i) => w === rendered[i])
+    );
+}
+
+function FittedText({ text, style, box, minFontSize, maxFontSize, verticalAlign }) {
+    const width = box.width - 4; // Sicherheitsrand gegen abgeschnittene Buchstaben
+    const area = { width, height: box.height };
+
+    const sizes = useMemo(() => {
+        const step = Math.max(1, Math.ceil((maxFontSize - minFontSize) / 30));
+        const list = [];
+        for (let s = minFontSize; s < maxFontSize; s += step) list.push(s);
+        list.push(maxFontSize);
+        return list;
+    }, [minFontSize, maxFontSize]);
+
+    const [fits, setFits] = useState({});
+
+    const report = (size, lines) =>
+        setFits(prev =>
+            prev[size] !== undefined
+                ? prev
+                : { ...prev, [size]: fitsInBox(lines, text, area) }
+        );
+
+    const allReported = Object.keys(fits).length === sizes.length;
+    const best = allReported
+        ? Math.max(minFontSize, ...sizes.filter(s => fits[s]))
+        : minFontSize;
+
+    return (
+        <>
+            {!allReported &&
+                sizes.map(s => (
+                    <Text
+                        key={s}
+                        pointerEvents="none"
+                        style={[
+                            style,
+                            { fontSize: s, position: 'absolute', top: 0, left: 0, width, opacity: 0 },
+                        ]}
+                        onTextLayout={e => report(s, e.nativeEvent.lines)}
+                    >
+                        {text}
+                    </Text>
+                ))}
+
+            {allReported && (
+                <View
+                    pointerEvents="none"
+                    style={[
+                        StyleSheet.absoluteFill,
+                        { justifyContent: verticalAlign, alignItems: 'center' },
+                    ]}
+                >
+                    <Text style={[style, { fontSize: best, width }]}>{text}</Text>
+                </View>
+            )}
+        </>
+    );
+}
+
+function AutoSizeText({
+    text,
+    style,
+    minFontSize = 10,
+    maxFontSize = 54,
+    verticalAlign = 'flex-start', // 'center' für vertikal zentrierten Text
+}) {
+    const [box, setBox] = useState(null);
+
+    const onLayout = useCallback(e => {
+        const { width, height } = e.nativeEvent.layout;
+        setBox(prev =>
+            prev && prev.width === width && prev.height === height
+                ? prev
+                : { width, height }
+        );
+    }, []);
+
+    return (
+        <View
+            style={{ flex: 1, alignSelf: 'stretch', minWidth: 0, minHeight: 0, overflow: 'hidden' }}
+            onLayout={onLayout}
         >
-            {text}
-        </Text>
-    </View>
-);
-
+            {box && box.width > 0 && box.height > 0 && (
+                <FittedText
+                    key={`${text}|${box.width}|${box.height}|${minFontSize}|${maxFontSize}`}
+                    text={text}
+                    style={style}
+                    box={box}
+                    minFontSize={minFontSize}
+                    maxFontSize={maxFontSize}
+                    verticalAlign={verticalAlign}
+                />
+            )}
+        </View>
+    );
 }
 
 export default function EvaluationScreen({
@@ -76,6 +161,7 @@ const voter = players[Math.min(votesCast, playerCount - 1)];
 
 const stampScale = useRef(new Animated.Value(0.3)).current;
 const stampOpacity = useRef(new Animated.Value(0)).current;
+const thumbsUpLottieRef = useRef(null);
 const pressScale = useRef(new Animated.Value(1)).current;
 const voteAnim = useRef(null);
 
@@ -85,6 +171,8 @@ const playVoteFeedback = () => {
     stampScale.setValue(0.3);
     stampOpacity.setValue(0);
     pressScale.setValue(1);
+    thumbsUpLottieRef.current?.reset();
+    thumbsUpLottieRef.current?.play();
 
     voteAnim.current = Animated.parallel([
         // Stempel poppt auf
@@ -473,8 +561,8 @@ const renderCardContent = (entry) => {
                             <AutoSizeText
                                 text={answer}
                                 style={styles.googleMapsEvaluationText}
-                                minFontSize={38}
-                                maxFontSize={52}
+                                minFontSize={10}
+                                maxFontSize={50}
                             />
                         </View>
 
@@ -492,12 +580,12 @@ const renderCardContent = (entry) => {
                         <View style={styles.googleMapsAnswerBox}>
                             <View style={styles.googleMapsLocationRow}>
                                 <Text style={styles.googleMapsPin}>📍</Text>
-                                <View style={styles.redditCommentBox}>
+                                <View style={styles.googleMapsLocationTextBox}>
                                     <AutoSizeText
                                         text = {response}
                                         style={styles.googleMapsLocation}
-                                        minFontSize={32}
-                                        maxFontSize={42}
+                                        minFontSize={10}
+                                        maxFontSize={50}
                                     />
                                 </View>
                             </View>
@@ -539,8 +627,8 @@ const renderCardContent = (entry) => {
                             <AutoSizeText
                                 text = {response}
                                 style={styles.redditPostTitle}
-                                minFontSize={36}
-                                maxFontSize={42}
+                                minFontSize={16}
+                                maxFontSize={50}
                             />
                         </View>
 
@@ -572,8 +660,8 @@ const renderCardContent = (entry) => {
                                     <AutoSizeText
                                         text={answer}
                                         style={styles.redditCommentText}
-                                        minFontSize={20}
-                                        maxFontSize={32}
+                                        minFontSize={10}
+                                        maxFontSize={50}
                                     />
                                 </View>
                             </View>
@@ -603,8 +691,8 @@ const renderCardContent = (entry) => {
                             <AutoSizeText
                                 text={response}
                                 style={styles.youtubeTitle}
-                                minFontSize={42}
-                                maxFontSize={52}
+                                minFontSize={10}
+                                maxFontSize={50}
                             />
                         </View>
 
@@ -636,8 +724,8 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={answer}
                                     style={styles.youtubeDescription}
-                                    minFontSize={32}
-                                    maxFontSize={42}
+                                    minFontSize={10}
+                                    maxFontSize={50}
                                 />
                             </View>
                         </View>
@@ -668,8 +756,8 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={response}
                                     style={styles.linkedinSubject}
-                                    minFontSize={32}
-                                    maxFontSize={64}
+                                    minFontSize={10}
+                                    maxFontSize={50}
                                 />
                             </View>
                         </View>
@@ -683,8 +771,8 @@ const renderCardContent = (entry) => {
                             <AutoSizeText
                                 text={answer}
                                 style={styles.linkedinQuoteText}
-                                minFontSize={26}
-                                maxFontSize={40}
+                                minFontSize={10}
+                                maxFontSize={50}
                             />
                         </View>
 
@@ -720,8 +808,8 @@ const renderCardContent = (entry) => {
                             <AutoSizeText
                                 text={response}
                                 style={styles.tagesschauHeadline}
-                                minFontSize={54}
-                                maxFontSize={72}
+                                minFontSize={16}
+                                maxFontSize={50}
                             />
                         </View>
 
@@ -747,8 +835,8 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={answer}
                                     style={styles.tagesschauCommentText}
-                                    minFontSize={26}
-                                    maxFontSize={36}
+                                    minFontSize={16}
+                                    maxFontSize={30}
                                 />
                             </View>
                         </View>
@@ -785,8 +873,9 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={response}
                                     style={styles.gutefrageQuestionText}
-                                    minFontSize={28}
-                                    maxFontSize={48}
+                                    minFontSize={10}
+                                    maxFontSize={50}
+                                    verticalAlign='center'
                                 />
                             </View>
                         </View>
@@ -809,8 +898,8 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={answer}
                                     style={styles.gutefrageAnswerText}
-                                    minFontSize={32}
-                                    maxFontSize={44}
+                                    minFontSize={10}
+                                    maxFontSize={50}
                                 />
                             </View>
                         </View>
@@ -837,8 +926,8 @@ const renderCardContent = (entry) => {
                             <AutoSizeText
                                 text={response}
                                 style={styles.gofundmeTitle}
-                                minFontSize={20}
-                                maxFontSize={44}
+                                minFontSize={10}
+                                maxFontSize={50}
                             />
                         </View>
                     </View>
@@ -887,8 +976,8 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={answer}
                                     style={styles.gofundmeCommentText}
-                                    minFontSize={24}
-                                    maxFontSize={42}
+                                    minFontSize={10}
+                                    maxFontSize={50}
                                 />
                             </View>
                         </View>
@@ -916,8 +1005,8 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={answer}
                                     style={styles.twitterText}
-                                    minFontSize={30}
-                                    maxFontSize={35}
+                                    minFontSize={10}
+                                    maxFontSize={40}
                                 />
                             </View>
                         </View>
@@ -928,8 +1017,8 @@ const renderCardContent = (entry) => {
                         <AutoSizeText
                             text={response}
                             style={[styles.twitterHashtag, { color: pColor}]}
-                            minFontSize={30}
-                            maxFontSize={48}
+                            minFontSize={10}
+                            maxFontSize={40}
                         />
                     </View>
 
@@ -975,8 +1064,8 @@ const renderCardContent = (entry) => {
                             <AutoSizeText
                                 text={response}
                                 style={styles.ebayTitle}
-                                minFontSize={32}
-                                maxFontSize={52}
+                                minFontSize={10}
+                                maxFontSize={40}
                             />
                         </View>
                     </View>
@@ -1017,8 +1106,8 @@ const renderCardContent = (entry) => {
                                 <AutoSizeText
                                     text={answer}
                                     style={styles.ebayCommentText}
-                                    minFontSize={26}
-                                    maxFontSize={42}
+                                    minFontSize={10}
+                                    maxFontSize={35}
                                 />
                             </View>
                         </View>
@@ -1050,7 +1139,7 @@ const renderTallyOverlay = (orderIdx) => {
                                 },
                             ]}
                         >
-                            🔥
+                            👍
                         </Animated.Text>
                     ))
                 )}
@@ -1159,18 +1248,17 @@ if (showResult) {
                                         opacity: stampOpacity,
                                         transform: [
                                             { scale: stampScale },
-                                            { rotate: '-10deg' },
                                         ],
                                     },
                                 ]}
                             >
-                                <Text style={styles.voteStampEmoji}>🔥</Text>
-
-                                <View style={styles.voteStampLabelBox}>
-                                    <Text style={styles.voteStampLabel}>
-                                        ABGESTIMMT!
-                                    </Text>
-                                </View>
+                                <LottieView
+                                    ref={thumbsUpLottieRef}
+                                    source={thumbsUp}
+                                    autoPlay={false}
+                                    loop={false}
+                                    style={styles.voteStampLottie}
+                                />
                             </Animated.View>
                         </View>
                         {allRevealed && (
@@ -1264,7 +1352,7 @@ if (showResult) {
                                             key={i}
                                             style={[styles.fireToken, i < votesCast && styles.fireTokenUsed]}
                                         >
-                                            🔥
+                                            👍
                                         </Text>
                                     ))}
                                 </View>
@@ -1526,23 +1614,9 @@ voteStamp: {
     alignItems: 'center',
 },
 
-voteStampEmoji: {
-    fontSize: 140,
-},
-
-voteStampLabelBox: {
-    backgroundColor: '#000000',
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    marginTop: 4,
-},
-
-voteStampLabel: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '900',
-    letterSpacing: 2,
+voteStampLottie: {
+    width: 180,
+    height: 180,
 },
 
 fireRow: {
@@ -1682,13 +1756,15 @@ tallyLabel: {
 // ── Google Maps ──────────────────────────────────────
 const googleMapsStyles = {
 googleMapsInterface: {
-width: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
-},
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
+    },
 
 googleMapsContent: {
+    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
@@ -1715,22 +1791,29 @@ googleMapsLocation: {
 
 googleMapsQuestionBox: {
     width: '100%',
-    height: 160,
+    flex: 3,
     overflow: 'hidden',
 },
 
 googleMapsAnswerBox: {
     width: '100%',
-    height: 150,
+    flex: 2,
     overflow: 'hidden',
 },
 
 googleMapsLocationRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    height: '100%',
+    flex: 1,
     marginTop: 10,
     marginBottom: 10,
+},
+
+googleMapsLocationTextBox: {  
+    flex: 1,
+    minWidth: 0,
+    alignSelf: 'stretch',
+    overflow: 'hidden',
 },
 
 googleMapsEvaluationText: {
@@ -1775,11 +1858,11 @@ playerName: {
 // ── Reddit ───────────────────────────────────────────
 const redditStyles = {
 redditInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#E5E5E5',
-borderRadius: 30,
-overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#E5E5E5',
+    borderRadius: 30,
+    overflow: 'hidden',
 },
 
 redditInner: {
@@ -1792,6 +1875,7 @@ redditInner: {
 
 redditPost: {
     padding: 20,
+    flex: 3,
 },
 
 redditHeader: {
@@ -1846,15 +1930,14 @@ redditDate: {
 },
 
 redditPostTitle: {
-    fontSize: '42',
     fontWeight: '900',
     color: '#000000',
-    marginTop: 10,
 },
 
 redditPostTitleBox: {
     width: '100%',
-    height: 120,
+    flex: 1,
+    marginTop: 10,
     overflow: 'hidden',
 },
 
@@ -1884,7 +1967,7 @@ redditComment: {
     paddingHorizontal: 20,
     paddingTop: 5,
     paddingBottom: 10,
-    flex: 1,
+    flex: 2,
 },
 
 redditCommentBox: {
@@ -1895,13 +1978,12 @@ redditCommentBox: {
 
 redditCommentInfo: {
     flex: 1,
+    minWidth: 0,
+    alignSelf: 'stretch', 
     marginLeft: 5,
 },
 
 redditCommentText: {
-    width: '100%',
-    height: '100%',
-    fontSize: 32,
     fontWeight: '900',
     color: '#000000',
     textAlign: 'left',
@@ -1956,6 +2038,7 @@ youtubeProgressThumb: {
 
 youtubeTitleSection: {
     width: '100%',
+    flex: 3,
     paddingHorizontal: 15,
     paddingTop: 15,
     paddingBottom: 15,
@@ -1965,7 +2048,7 @@ youtubeTitleSection: {
 
 youtubeTitleBox: {
     width: '100%',
-    height: 160,
+    flex: 1,
     overflow: 'hidden',
 },
 
@@ -2002,10 +2085,12 @@ youtubeViewsText: {
 
 youtubeChannelSection: {
     width: '100%',
+    flex: 2,
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: 15,
     paddingTop: 15,
+    paddingBottom: 10,
 },
 
 youtubeChannelAvatar: {
@@ -2016,9 +2101,9 @@ youtubeChannelAvatar: {
 },
 
 youtubeChannelInfo: {
-    height: '100%',
     flex: 1,
     minWidth: 0,
+    alignSelf: 'stretch',  
 },
 
 youtubeChannelName: {
@@ -2028,7 +2113,7 @@ youtubeChannelName: {
 
 youtubeDescriptionBox: {
     width: '100%',
-    height: 120,
+    flex: 1,
     marginTop: 5,
     overflow: 'hidden',
 },
@@ -2043,16 +2128,16 @@ youtubeDescription: {
 // ── LinkedIn ─────────────────────────────────────────
 const linkedinStyles = {
 linkedinInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
 },
 
 linkedinHeader: {
     width: '100%',
-    height: 200,
+    height: '40%',
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
@@ -2061,14 +2146,14 @@ linkedinHeader: {
 },
 
 linkedinAvatar: {
-    width: 90,
-    height: 90,
+    width: 70,
+    height: 70,
     marginRight: 20,
 },
 
 linkedinHeaderText: {
     flex: 1,
-    height: '100%',
+    alignSelf: 'stretch', 
     minWidth: 0,
 },
 
@@ -2098,9 +2183,9 @@ linkedinSubject: {
 
 linkedinQuoteBox: {
     width: '90%',
-    flex: 1,
+    height: '55%',
     paddingHorizontal: 25,
-    paddingVertical: 20,
+    paddingVertical: 15,
     justifyContent: 'center',
     alignSelf: 'center',
     borderRadius: 20,
@@ -2109,13 +2194,16 @@ linkedinQuoteBox: {
 },
 
 linkedinQuoteMark: {
-    fontSize: 50,
+    fontSize: 40,
+    lineHeight: 40,
+    height: 40,
     color: 'rgba(255,255,255,0.4)',
     fontWeight: '900',
 },
 
 linkedinQuoteMarkEnd: {
     alignSelf: 'flex-end',
+    marginBottom: -10,
 },
 
 linkedinQuoteTextBox: {
@@ -2136,11 +2224,11 @@ linkedinQuoteText: {
 // ── Tagesschau ───────────────────────────────────────
 const tagesschauStyles = {
 tagesschauInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
 },
 
 tagesschauNavBar: {
@@ -2185,10 +2273,10 @@ tagesschauNavItem: {
 
 tagesschauHeadlineSection: {
     width: '100%',
-    height: 250,
+    height: 230,
     paddingHorizontal: 20,
     paddingTop: 15,
-    paddingBottom: 15,
+    paddingBottom: 10,
     borderBottomWidth: 8,
     borderBottomColor: '#E5E5E5',
 },
@@ -2208,8 +2296,8 @@ tagesschauDate: {
     fontSize: 20,
     fontWeight: '700',
     color: '#AAAAAA',
-    marginTop: 10,
-    marginBottom: 15,
+    marginTop: -5,
+    marginBottom: 20,
 },
 
 tagesschauCommentSection: {
@@ -2219,6 +2307,7 @@ tagesschauCommentSection: {
     alignItems: 'flex-start',
     paddingHorizontal: 20,
     paddingTop: 15,
+    marginBottom: 10,
 },
 
 tagesschauAvatar: {
@@ -2229,7 +2318,7 @@ tagesschauAvatar: {
 
 tagesschauCommentInfo: {
     flex: 1,
-    height: '100%',
+    alignSelf: 'stretch',
     minWidth: 0,
 },
 
@@ -2240,8 +2329,9 @@ tagesschauUsername: {
 
 tagesschauCommentBox: {
     width: '100%',
-    height: 130,
-    marginTop: 5,
+    flex: 1,
+    marginTop: 0,
+    marginBottom: 5,
     overflow: 'hidden',
 },
 
@@ -2255,11 +2345,11 @@ tagesschauCommentText: {
 // ── Gutefrage.net ────────────────────────────────────
 const gutefrageStyles = {
 gutefrageInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
 },
 
 gutefrageHeader: {
@@ -2280,9 +2370,11 @@ gutefrageHeaderTitle: {
 
 gutefrageQuestionCard: {
     width: '100%',
-    height: 230,
+    flex: 2,
+    minHeight: 150,
     paddingHorizontal: 20,
     paddingTop: 15,
+    paddingBottom: 10,
 },
 
 gutefrageTimeBar: {
@@ -2305,14 +2397,14 @@ gutefrageQuestionRow: {
     borderWidth: 1,
     borderColor: '#DDDDDD',
     borderTopWidth: 0,
-    paddingHorizontal: 15,
+    paddingHorizontal: 10,
     paddingVertical: 10,
 },
 
 gutefrageVotes: {
     width: 60,
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 10,
 },
 
 gutefrageVoteCount: {
@@ -2324,7 +2416,7 @@ gutefrageVoteCount: {
 
 gutefrageQuestionBox: {
     flex: 1,
-    height: '100%',
+    alignSelf: 'stretch',
     overflow: 'hidden',
     minWidth: 0,
 },
@@ -2336,22 +2428,23 @@ gutefrageQuestionText: {
 
 gutefrageAnswerSection: {
     width: '100%',
-    flex: 1,
+    flex: 4,
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: 15,
+    paddingTop: 10,
+    paddingBottom: 10, 
 },
 
 gutefrageAvatar: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     marginRight: 15,
 },
 
 gutefrageAnswerInfo: {
     flex: 1,
-    height: '100%',
+    alignSelf: 'stretch',
     minWidth: 0,
 },
 
@@ -2368,7 +2461,7 @@ gutefrageAnswerBox: {
 },
 
 gutefrageAnswerText: {
-    fontWeight: '700',
+    fontWeight: '900',
     color: '#000000',
 },
 
@@ -2377,11 +2470,11 @@ gutefrageAnswerText: {
 // ── GoFundMe ─────────────────────────────────────────
 const gofundmeStyles = {
 gofundmeInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
 },
 
 gofundmeHeader: {
@@ -2412,14 +2505,14 @@ gofundmeLogoFundMe: {
 
 gofundmeTitleSection: {
     width: '100%',
-    height: 150,
+    flex: 2,
     paddingHorizontal: 20,
     paddingTop: 15,
 },
 
 gofundmeTitleBox: {
     width: '100%',
-    height: '100%',
+    flex: 1,
     overflow: 'hidden',
 },
 
@@ -2472,11 +2565,12 @@ gofundmeButtonText: {
 
 gofundmeCommentSection: {
     width: '100%',
-    flex: 1,
+    flex: 2,
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
     paddingTop: 15,
+    paddingBottom: 20,
 },
 
 gofundmeAvatar: {
@@ -2487,7 +2581,7 @@ gofundmeAvatar: {
 
 gofundmeCommentInfo: {
     flex: 1,
-    height: '100%',
+    alignSelf: 'stretch', 
     minWidth: 0,
 },
 
@@ -2514,20 +2608,21 @@ gofundmeCommentText: {
 // ── Twitter ──────────────────────────────────────────
 const twitterStyles = {
 twitterInterface: {
-width: '100%',
-height: '100%',
-backgroundColor: '#FFFFFF',
-borderRadius: 30,
-overflow: 'hidden',
-},
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
+    },
 
 twitterHeader: {
     width: '100%',
-    height: 180,
+    height: '40%',
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
     paddingTop: 20,
+    paddingBottom: 10,
     overflow: 'hidden',
 },
 
@@ -2539,7 +2634,7 @@ twitterAvatar: {
 
 twitterHeaderInfo: {
     flex: 1,
-    height: '100%',
+    alignSelf: 'stretch', 
     minWidth: 0,
 },
 
@@ -2562,11 +2657,9 @@ twitterText: {
 
 twitterHashtagBox: {
     width: '100%',
-    flex: 1,
+    height: '45%',
     marginTop: 5,
     paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
     overflow: 'hidden',
 },
 
@@ -2581,7 +2674,7 @@ twitterStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 20,
+    paddingHorizontal: 20, 
 },
 
 twitterStatBlock: {
@@ -2617,7 +2710,7 @@ ebaySearchBar: {
 },
 
 ebaySearchInput: {
-    width: 280,
+    flex: 1, 
     height: 40,
     backgroundColor: '#FFFFFF',
     borderRadius: 6,
@@ -2637,15 +2730,14 @@ ebaySearchPlaceholder: {
 
 ebayTitleSection: {
     width: '100%',
-    height: 160,
+    height: '35%',
     paddingHorizontal: 20,
-    paddingTop: 15,
-    paddingBottom: 10,
+    paddingTop: 10,
 },
 
 ebayTitleBox: {
     width: '100%',
-    height: '100%',
+    flex: 1,
     overflow: 'hidden',
 },
 
@@ -2685,11 +2777,12 @@ ebayCartButtonText: {
 
 ebayCommentSection: {
     width: '100%',
-    flex: 1,
+    height: '40%',
     flexDirection: 'row',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
     paddingTop: 15,
+    paddingBottom: 10,
 },
 
 ebayAvatar: {
@@ -2700,7 +2793,7 @@ ebayAvatar: {
 
 ebayCommentInfo: {
     flex: 1,
-    height: '100%',
+    alignSelf: 'stretch',  
     minWidth: 0,
 },
 
@@ -2711,7 +2804,7 @@ ebayName: {
 
 ebayCommentBox: {
     width: '100%',
-    height: 150,
+    flex: 1,
     marginTop: 5,
     overflow: 'hidden',
 },
@@ -2722,7 +2815,7 @@ ebayCommentText: {
 },
 
 ebaySearchButton: {
-    height: '100%',
+    alignSelf: 'stretch',
     width: 45,
     justifyContent: 'center',
     alignItems: 'center',

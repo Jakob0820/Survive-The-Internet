@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import podium from '../../assets/podium.png';
+import confettiAnimation from '../../assets/celebrate.json'
 import {
     StyleSheet,
     Text,
@@ -34,6 +36,17 @@ export default function ResultScreen({
             }))
             .sort((a, b) => b.points - a.points);
     }, [players, voteCount, burnCount]);
+
+    const confettiRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (isLastRound) {
+            confettiRef.current?.reset();
+            confettiRef.current?.play();
+        } else {
+            confettiRef.current?.reset();
+        }
+    }, [isLastRound]);
 
     return (
         <>
@@ -89,142 +102,159 @@ export default function ResultScreen({
                 </View>
             )}
             {isLastRound && (
-                <View style={styles.podiumWrapper}>
-                    <View style={styles.screenContainer}>
-                        <View style={styles.podiumBox}>
-                            <Image
-                                source={podium}
-                                style={styles.podiumImage}
-                                resizeMode="contain"
-                            />
+                <>
+                    <LottieView
+                        ref={confettiRef}
+                        source={confettiAnimation}
+                        autoPlay={false}
+                        loop={false}
+                        style={styles.confettiOverlay}
+                        resizeMode="cover"
+                        pointerEvents="none"
+                    />
+                    <View style={styles.podiumWrapper}>
+                        <View style={styles.screenContainer}>
+                            <View style={styles.podiumBox}>
+                                <Image
+                                    source={podium}
+                                    style={styles.podiumImage}
+                                    resizeMode="contain"
+                                />
 
-                            {/* PLATZ 2 */}
-                            {ranking[1] && (
-                                <View style={[styles.podiumPlayer, styles.secondPlace]}>
-                                    <Image
-                                        source={ranking[1].player?.image}
-                                        style={styles.podiumPlayerImage}
-                                        resizeMode="contain"
-                                    />
-                                    <Text
-                                        style={[
-                                            styles.podiumPlayerName,
-                                            { color: ranking[1].player?.color }
-                                        ]}
-                                        numberOfLines={1}
-                                    >
-                                        {ranking[1].player?.name}
-                                    </Text>
-                                    <Text style={styles.pointsTop}>
-                                        {ranking[1].points}
-                                    </Text>
-                                </View>
-                            )}
-
-                            {/* PLATZ 1 */}
-                            {ranking[0] && (
-                                <View style={[styles.podiumPlayer, styles.firstPlace]}>
-                                    <Image
-                                        source={ranking[0].player?.image}
-                                        style={styles.podiumPlayerImage}
-                                        resizeMode="contain"
-                                    />
-                                    <Text
-                                        style={[
-                                            styles.podiumPlayerName,
-                                            { color: ranking[0].player?.color }
-                                        ]}
-                                        numberOfLines={1}
-                                    >
-                                        {ranking[0].player?.name}
-                                    </Text>
-                                    <Text style={styles.pointsTop}>
-                                        {ranking[0].points}
-                                    </Text>
-                                </View>
-                            )}
-
-                            {/* PLATZ 3 */}
-                            {ranking[2] && (
-                                <View style={[styles.podiumPlayer, styles.thirdPlace]}>
-                                    <Image
-                                        source={ranking[2].player?.image}
-                                        style={styles.podiumPlayerImage}
-                                        resizeMode="contain"
-                                    />
-                                    <Text
-                                        style={[
-                                            styles.podiumPlayerName,
-                                            { color: ranking[2].player?.color }
-                                        ]}
-                                        numberOfLines={1}
-                                    >
-                                        {ranking[2].player?.name}
-                                    </Text>
-                                    <Text style={styles.pointsTop}>
-                                        {ranking[2].points}
-                                    </Text>
-                                </View>
-                            )}
-                        </View>
-
-                        {/* AB PLATZ 4 */}
-                        {ranking.length > 3 && (
-                            <View style={styles.remainingPlayers}>
-                                {ranking.slice(3).map((item, index) => (
-                                    <View style={styles.row} key={String(item.index)}>
-                                        <Text style={styles.placement}>
-                                            {index + 4}.
-                                        </Text>
-                                        <View style={styles.avatarBoxResult}>
-                                            <Image
-                                                source={item.player?.image}
-                                                style={styles.avatarImageResult}
-                                                resizeMode="contain"
-                                            />
-                                        </View>
-
+                                {/* PLATZ 2 */}
+                                {ranking[1] && (
+                                    <View style={[styles.podiumPlayer, styles.secondPlace]}>
+                                        <Image
+                                            source={ranking[1].player?.image}
+                                            style={styles.podiumPlayerImage}
+                                            resizeMode="contain"
+                                        />
                                         <Text
                                             style={[
-                                                styles.nameResult,
-                                                { color: item.player?.color }
+                                                styles.podiumPlayerName,
+                                                { color: ranking[1].player?.color }
                                             ]}
                                             numberOfLines={1}
                                         >
-                                            {item.player?.name}
+                                            {ranking[1].player?.name}
                                         </Text>
-
-                                        <Text style={styles.pointsResult}>
-                                            {item.points}
+                                        <Text style={styles.pointsTop}>
+                                            {ranking[1].points}
                                         </Text>
                                     </View>
-                                ))}
+                                )}
+
+                                {/* PLATZ 1 */}
+                                {ranking[0] && (
+                                    <View style={[styles.podiumPlayer, styles.firstPlace]}>
+                                        <Image
+                                            source={ranking[0].player?.image}
+                                            style={styles.podiumPlayerImage}
+                                            resizeMode="contain"
+                                        />
+                                        <Text
+                                            style={[
+                                                styles.podiumPlayerName,
+                                                { color: ranking[0].player?.color }
+                                            ]}
+                                            numberOfLines={1}
+                                        >
+                                            {ranking[0].player?.name}
+                                        </Text>
+                                        <Text style={styles.pointsTop}>
+                                            {ranking[0].points}
+                                        </Text>
+                                    </View>
+                                )}
+
+                                {/* PLATZ 3 */}
+                                {ranking[2] && (
+                                    <View style={[styles.podiumPlayer, styles.thirdPlace]}>
+                                        <Image
+                                            source={ranking[2].player?.image}
+                                            style={styles.podiumPlayerImage}
+                                            resizeMode="contain"
+                                        />
+                                        <Text
+                                            style={[
+                                                styles.podiumPlayerName,
+                                                { color: ranking[2].player?.color }
+                                            ]}
+                                            numberOfLines={1}
+                                        >
+                                            {ranking[2].player?.name}
+                                        </Text>
+                                        <Text style={styles.pointsTop}>
+                                            {ranking[2].points}
+                                        </Text>
+                                    </View>
+                                )}
                             </View>
-                        )}
 
-                        <View style={styles.btnBox}>
-                            <TouchableOpacity
-                                style={[styles.btn, styles.btnPrimary, { marginTop: 5 }]}
-                                activeOpacity={0.8}
-                                onPress={onNext}
-                            >
-                                <Text style={styles.btnPrimaryText}>
-                                    NOCHMAL SPIELEN
-                                </Text>
-                            </TouchableOpacity>
+                            {/* AB PLATZ 4 */}
+                            {ranking.length > 3 && (
+                                <View style={styles.remainingPlayers}>
+                                    {ranking.slice(3).map((item, index) => (
+                                        <View style={styles.row} key={String(item.index)}>
+                                            <Text style={styles.placement}>
+                                                {index + 4}.
+                                            </Text>
+                                            <View style={styles.avatarBoxResult}>
+                                                <Image
+                                                    source={item.player?.image}
+                                                    style={styles.avatarImageResult}
+                                                    resizeMode="contain"
+                                                />
+                                            </View>
 
-                            <TouchableOpacity
-                                style={[styles.btn, styles.btnPrimary, { marginTop: 10 }]}
-                                activeOpacity={0.8}
-                                onPress={onBack}
-                            >
-                                <Text style={styles.btnPrimaryText}>
-                                    HAUPTMENÜ
-                                </Text>
-                            </TouchableOpacity>
+                                            <Text
+                                                style={[
+                                                    styles.nameResult,
+                                                    { color: item.player?.color }
+                                                ]}
+                                                numberOfLines={1}
+                                            >
+                                                {item.player?.name}
+                                            </Text>
+
+                                            <Text style={styles.pointsResult}>
+                                                {item.points}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+
+                            <View style={styles.btnBox}>
+                                <TouchableOpacity
+                                    style={[styles.btn, styles.btnPrimary, { marginTop: 5 }]}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        confettiRef.current?.reset();
+                                        onNext();
+                                    }}
+                                >
+                                    <Text style={styles.btnPrimaryText}>
+                                        NOCHMAL SPIELEN
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.btn, styles.btnPrimary, { marginTop: 10 }]}
+                                    activeOpacity={0.8}
+                                        onPress={() => {
+                                            confettiRef.current?.reset();
+                                            onBack();
+                                        }}
+                                >
+                                    <Text style={styles.btnPrimaryText}>
+                                        HAUPTMENÜ
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
-                </View>
+                </>
             )}
         </>
     );
@@ -477,5 +507,14 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: '900',
         color: '#000000',
+    },
+
+    confettiOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 50,
     },
 });

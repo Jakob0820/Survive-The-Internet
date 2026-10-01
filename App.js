@@ -66,7 +66,7 @@ export default function App() {
 
   //Test Modus
   const TEST_MODE = false;
-  const TEST_SCREEN = 'result';
+  const TEST_SCREEN = 'evaluation';
 
   React.useEffect(() => {
     if (!TEST_MODE) return;
@@ -86,13 +86,13 @@ export default function App() {
             name: 'Spieler 3',
             color: COLOR_OPTIONS[6],
             image: COLOR_IMAGES[6],
-        },
+        }, /*
         {
             name: 'Spieler 4',
             color: COLOR_OPTIONS[2],
             image: COLOR_IMAGES[2],
         },
-        /*
+        
         {
             name: 'Spieler 5',
             color: COLOR_OPTIONS[3],
@@ -117,7 +117,7 @@ export default function App() {
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
     //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.GOOGLE_MAPS]
+    const testRounds = [ROUND_TYPE.EBAY]
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -134,15 +134,15 @@ export default function App() {
     );
 
     const testFirstAnswers = [
-        'Ultra geil. Macht vor allem bock das in der Badewanne zu benutzen',
+        'Ultra geil, macht vor allem Spaß in der Badewanne zu benutzen',
         'Wofür hast du die benutzt?',
-        'Hat nicht funktioniert, muss jetzt Künstlich beatmet werden.'
+        'Entführe die Kinder von deinem Lehrer'
     ];
 
     const testResponses = [
         'Turbo Thrustmaster 5000x mit extra Vibrationsfunktion',
         'VR Brille mit cumstains',
-        'Asthmaspray'
+        'Kann mir jemand beim lernen meiner Mathearbeit helfen, ich verstehe das einfach nicht...',
     ];
 
     setShuffledFirstAnswers(testFirstAnswers);
