@@ -10,6 +10,7 @@ Text,
 View,
 TouchableOpacity,
 Animated,
+Easing, 
 Image,
 SafeAreaView,
 Dimensions,
@@ -37,7 +38,7 @@ function fitsInBox(lines, text, box) {
     );
 }
 
-function FittedText({ text, style, box, minFontSize, maxFontSize, verticalAlign }) {
+function FittedText({ text, style, box, minFontSize, maxFontSize, verticalAlign, visibleChars }) {
     const width = box.width - 4; // Sicherheitsrand gegen abgeschnittene Buchstaben
     const area = { width, height: box.height };
 
@@ -62,6 +63,10 @@ function FittedText({ text, style, box, minFontSize, maxFontSize, verticalAlign 
     const best = allReported
         ? Math.max(minFontSize, ...sizes.filter(s => fits[s]))
         : minFontSize;
+
+    const chars = Array.from(text);
+    const shown = chars.slice(0, visibleChars).join('');
+    const rest = chars.slice(visibleChars).join('');
 
     return (
         <>
@@ -88,7 +93,10 @@ function FittedText({ text, style, box, minFontSize, maxFontSize, verticalAlign 
                         { justifyContent: verticalAlign, alignItems: 'center' },
                     ]}
                 >
-                    <Text style={[style, { fontSize: best, width }]}>{text}</Text>
+                    <Text style={[style, { fontSize: best, width }]}>
+                        {shown}
+                        {rest ? <Text style={{ color: 'transparent' }}>{rest}</Text> : null}
+                    </Text>
                 </View>
             )}
         </>
@@ -100,7 +108,9 @@ function AutoSizeText({
     style,
     minFontSize = 10,
     maxFontSize = 54,
-    verticalAlign = 'flex-start', // 'center' für vertikal zentrierten Text
+    verticalAlign = 'flex-start',
+    stamp, 
+    visibleChars = Infinity,
 }) {
     const [box, setBox] = useState(null);
 
@@ -113,9 +123,27 @@ function AutoSizeText({
         );
     }, []);
 
+    const stampStyle = useMemo(() => {
+        if (!stamp) return null;
+        return {
+            opacity: stamp.interpolate({
+                inputRange: [0, 0.2, 1],
+                outputRange: [0, 1, 1],
+                extrapolate: 'clamp',
+            }),
+            transform: [
+                { scale: stamp.interpolate({ inputRange: [0, 1], outputRange: [2.2, 1] }) },
+                { rotate: stamp.interpolate({ inputRange: [0, 1], outputRange: ['-8deg', '0deg'] }) },
+            ],
+        };
+    }, [stamp]);
+
     return (
-        <View
-            style={{ flex: 1, alignSelf: 'stretch', minWidth: 0, minHeight: 0, overflow: 'hidden' }}
+        <Animated.View
+            style={[
+                { flex: 1, alignSelf: 'stretch', minWidth: 0, minHeight: 0, overflow: 'hidden' },
+                stampStyle,
+            ]}
             onLayout={onLayout}
         >
             {box && box.width > 0 && box.height > 0 && (
@@ -127,9 +155,10 @@ function AutoSizeText({
                     minFontSize={minFontSize}
                     maxFontSize={maxFontSize}
                     verticalAlign={verticalAlign}
+                    visibleChars={visibleChars}
                 />
             )}
-        </View>
+        </Animated.View>
     );
 }
 
@@ -150,6 +179,9 @@ onVote,
 }) {
 
 const [showResult, setShowResult] = useState(false);
+const [showResponse, setShowResponse] = useState(false);
+const [typedChars, setTypedChars] = useState(0);
+const stampAnim = useRef(new Animated.Value(0)).current;
 
 const [allRevealed, setAllRevealed] = useState(false);
 const [revealIndex, setRevealIndex] = useState(0);
@@ -376,8 +408,12 @@ useEffect(() => {
     if (!showResult) return;
     if (allRevealed) return;
 
-    const timer = setTimeout(() => {
+    const REVEAL_DELAY = 3000;   // ab dann wird die response angezeigt
+    const HOLD_AFTER = 4000;     // so lange bleibt die Karte danach noch stehen
 
+    const revealTimer = setTimeout(() => setShowResponse(true), REVEAL_DELAY);
+
+    const nextTimer = setTimeout(() => {
         if (currentPlayerIndex >= playerCount - 1) {
             setAllRevealed(true);
             revealIndexRef.current = currentPlayerIndex;
@@ -391,25 +427,75 @@ useEffect(() => {
             duration: 350,
             useNativeDriver: true,
         }).start(({ finished }) => {
-
             if (finished) {
                 resultTranslateX.setValue(-SCREEN_WIDTH);
+                setShowResponse(false);
+                setTypedChars(0); 
                 onNext();
             }
-
         });
+    }, REVEAL_DELAY + HOLD_AFTER);
 
-    }, 7000);
+    return () => {
+        clearTimeout(revealTimer);
+        clearTimeout(nextTimer);
+    };
+}, [showResult, allRevealed, currentPlayerIndex, playerCount, onNext]);
 
-    return () => clearTimeout(timer);
+//Tippen Animation
+useEffect(() => {
+    if (!showResult || allRevealed) return;
 
-}, [
-    showResult,
-    allRevealed,
-    currentPlayerIndex,
-    playerCount,
-    onNext
-]);
+    const answer = evaluationData[evaluationOrder[currentPlayerIndex]]?.originalAnswer ?? '';
+    const total = Array.from(answer).length; // Array.from, damit Emojis nicht zerschnitten werden
+
+    setTypedChars(0);
+
+    // Gesamtdauer des Tippens ca. 1,5 s, pro Buchstabe zwischen 15 und 60 ms
+    const interval = Math.max(10, Math.min(30, 700 / Math.max(total, 1)));
+
+    let timer;
+    const startTimer = setTimeout(() => {   // erst starten, wenn die Karte eingeflogen ist
+        let n = 0;
+        timer = setInterval(() => {
+            n += 1;
+            setTypedChars(n);
+            if (n >= total) clearInterval(timer);
+        }, interval);
+    }, 500);
+
+    return () => {
+        clearTimeout(startTimer);
+        clearInterval(timer);
+    };
+}, [showResult, allRevealed, currentPlayerIndex]);
+//Text Einschlaganimation
+useEffect(() => {
+    stampAnim.setValue(0);
+    if (!showResponse) return;
+
+    Animated.sequence([
+        // Text schlägt ein: langsam anfangen, am Ende am schnellsten
+        Animated.timing(stampAnim, {
+            toValue: 1,
+            duration: 140,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+        }),
+        // Karte zuckt im Moment des Aufpralls kurz zusammen
+        Animated.timing(pressScale, {
+            toValue: 0.97,
+            duration: 50,
+            useNativeDriver: true,
+        }),
+        Animated.timing(pressScale, {
+            toValue: 1,
+            duration: 100,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: true,
+        }),
+    ]).start();
+}, [showResponse]);
 
 const handleShowResult = () => {
     setShowResult(true);
@@ -499,6 +585,8 @@ const panResponder = useMemo(() => {
 useEffect(() => {
     if (!showResult) {
         setAllRevealed(false);
+        setShowResponse(false);
+        setTypedChars(0); 
         logoHeight.setValue(256);
         logoOpacity.setValue(1);
         votingBarTranslateY.setValue(-300);
@@ -531,6 +619,8 @@ const renderCardContent = (entry) => {
     const pColor = player?.color;
     const lightPColor = tinycolor(pColor).lighten(25).brighten(10).toHexString();
     const s = entry.stats;
+    const stamp = allRevealed ? undefined : stampAnim;
+    const typed = allRevealed ? Infinity : typedChars;
 
     return (
         <>
@@ -563,6 +653,7 @@ const renderCardContent = (entry) => {
                                 style={styles.googleMapsEvaluationText}
                                 minFontSize={10}
                                 maxFontSize={50}
+                                visibleChars={typed}
                             />
                         </View>
 
@@ -586,6 +677,7 @@ const renderCardContent = (entry) => {
                                         style={styles.googleMapsLocation}
                                         minFontSize={10}
                                         maxFontSize={50}
+                                        stamp={stamp}
                                     />
                                 </View>
                             </View>
@@ -629,6 +721,7 @@ const renderCardContent = (entry) => {
                                 style={styles.redditPostTitle}
                                 minFontSize={16}
                                 maxFontSize={50}
+                                stamp={stamp}
                             />
                         </View>
 
@@ -662,6 +755,7 @@ const renderCardContent = (entry) => {
                                         style={styles.redditCommentText}
                                         minFontSize={10}
                                         maxFontSize={50}
+                                        visibleChars={typed}
                                     />
                                 </View>
                             </View>
@@ -693,6 +787,7 @@ const renderCardContent = (entry) => {
                                 style={styles.youtubeTitle}
                                 minFontSize={10}
                                 maxFontSize={50}
+                                stamp={stamp}
                             />
                         </View>
 
@@ -726,6 +821,7 @@ const renderCardContent = (entry) => {
                                     style={styles.youtubeDescription}
                                     minFontSize={10}
                                     maxFontSize={50}
+                                    visibleChars={typed}
                                 />
                             </View>
                         </View>
@@ -758,6 +854,7 @@ const renderCardContent = (entry) => {
                                     style={styles.linkedinSubject}
                                     minFontSize={10}
                                     maxFontSize={50}
+                                    stamp={stamp}
                                 />
                             </View>
                         </View>
@@ -773,6 +870,7 @@ const renderCardContent = (entry) => {
                                 style={styles.linkedinQuoteText}
                                 minFontSize={10}
                                 maxFontSize={50}
+                                visibleChars={typed}
                             />
                         </View>
 
@@ -810,6 +908,7 @@ const renderCardContent = (entry) => {
                                 style={styles.tagesschauHeadline}
                                 minFontSize={16}
                                 maxFontSize={50}
+                                stamp={stamp}
                             />
                         </View>
 
@@ -837,6 +936,7 @@ const renderCardContent = (entry) => {
                                     style={styles.tagesschauCommentText}
                                     minFontSize={16}
                                     maxFontSize={30}
+                                    visibleChars={typed}
                                 />
                             </View>
                         </View>
@@ -876,6 +976,7 @@ const renderCardContent = (entry) => {
                                     minFontSize={10}
                                     maxFontSize={50}
                                     verticalAlign='center'
+                                    stamp={stamp}
                                 />
                             </View>
                         </View>
@@ -900,6 +1001,7 @@ const renderCardContent = (entry) => {
                                     style={styles.gutefrageAnswerText}
                                     minFontSize={10}
                                     maxFontSize={50}
+                                    visibleChars={typed}
                                 />
                             </View>
                         </View>
@@ -928,6 +1030,7 @@ const renderCardContent = (entry) => {
                                 style={styles.gofundmeTitle}
                                 minFontSize={10}
                                 maxFontSize={50}
+                                stamp={stamp}
                             />
                         </View>
                     </View>
@@ -978,6 +1081,7 @@ const renderCardContent = (entry) => {
                                     style={styles.gofundmeCommentText}
                                     minFontSize={10}
                                     maxFontSize={50}
+                                    visibleChars={typed}
                                 />
                             </View>
                         </View>
@@ -1007,6 +1111,7 @@ const renderCardContent = (entry) => {
                                     style={styles.twitterText}
                                     minFontSize={10}
                                     maxFontSize={40}
+                                    visibleChars={typed}
                                 />
                             </View>
                         </View>
@@ -1019,6 +1124,7 @@ const renderCardContent = (entry) => {
                             style={[styles.twitterHashtag, { color: pColor}]}
                             minFontSize={10}
                             maxFontSize={40}
+                            stamp={stamp}
                         />
                     </View>
 
@@ -1066,6 +1172,7 @@ const renderCardContent = (entry) => {
                                 style={styles.ebayTitle}
                                 minFontSize={10}
                                 maxFontSize={40}
+                                stamp={stamp}
                             />
                         </View>
                     </View>
@@ -1108,6 +1215,7 @@ const renderCardContent = (entry) => {
                                     style={styles.ebayCommentText}
                                     minFontSize={10}
                                     maxFontSize={35}
+                                    visibleChars={typed}
                                 />
                             </View>
                         </View>

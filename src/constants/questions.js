@@ -72,6 +72,7 @@ export const QUESTIONS = [
             'Was rufst du dem Autofahrer zu, der vor dir ohne zu blinken abbiegt?',
             'Was ist ein universeller Spruch, der jeden Streit beenden kann?',
             'Was denkst du über Leute die in einer Wohngemeinschaft leben?',
+            'Du wurdest beim zu schnell Fahren erwischt! Wie redest du dich raus?',
         ],
         answer: ['wäre eine peinliche Antwort auf diesen Kommentar:'],
         color: [
@@ -193,6 +194,7 @@ export const QUESTIONS = [
             'Was denkst du über Leute, die sich in öffentlichen Verkehrsmitteln die Fingernägel schneiden?',
             'Welchen Klischeesatz benutzt du am häufigsten?',
             'Was sagst du wenn du beim Schach gewinnst?',
+            'Was würdest du deinem 18-jähringen ich raten?',
         ],
         answer: ['wäre ein schrecklicher Kommentar auf diese Schlagzeile:'],
         color: [
@@ -263,6 +265,7 @@ export const QUESTIONS = [
             'Was rufst du einer Person zu, die beim Einparken drei Parkplätze auf einmal blockiert?',
             'Wie stehst du zu Ostern?',
             'Wie würdest du deine athletischen Fähigkeiten beschreiben?',
+            'Du umarmst als Scherz einen Fremden auf der Straße! Was flüsterst du ihm ins Ohr?',
         ],
         answer: ['wäre ein lustiger Kommentar auf eine Crowdfunding-Kampagne mit diesem namens:'],
         color: [
@@ -292,6 +295,9 @@ export const QUESTIONS = [
             'Was ist das Erste, was du denkst, wenn du morgens nach einer Party aufwachst und jemand Fremdes neben dir liegt?',
             'Was ist dein lieblings Filmzitat?',
             'Was möchtest du oft laut herausrufen, wenn du die Nachrichten siehst?',
+            'Du bist auf dem Mond gelandet! Was gravierst du in den Boden?',
+            'Was ist dein Lieblingszitat oder ein Zitat, das dich bewegt?',
+            'Wie sieht dein Leben in 10 Jahren aus?',
         ],
         answer: ['wäre ein peinlicher Kommentar zu diesem Hashtag:'],
         color: [
