@@ -4,6 +4,7 @@ import {COLOR_IMAGES } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import thumbsUp from '../../assets/Thumbs up.json';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import {
 StyleSheet,
 Text,
@@ -111,6 +112,7 @@ function AutoSizeText({
     verticalAlign = 'flex-start',
     stamp, 
     visibleChars = Infinity,
+    overflowVisible = false,
 }) {
     const [box, setBox] = useState(null);
 
@@ -141,7 +143,10 @@ function AutoSizeText({
     return (
         <Animated.View
             style={[
-                { flex: 1, alignSelf: 'stretch', minWidth: 0, minHeight: 0, overflow: 'hidden' },
+                {
+                    flex: 1, alignSelf: 'stretch', minWidth: 0, minHeight: 0,
+                    overflow: overflowVisible ? 'visible' : 'hidden',   // <- geändert
+                },
                 stampStyle,
             ]}
             onLayout={onLayout}
@@ -180,8 +185,28 @@ onVote,
 
 const [showResult, setShowResult] = useState(false);
 const [showResponse, setShowResponse] = useState(false);
+
 const [typedChars, setTypedChars] = useState(0);
 const stampAnim = useRef(new Animated.Value(0)).current;
+const [stampActive, setStampActive] = useState(false);
+const stampSound = useAudioPlayer(require('../../assets/punchSound.mp3'));
+const playStamp = async () => {
+    try {
+        await stampSound.seekTo(0);
+        stampSound.play();
+    } catch (e) {
+        console.log('Stamp sound error', e);
+    }
+};
+useEffect(() => {
+    stampSound.volume = 0.6;
+    setAudioModeAsync({ playsInSilentMode: true });
+}, []);
+const typingSound = useAudioPlayer(require('../../assets/typingSound.mp3'))
+useEffect(() => {
+    typingSound.loop = true;
+    typingSound.volume = 0.6;
+}, [typingSound]);
 
 const [allRevealed, setAllRevealed] = useState(false);
 const [revealIndex, setRevealIndex] = useState(0);
@@ -447,54 +472,68 @@ useEffect(() => {
     if (!showResult || allRevealed) return;
 
     const answer = evaluationData[evaluationOrder[currentPlayerIndex]]?.originalAnswer ?? '';
-    const total = Array.from(answer).length; // Array.from, damit Emojis nicht zerschnitten werden
+    const total = Array.from(answer).length;
 
     setTypedChars(0);
 
-    // Gesamtdauer des Tippens ca. 1,5 s, pro Buchstabe zwischen 15 und 60 ms
     const interval = Math.max(10, Math.min(30, 700 / Math.max(total, 1)));
 
     let timer;
-    const startTimer = setTimeout(() => {   // erst starten, wenn die Karte eingeflogen ist
+    const stopSound = () => {
+        typingSound.pause();
+    };
+
+    const startTimer = setTimeout(() => {
+
+        typingSound.seekTo(0).then(() => typingSound.play()).catch(() => {});
+
         let n = 0;
         timer = setInterval(() => {
             n += 1;
             setTypedChars(n);
-            if (n >= total) clearInterval(timer);
+            if (n >= total) {
+                clearInterval(timer);
+                stopSound();
+            }
         }, interval);
-    }, 500);
+    }, 300);
 
     return () => {
         clearTimeout(startTimer);
         clearInterval(timer);
+        stopSound();                     
     };
 }, [showResult, allRevealed, currentPlayerIndex]);
 //Text Einschlaganimation
 useEffect(() => {
     stampAnim.setValue(0);
-    if (!showResponse) return;
+    if (!showResponse) {
+        setStampActive(false);
+        return;
+    }
 
-    Animated.sequence([
-        // Text schlägt ein: langsam anfangen, am Ende am schnellsten
-        Animated.timing(stampAnim, {
-            toValue: 1,
-            duration: 140,
-            easing: Easing.in(Easing.cubic),
-            useNativeDriver: true,
-        }),
-        // Karte zuckt im Moment des Aufpralls kurz zusammen
-        Animated.timing(pressScale, {
-            toValue: 0.97,
-            duration: 50,
-            useNativeDriver: true,
-        }),
-        Animated.timing(pressScale, {
-            toValue: 1,
-            duration: 100,
-            easing: Easing.out(Easing.quad),
-            useNativeDriver: true,
-        }),
-    ]).start();
+    setStampActive(true);
+
+    Animated.timing(stampAnim, {
+        toValue: 1,
+        duration: 140,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+    }).start(({ finished }) => {
+        if (!finished) return;
+
+        playStamp();
+
+        Animated.sequence([
+            Animated.timing(pressScale, { toValue: 0.97, duration: 50, useNativeDriver: true }),
+            Animated.timing(pressScale, {
+                toValue: 1,
+                duration: 100,
+                easing: Easing.out(Easing.quad),
+                useNativeDriver: true,
+            }),
+        ]).start(() => setStampActive(false));
+    });
 }, [showResponse]);
 
 const handleShowResult = () => {
@@ -620,6 +659,8 @@ const renderCardContent = (entry) => {
     const lightPColor = tinycolor(pColor).lighten(25).brighten(10).toHexString();
     const s = entry.stats;
     const stamp = allRevealed ? undefined : stampAnim;
+    const stampActiveNow = stampActive && !allRevealed;
+    const stampBox = stampActiveNow ? { overflow: 'visible', zIndex: 10 } : null;
     const typed = allRevealed ? Infinity : typedChars;
 
     return (
@@ -668,16 +709,17 @@ const renderCardContent = (entry) => {
                         </Text>
 
                         {/* Ort */}
-                        <View style={styles.googleMapsAnswerBox}>
+                        <View style={[styles.googleMapsAnswerBox, stampBox]}>
                             <View style={styles.googleMapsLocationRow}>
                                 <Text style={styles.googleMapsPin}>📍</Text>
-                                <View style={styles.googleMapsLocationTextBox}>
+                                <View style={[styles.googleMapsLocationTextBox, stampBox]}>
                                     <AutoSizeText
                                         text = {response}
                                         style={styles.googleMapsLocation}
                                         minFontSize={10}
                                         maxFontSize={50}
                                         stamp={stamp}
+                                        overflowVisible={stampActiveNow}
                                     />
                                 </View>
                             </View>
@@ -715,13 +757,14 @@ const renderCardContent = (entry) => {
                             </View>
                         </View>
 
-                        <View style={styles.redditPostTitleBox}>
+                        <View style={[styles.redditPostTitleBox, stampBox]}>
                             <AutoSizeText
                                 text = {response}
                                 style={styles.redditPostTitle}
                                 minFontSize={16}
                                 maxFontSize={50}
                                 stamp={stamp}
+                                overflowVisible={stampActiveNow}
                             />
                         </View>
 
@@ -781,13 +824,14 @@ const renderCardContent = (entry) => {
 
                     {/* Titel + Stats */}
                     <View style={styles.youtubeTitleSection}>
-                        <View style={styles.youtubeTitleBox}>
+                        <View style={[styles.youtubeTitleBox, stampBox]}>
                             <AutoSizeText
                                 text={response}
                                 style={styles.youtubeTitle}
                                 minFontSize={10}
                                 maxFontSize={50}
                                 stamp={stamp}
+                                overflowVisible={stampActiveNow}
                             />
                         </View>
 
@@ -848,13 +892,14 @@ const renderCardContent = (entry) => {
                                 empfiehlt
                             </Text>
 
-                            <View style={styles.linkedinSubjectBox}>
+                            <View style={[styles.linkedinSubjectBox, stampBox]}>
                                 <AutoSizeText
                                     text={response}
                                     style={styles.linkedinSubject}
                                     minFontSize={10}
                                     maxFontSize={50}
                                     stamp={stamp}
+                                    overflowVisible={stampActiveNow}
                                 />
                             </View>
                         </View>
@@ -902,13 +947,14 @@ const renderCardContent = (entry) => {
 
                     {/* Schlagzeile + Datum */}
                     <View style={styles.tagesschauHeadlineSection}>
-                        <View style={styles.tagesschauHeadlineBox}>
+                        <View style={[styles.tagesschauHeadlineBox, stampBox]}>
                             <AutoSizeText
                                 text={response}
                                 style={styles.tagesschauHeadline}
                                 minFontSize={16}
                                 maxFontSize={50}
                                 stamp={stamp}
+                                overflowVisible={stampActiveNow}
                             />
                         </View>
 
@@ -969,7 +1015,7 @@ const renderCardContent = (entry) => {
                                 <Ionicons name="thumbs-down" size={26} color="#AAAAAA" style={{ marginTop: 10 }} />
                             </View>
 
-                            <View style={styles.gutefrageQuestionBox}>
+                            <View style={[styles.gutefrageQuestionBox, stampBox]}>
                                 <AutoSizeText
                                     text={response}
                                     style={styles.gutefrageQuestionText}
@@ -977,6 +1023,7 @@ const renderCardContent = (entry) => {
                                     maxFontSize={50}
                                     verticalAlign='center'
                                     stamp={stamp}
+                                    overflowVisible={stampActiveNow}
                                 />
                             </View>
                         </View>
@@ -1024,13 +1071,14 @@ const renderCardContent = (entry) => {
 
                     {/* Titel */}
                     <View style={styles.gofundmeTitleSection}>
-                        <View style={styles.gofundmeTitleBox}>
+                        <View style={[styles.gofundmeTitleBox, stampBox]}>
                             <AutoSizeText
                                 text={response}
                                 style={styles.gofundmeTitle}
                                 minFontSize={10}
                                 maxFontSize={50}
                                 stamp={stamp}
+                                overflowVisible={stampActiveNow}
                             />
                         </View>
                     </View>
@@ -1118,13 +1166,14 @@ const renderCardContent = (entry) => {
                     </View>
 
                     {/* Hashtag */}
-                    <View style={styles.twitterHashtagBox}>
+                    <View style={[styles.twitterHashtagBox, stampBox]}>
                         <AutoSizeText
                             text={response}
                             style={[styles.twitterHashtag, { color: pColor}]}
                             minFontSize={10}
                             maxFontSize={40}
                             stamp={stamp}
+                            overflowVisible={stampActiveNow}
                         />
                     </View>
 
@@ -1166,13 +1215,14 @@ const renderCardContent = (entry) => {
 
                     {/* Titel */}
                     <View style={styles.ebayTitleSection}>
-                        <View style={styles.ebayTitleBox}>
+                        <View style={[styles.ebayTitleBox, stampBox]}>
                             <AutoSizeText
                                 text={response}
                                 style={styles.ebayTitle}
                                 minFontSize={10}
                                 maxFontSize={40}
                                 stamp={stamp}
+                                overflowVisible={stampActiveNow}
                             />
                         </View>
                     </View>
