@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 export default function MainScreen ({
   online,
   local,
   options,
-}) 
+})
+
 {
+  const clickSound = useAudioPlayer(
+    require('../../assets/clickSound.mp3'),
+  )
+
+  useEffect(() => {
+    clickSound.play();
+  }, [clickSound]);
+
   return (
           <View style={styles.screenContainer}>
             {/* Titel-Header */}

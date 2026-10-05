@@ -1,4 +1,4 @@
-import React, {useState } from 'react';
+import React, {useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
  
 import { COLOR_OPTIONS, COLOR_IMAGES } from './src/constants/colors';
 import MainScreen from './src/screens/MainScreen';
@@ -26,18 +27,21 @@ import { createFakeStats } from './src/constants/stats';
 import ResultScreen from './src/screens/ResultScreen';
  
 export default function App() {
-  // Screen Steuerung: 'main', 'options', oder 'game'
+  // Screen Steuerung
   const [currentScreen, setCurrentScreen] = useState('main');
   const [volume, setVolume] = useState(80);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [duration, setDuration] = useState(60);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [duration, setDuration] = useState(90);
   const [playerCount, setPlayerCount] = useState(3);
+
   // Logik für Spieler Setup
   const [players, setPlayers] = useState([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [playerName, setPlayerName] = useState(`Spieler ${currentPlayerIndex + 1}`);
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
   const [isOnline, setOnlineStatus] = useState(false);
+
   //Logik für Antwort Setup
   const [firstAnswers, setFirstAnswer] = useState([]);
   const [secoundAnswers, setSecondAnswer] = useState([]);
@@ -68,7 +72,7 @@ export default function App() {
   const TEST_MODE = false;
   const TEST_SCREEN = 'evaluation';
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!TEST_MODE) return;
 
     const testPlayers = [
@@ -171,10 +175,23 @@ export default function App() {
       player.loop = true;
     }
   );
+
+  const audioPlayer = useAudioPlayer(
+    require('./assets/backgroundSoundIntro.mp3'),
+  );
  
-  React.useEffect(() => {
+  useEffect(() => {
     player.play();
-  }, [player]);
+  },[player]);
+
+  useEffect(() => {
+    audioPlayer.loop = true;
+    audioPlayer.play();
+  },[audioPlayer]);
+
+  useEffect(() => {
+    audioPlayer.volume = musicEnabled ? volume / 100 : 0;
+  }, [volume, musicEnabled, audioPlayer]);
     
   const resetPlayerSetup = () => {
     setPlayerCount(3);
@@ -489,8 +506,8 @@ export default function App() {
           <OptionsScreen 
             volume={volume} setVolume={setVolume}
             soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}
+            musicEnabled={musicEnabled} setMusicEnabled={setMusicEnabled}
             onBack={() => {
-              resetPlayerSetup();
               setCurrentScreen('main');
             }}
           />

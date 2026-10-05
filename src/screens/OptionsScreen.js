@@ -1,13 +1,26 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import Slider from '@react-native-community/slider';
 
 export default function OptionsScreen({
     volume,
     setVolume,
     soundEnabled,
     setSoundEnabled,
+    musicEnabled,
+    setMusicEnabled,
     onBack,
 }) {
+
+    const clickSound = useAudioPlayer(
+      require('../../assets/clickSound.mp3'),
+    )
+  
+    useEffect(() => {
+      clickSound.play();
+    }, [clickSound]);
+
     return (
         <View style={styles.screenContainer}>
           <View style={styles.card}>
@@ -19,21 +32,17 @@ export default function OptionsScreen({
               <Text style={styles.optionValue}>{volume}%</Text>
             </View>
             <View style={styles.volumeBarContainer}>
-              <TouchableOpacity
-                style={styles.volumeBtn}
-                onPress={() => setVolume(Math.max(0, volume - 10))}
-              >
-                <Text style={styles.volumeBtnText}>-</Text>
-              </TouchableOpacity>
-              <View style={styles.volumeTrack}>
-                <View style={[styles.volumeFill, { width: `${volume}%` }]} />
-              </View>
-              <TouchableOpacity
-                style={styles.volumeBtn}
-                onPress={() => setVolume(Math.min(100, volume + 10))}
-              >
-                <Text style={styles.volumeBtnText}>+</Text>
-              </TouchableOpacity>
+              <Slider
+                style={{ flex: 1, height: 36 }}
+                minimumValue={0}
+                maximumValue={100}
+                step={10}
+                value={volume}
+                onValueChange={setVolume}
+                minimumTrackTintColor="#3799d1"
+                maximumTrackTintColor="#e5e5ea"
+                thumbTintColor="#3799d1"
+              />
             </View>
 
             {/* Soundeffekte Toggle */}
@@ -46,23 +55,41 @@ export default function OptionsScreen({
                   styles.customSwitchTrack,
                     { backgroundColor: soundEnabled ? '#3799d1' : '#e5e5ea' }
                   ]}
-            >
-            <View
-              style={[
-                styles.customSwitchThumb,
-                soundEnabled ? styles.switchOn : styles.switchOff
-               ]}
-            />
+              >
+                <View
+                  style={[
+                    styles.customSwitchThumb,
+                    soundEnabled ? styles.switchOn : styles.switchOff
+                  ]}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.optionRow}>
+              <Text style={styles.optionLabel}>Musik</Text>
+              <TouchableOpacity
+                 activeOpacity={0.8}
+                  onPress={() => setMusicEnabled(!musicEnabled)}
+                  style={[
+                  styles.customSwitchTrack,
+                    { backgroundColor: musicEnabled ? '#3799d1' : '#e5e5ea' }
+                  ]}
+              >
+                <View
+                  style={[
+                    styles.customSwitchThumb,
+                    musicEnabled ? styles.switchOn : styles.switchOff
+                  ]}
+                />
               </TouchableOpacity>
             </View>
 
             {/* Zurück Button */}
             <TouchableOpacity
-              style={[styles.btn, styles.btnSecondary, { marginTop: 20 }]}
+              style={[styles.btn, styles.btnPrimary, { marginTop: 20 }]}
               activeOpacity={0.8}
               onPress={onBack}
             >
-              <Text style={styles.btnSecondaryText}>ZURÜCK</Text>
+              <Text style={styles.btnPrimaryText}>ZURÜCK</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -150,8 +177,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-    btnSecondary: {
+  btnPrimary: {
+    backgroundColor: '#3799d1',
+  },
+  btnPrimaryText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  btnSecondary: {
     backgroundColor: '#f2f2f7',
     borderWidth: 1,
     borderColor: '#e5e5ea',

@@ -1,6 +1,7 @@
-import React from 'react';
+import {useEffect} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 export default function PlayerSetupScreen({
   currentPlayerIndex,
@@ -14,97 +15,105 @@ export default function PlayerSetupScreen({
   onPrev,
 })
 {
-    return(
-        <View style={styles.screenContainer}>
-            <View style={styles.card}>
-            <Text style={styles.sectionTitle}>
-                Spieler {currentPlayerIndex + 1}
-            </Text>
-        
-            {/* Namensfeld */}
-            <View style={{ marginBottom: 15 }}>
-                <Text style={styles.optionLabel}>Name:</Text>
-                <TextInput
-                    style={styles.textInput}
-                    value={playerName}
-                    onChangeText={setPlayerName}
-                    placeholder="Namen eingeben"
-                    placeholderTextColor="#8a99ad"
-                    maxLength={12}
-                />
-            </View>
-        
-            {/* Farbauswahl */}
-            <Text style={styles.optionLabel}>Farbe wählen:</Text>
-            <View style={{ gap: 12, marginVertical: 10 }}>
-                {/* Zeile 1: Erste 4 Farben */}
-                <View style={styles.colorRow}>
-                {COLOR_OPTIONS.slice(0, 4).map((color, index) => {
-                    const isTaken = players.slice(0, currentPlayerIndex).some((p) => p.color === color);
-                        
-                    return(
-                    <TouchableOpacity
-                    key={color}
-                    disabled={isTaken}
-                    style={[
-                        styles.colorCircle,
-                        { backgroundColor: color,},
-                        selectedColor === color && styles.colorCircleSelected,
-                        isTaken && styles.colorCircleDisabled,
-                    ]}
-                    onPress={() => setSelectedColor(color)}
-                    >
-                        {isTaken && <Text style={styles.crossText}>✕</Text>}
-                    </TouchableOpacity>
-                    );
-                })}
-                </View>
-        
-                {/* Zeile 2: Nächste 4 Farben */}
-                <View style={styles.colorRow}>
-                {COLOR_OPTIONS.slice(4, 8).map((color, index) => {
+  const clickSound = useAudioPlayer(
+    require('../../assets/clickSound.mp3'),
+  )
+
+  useEffect(() => {
+    clickSound.play();
+  }, [clickSound]);
+  
+  return(
+      <View style={styles.screenContainer}>
+          <View style={styles.card}>
+          <Text style={styles.sectionTitle}>
+              Spieler {currentPlayerIndex + 1}
+          </Text>
+      
+          {/* Namensfeld */}
+          <View style={{ marginBottom: 15 }}>
+              <Text style={styles.optionLabel}>Name:</Text>
+              <TextInput
+                  style={styles.textInput}
+                  value={playerName}
+                  onChangeText={setPlayerName}
+                  placeholder="Namen eingeben"
+                  placeholderTextColor="#8a99ad"
+                  maxLength={12}
+              />
+          </View>
+      
+          {/* Farbauswahl */}
+          <Text style={styles.optionLabel}>Farbe wählen:</Text>
+          <View style={{ gap: 12, marginVertical: 10 }}>
+              {/* Zeile 1: Erste 4 Farben */}
+              <View style={styles.colorRow}>
+              {COLOR_OPTIONS.slice(0, 4).map((color, index) => {
                   const isTaken = players.slice(0, currentPlayerIndex).some((p) => p.color === color);
-                        
-                return (
-                    <TouchableOpacity
-                    key = {color}
-                    disabled = {isTaken}
-                    style ={[
-                    styles.colorCircle,
-                    {backgroundColor: color},
-                    selectedColor === color && styles.colorCircleSelected,
-                    isTaken && styles.colorCircleDisabled,
-                    ]}
-                    onPress={() => setSelectedColor(color)}
-                    >
-                    {isTaken && <Text style={styles.crossText}>✕</Text>}
-                    </TouchableOpacity>
-                )
-                })}
-                </View>
-            </View>
-        
-            <TouchableOpacity
-                style={[styles.btn, styles.btnPrimary, { marginTop: 20 }]}
-                activeOpacity={0.8}
-                onPress={onNext}
-            >
-                <Text style={styles.btnPrimaryText}>
-                {currentPlayerIndex < playerCount - 1 ? 'NÄCHSTER SPIELER ▶' : 'SPIEL STARTEN '}
-                </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={[styles.btn, styles.btnPrimary, { marginTop: 5 }]}
-                activeOpacity={0.8}
-                onPress={onPrev}
-            >
-                <Text style={styles.btnPrimaryText}>
-                {currentPlayerIndex == 0 ? 'ZURÜCK' : '◀ VORHERIGER SPIELER'}
-                </Text>
-            </TouchableOpacity>
-            </View>
-        </View>
-    );
+                      
+                  return(
+                  <TouchableOpacity
+                  key={color}
+                  disabled={isTaken}
+                  style={[
+                      styles.colorCircle,
+                      { backgroundColor: color,},
+                      selectedColor === color && styles.colorCircleSelected,
+                      isTaken && styles.colorCircleDisabled,
+                  ]}
+                  onPress={() => setSelectedColor(color)}
+                  >
+                      {isTaken && <Text style={styles.crossText}>✕</Text>}
+                  </TouchableOpacity>
+                  );
+              })}
+              </View>
+      
+              {/* Zeile 2: Nächste 4 Farben */}
+              <View style={styles.colorRow}>
+              {COLOR_OPTIONS.slice(4, 8).map((color, index) => {
+                const isTaken = players.slice(0, currentPlayerIndex).some((p) => p.color === color);
+                      
+              return (
+                  <TouchableOpacity
+                  key = {color}
+                  disabled = {isTaken}
+                  style ={[
+                  styles.colorCircle,
+                  {backgroundColor: color},
+                  selectedColor === color && styles.colorCircleSelected,
+                  isTaken && styles.colorCircleDisabled,
+                  ]}
+                  onPress={() => setSelectedColor(color)}
+                  >
+                  {isTaken && <Text style={styles.crossText}>✕</Text>}
+                  </TouchableOpacity>
+              )
+              })}
+              </View>
+          </View>
+      
+          <TouchableOpacity
+              style={[styles.btn, styles.btnPrimary, { marginTop: 20 }]}
+              activeOpacity={0.8}
+              onPress={onNext}
+          >
+              <Text style={styles.btnPrimaryText}>
+              {currentPlayerIndex < playerCount - 1 ? 'NÄCHSTER SPIELER ▶' : 'SPIEL STARTEN '}
+              </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+              style={[styles.btn, styles.btnPrimary, { marginTop: 5 }]}
+              activeOpacity={0.8}
+              onPress={onPrev}
+          >
+              <Text style={styles.btnPrimaryText}>
+              {currentPlayerIndex == 0 ? 'ZURÜCK' : '◀ VORHERIGER SPIELER'}
+              </Text>
+          </TouchableOpacity>
+          </View>
+      </View>
+  );
 }
 
 const styles = StyleSheet.create({

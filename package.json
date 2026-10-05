@@ -1,10 +1,13 @@
 {
-  "name": "mein-app-projekt",
+  "name": "Survive the Internet",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
+    "@react-native-community/slider": "5.2.0",
+    "expo": "~57.0.26",
     "expo-audio": "~57.0.5",
+    "expo-dev-client": "~57.0.19",
     "expo-status-bar": "~57.0.1",
     "expo-video": "~57.0.2",
     "lottie-react-native": "~7.3.8",

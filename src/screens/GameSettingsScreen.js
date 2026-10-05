@@ -1,5 +1,7 @@
-import React from 'react';
+import {useEffect} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import Slider from '@react-native-community/slider';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 export default function GameSettingsScreen({
     isOnline,
@@ -12,6 +14,15 @@ export default function GameSettingsScreen({
     onNext,
     onBack,
 }) {
+
+    const clickSound = useAudioPlayer(
+      require('../../assets/clickSound.mp3'),
+    )
+  
+    useEffect(() => {
+      clickSound.play();
+    }, [clickSound]);
+
     return (
         <View style={styles.screenContainer}>
                 <View style={styles.card}>
@@ -23,23 +34,17 @@ export default function GameSettingsScreen({
                 </View>
 
                 <View style={styles.durationBarContainer}>
-                    <TouchableOpacity
-                    style={styles.durationBtn}
-                    onPress={() => setDuration(Math.max(10, duration - 10))}
-                    >
-                        <Text style={styles.durationBtnText}>-</Text>
-                    </TouchableOpacity>
-                
-                    <View style={styles.durationTrack}>
-                    <View style={[styles.durationFill, { width: `${Math.min(100, (duration / 120) * 100)}%` }]} />
-                    </View>
-                
-                    <TouchableOpacity
-                    style={styles.durationBtn}
-                    onPress={() => setDuration(Math.min(120, duration + 10))}
-                    >
-                    <Text style={styles.durationBtnText}>+</Text>
-                    </TouchableOpacity>
+                    <Slider
+                      style={{ flex: 1, height: 36 }}
+                      minimumValue={60}
+                      maximumValue={120}
+                      step={10}
+                      value={duration}
+                      onValueChange={setDuration}
+                      minimumTrackTintColor="#3799d1"
+                      maximumTrackTintColor="#e5e5ea"
+                      thumbTintColor="#3799d1"
+                    />
                 </View>
 
                 {!isOnline && (
