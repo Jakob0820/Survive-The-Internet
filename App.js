@@ -10,7 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
  
 import { COLOR_OPTIONS, COLOR_IMAGES } from './src/constants/colors';
 import MainScreen from './src/screens/MainScreen';
@@ -25,6 +24,8 @@ import AnswerScreen from './src/screens/AnswerScreen';
 import EvaluationScreen from './src/screens/EvaluationScreen';
 import { createFakeStats } from './src/constants/stats';
 import ResultScreen from './src/screens/ResultScreen';
+import { setSoundsMuted, setSoundVolume } from './src/constants/sounds';
+import { playMusic, stopMusic, applyMusicEnabled, setMusicVolume } from './src/constants/music';
  
 export default function App() {
   // Screen Steuerung
@@ -176,22 +177,35 @@ export default function App() {
     }
   );
 
-  const audioPlayer = useAudioPlayer(
-    require('./assets/backgroundSoundIntro.mp3'),
-  );
- 
   useEffect(() => {
     player.play();
   },[player]);
 
-  useEffect(() => {
-    audioPlayer.loop = true;
-    audioPlayer.play();
-  },[audioPlayer]);
+  const screenMusic = {
+    main: 'mainMenu',
+    options: 'mainMenu',
+    gameSettings: 'mainMenu',
+    playerSetup: 'mainMenu',
+  }
 
   useEffect(() => {
-    audioPlayer.volume = musicEnabled ? volume / 100 : 0;
-  }, [volume, musicEnabled, audioPlayer]);
+    const track = screenMusic[currentScreen];
+    if (track) playMusic(track);
+    else stopMusic();
+  }, [currentScreen]);
+
+  useEffect(() => {
+    applyMusicEnabled(musicEnabled);
+  }, [musicEnabled]);
+
+  useEffect(() => {
+    setSoundsMuted(soundEnabled);
+  }, [soundEnabled])
+
+  useEffect(() => {
+    setMusicVolume(volume / 100);
+    setSoundVolume(volume / 100);
+  }, [volume]);
     
   const resetPlayerSetup = () => {
     setPlayerCount(3);

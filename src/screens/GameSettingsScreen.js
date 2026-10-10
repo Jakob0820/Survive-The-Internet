@@ -1,7 +1,7 @@
 import {useEffect} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { playClickSound } from '../constants/sounds';
 
 export default function GameSettingsScreen({
     isOnline,
@@ -14,14 +14,6 @@ export default function GameSettingsScreen({
     onNext,
     onBack,
 }) {
-
-    const clickSound = useAudioPlayer(
-      require('../../assets/clickSound.mp3'),
-    )
-  
-    useEffect(() => {
-      clickSound.play();
-    }, [clickSound]);
 
     return (
         <View style={styles.screenContainer}>
@@ -74,14 +66,20 @@ export default function GameSettingsScreen({
                     <TouchableOpacity
                         style={[styles.btn, styles.btnPrimary, { marginTop: 15}]}
                         activeOpacity={0.8}
-                        onPress={onNextCreate}
+                        onPress={() => {
+                          onNextCreate();
+                          playClickSound();
+                        }}
                     >
                         <Text style={styles.btnPrimaryText}>RAUM ERSTELLEN</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.btn, styles.btnPrimary, { marginTop: 20}]}
                         activeOpacity={0.8}
-                        onPress={onNextJoin}
+                        onPress={() => {
+                          onNextJoin();
+                          playClickSound();
+                        }}
                     >
                         <Text style={styles.btnPrimaryText}>RAUM BEITRETEN</Text>
                     </TouchableOpacity>
@@ -93,7 +91,10 @@ export default function GameSettingsScreen({
                         <TouchableOpacity
                             style={[styles.btn, styles.btnPrimary, { marginTop: 5}]}
                             activeOpacity={0.8}
-                            onPress={onNext}
+                            onPress={() => {
+                              onNext();
+                              playClickSound();
+                            }}
                         >
                             <Text style={styles.btnPrimaryText}>WEITER</Text>
                         </TouchableOpacity>
@@ -103,7 +104,10 @@ export default function GameSettingsScreen({
                 <TouchableOpacity
                     style={[styles.btn, styles.btnSecondary, { marginTop: 5}]}
                     activeOpacity={0.8}
-                    onPress={onBack}
+                    onPress={() => {
+                          onBack();
+                          playClickSound();
+                        }}
                 >
                     <Text style={styles.btnSecondaryText}>HAUPTMENÜ</Text>
                 </TouchableOpacity>

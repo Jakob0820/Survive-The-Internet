@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { playClickSound } from '../constants/sounds';
 import Slider from '@react-native-community/slider';
 
 export default function OptionsScreen({
@@ -12,14 +11,6 @@ export default function OptionsScreen({
     setMusicEnabled,
     onBack,
 }) {
-
-    const clickSound = useAudioPlayer(
-      require('../../assets/clickSound.mp3'),
-    )
-  
-    useEffect(() => {
-      clickSound.play();
-    }, [clickSound]);
 
     return (
         <View style={styles.screenContainer}>
@@ -50,7 +41,10 @@ export default function OptionsScreen({
               <Text style={styles.optionLabel}>Soundeffekte</Text>
               <TouchableOpacity
                  activeOpacity={0.8}
-                  onPress={() => setSoundEnabled(!soundEnabled)}
+                  onPress={() => {
+                    setSoundEnabled(!soundEnabled);
+                    playClickSound();
+                  }}
                   style={[
                   styles.customSwitchTrack,
                     { backgroundColor: soundEnabled ? '#3799d1' : '#e5e5ea' }
@@ -68,7 +62,10 @@ export default function OptionsScreen({
               <Text style={styles.optionLabel}>Musik</Text>
               <TouchableOpacity
                  activeOpacity={0.8}
-                  onPress={() => setMusicEnabled(!musicEnabled)}
+                  onPress={() => {
+                    setMusicEnabled(!musicEnabled);
+                    playClickSound();
+                  }}
                   style={[
                   styles.customSwitchTrack,
                     { backgroundColor: musicEnabled ? '#3799d1' : '#e5e5ea' }
@@ -87,7 +84,10 @@ export default function OptionsScreen({
             <TouchableOpacity
               style={[styles.btn, styles.btnPrimary, { marginTop: 20 }]}
               activeOpacity={0.8}
-              onPress={onBack}
+              onPress={ () => {
+                onBack();
+                playClickSound();
+              }}
             >
               <Text style={styles.btnPrimaryText}>ZURÜCK</Text>
             </TouchableOpacity>

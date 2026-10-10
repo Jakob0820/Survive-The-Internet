@@ -4,7 +4,7 @@ import {COLOR_IMAGES } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import thumbsUp from '../../assets/Thumbs up.json';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { playStampSound, playTypingSound, playVoteSound,stopSound } from '../constants/sounds';
 import {
 StyleSheet,
 Text,
@@ -189,24 +189,6 @@ const [showResponse, setShowResponse] = useState(false);
 const [typedChars, setTypedChars] = useState(0);
 const stampAnim = useRef(new Animated.Value(0)).current;
 const [stampActive, setStampActive] = useState(false);
-const stampSound = useAudioPlayer(require('../../assets/punchSound.mp3'));
-const playStamp = async () => {
-    try {
-        await stampSound.seekTo(0);
-        stampSound.play();
-    } catch (e) {
-        console.log('Stamp sound error', e);
-    }
-};
-useEffect(() => {
-    stampSound.volume = 0.6;
-    setAudioModeAsync({ playsInSilentMode: true });
-}, []);
-const typingSound = useAudioPlayer(require('../../assets/typingSound.mp3'))
-useEffect(() => {
-    typingSound.loop = true;
-    typingSound.volume = 0.6;
-}, [typingSound]);
 
 const [allRevealed, setAllRevealed] = useState(false);
 const [revealIndex, setRevealIndex] = useState(0);
@@ -267,6 +249,7 @@ const handleVote = () => {
     );
     setVotesLeft((v) => v - 1);
     playVoteFeedback();
+    playVoteSound();
 };
 
 const POINTS_RESPONSE = 100;
@@ -279,6 +262,15 @@ const tallyOrderIdx = evaluationOrder[tallyIndex];
 const tallyVotes = cardVotes[tallyOrderIdx] ?? 0;
 const tallyResponseAuthor = players[tallyOrderIdx];
 const tallyAnswerAuthor = players[evaluationData[tallyOrderIdx]?.originalIndex];
+
+//Hochzählanimation bei Punkten von den einzelnen Spielern
+const countAnim = useRef(new Animated.Value(0)).current;
+const [countProgress, setCountProgress] = useState(0);
+
+useEffect(() => {
+    const id = countAnim.addListener(({ value }) => setCountProgress(value));
+    return () => countAnim.removeListener(id);
+}, []);
 
 const flameScales = useRef(
     Array.from({ length: playerCount }, () => new Animated.Value(0))
@@ -324,9 +316,11 @@ const playDenyFeedback = () => {
     ]).start();
 };
 
+//Voting Ergebnisse inkl. Punkte für die einzelnen Spieler
 const playTallyReveal = (votes, onDone) => {
     flameScales.forEach((v) => v.setValue(0));
     pointsAnim.setValue(0);
+    countAnim.setValue(0);
 
     Animated.sequence([
         // Flammen poppen nacheinander auf
@@ -338,6 +332,14 @@ const playTallyReveal = (votes, onDone) => {
         ),
         // danach fährt die Punkteleiste ein
         Animated.timing(pointsAnim, { toValue: 1, duration: 350, useNativeDriver: true }),
+        // Punkte zählen von 0 hoch
+        Animated.timing(countAnim, {
+            toValue: 1,
+            duration: 900,
+            delay: 200,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: false,
+        }),
     ]).start(({ finished }) => finished && onDone());
 };
 
@@ -479,13 +481,10 @@ useEffect(() => {
     const interval = Math.max(10, Math.min(30, 700 / Math.max(total, 1)));
 
     let timer;
-    const stopSound = () => {
-        typingSound.pause();
-    };
 
     const startTimer = setTimeout(() => {
 
-        typingSound.seekTo(0).then(() => typingSound.play()).catch(() => {});
+        playTypingSound();
 
         let n = 0;
         timer = setInterval(() => {
@@ -522,7 +521,8 @@ useEffect(() => {
     }).start(({ finished }) => {
         if (!finished) return;
 
-        playStamp();
+        //playStamp();
+        playStampSound();
 
         Animated.sequence([
             Animated.timing(pressScale, { toValue: 0.97, duration: 50, useNativeDriver: true }),
@@ -1372,7 +1372,9 @@ if (showResult) {
                                                 votingDone ||
                                                 i !== revealIndex
                                             }
-                                            onPress={handleVote}
+                                            onPress={() => {
+                                                handleVote();
+                                            }}
                                         >
                                             {renderCardContent(evaluationData[orderIdx])}
                                         </Pressable>
@@ -1476,7 +1478,7 @@ if (showResult) {
                                                     : styles.tallyChipPointsSecondary
                                             }
                                         >
-                                            +{points}
+                                            +{Math.round(points * countProgress)}
                                         </Text>
                                     </View>
                                 ))}

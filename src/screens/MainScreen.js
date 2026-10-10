@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { playClickSound } from '../constants/sounds';
 
 export default function MainScreen ({
   online,
@@ -9,14 +8,6 @@ export default function MainScreen ({
 })
 
 {
-  const clickSound = useAudioPlayer(
-    require('../../assets/clickSound.mp3'),
-  )
-
-  useEffect(() => {
-    clickSound.play();
-  }, [clickSound]);
-
   return (
           <View style={styles.screenContainer}>
             {/* Titel-Header */}
@@ -30,7 +21,10 @@ export default function MainScreen ({
               <TouchableOpacity
                 style={[styles.btn, styles.btnPrimary]}
                 activeOpacity={0.8}
-                onPress={local}
+                onPress={ () => {
+                  local();
+                  playClickSound();
+                }}
               >
                 <Text style={styles.btnPrimaryText}>▶   LOKALES SPIEL</Text>
               </TouchableOpacity>
@@ -38,7 +32,10 @@ export default function MainScreen ({
               <TouchableOpacity
                 style={[styles.btn, styles.btnPrimary]}
                 activeOpacity={0.8}
-                onPress={online}
+                onPress={ () => {
+                  online();
+                  playClickSound();
+                }}
               >
                 <Text style={styles.btnPrimaryText}>▶   ONLINE</Text>
               </TouchableOpacity>
@@ -46,7 +43,10 @@ export default function MainScreen ({
               <TouchableOpacity
                 style={[styles.btn, styles.btnSecondary]}
                 activeOpacity={0.8}
-                onPress={options}
+                onPress={ () => {
+                  options();
+                  playClickSound();
+                }}
               >
                 <Text style={styles.btnSecondaryText}>⚙   OPTIONEN</Text>
               </TouchableOpacity>

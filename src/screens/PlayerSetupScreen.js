@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { playClickSound } from '../constants/sounds';
 
 export default function PlayerSetupScreen({
   currentPlayerIndex,
@@ -15,13 +16,11 @@ export default function PlayerSetupScreen({
   onPrev,
 })
 {
-  const clickSound = useAudioPlayer(
-    require('../../assets/clickSound.mp3'),
-  )
 
   useEffect(() => {
-    clickSound.play();
-  }, [clickSound]);
+      playClickSound();
+  }, []);
+  
   
   return(
       <View style={styles.screenContainer}>
@@ -61,7 +60,10 @@ export default function PlayerSetupScreen({
                       selectedColor === color && styles.colorCircleSelected,
                       isTaken && styles.colorCircleDisabled,
                   ]}
-                  onPress={() => setSelectedColor(color)}
+                  onPress={() => {
+                    setSelectedColor(color);
+                    playClickSound();
+                  }}
                   >
                       {isTaken && <Text style={styles.crossText}>✕</Text>}
                   </TouchableOpacity>
@@ -84,7 +86,10 @@ export default function PlayerSetupScreen({
                   selectedColor === color && styles.colorCircleSelected,
                   isTaken && styles.colorCircleDisabled,
                   ]}
-                  onPress={() => setSelectedColor(color)}
+                  onPress={() => {
+                    setSelectedColor(color);
+                    playClickSound();
+                  }}
                   >
                   {isTaken && <Text style={styles.crossText}>✕</Text>}
                   </TouchableOpacity>
@@ -96,7 +101,10 @@ export default function PlayerSetupScreen({
           <TouchableOpacity
               style={[styles.btn, styles.btnPrimary, { marginTop: 20 }]}
               activeOpacity={0.8}
-              onPress={onNext}
+              onPress={ () => { 
+                onNext();
+                playClickSound();
+              }}
           >
               <Text style={styles.btnPrimaryText}>
               {currentPlayerIndex < playerCount - 1 ? 'NÄCHSTER SPIELER ▶' : 'SPIEL STARTEN '}
@@ -105,7 +113,10 @@ export default function PlayerSetupScreen({
           <TouchableOpacity
               style={[styles.btn, styles.btnPrimary, { marginTop: 5 }]}
               activeOpacity={0.8}
-              onPress={onPrev}
+              onPress={ () => {
+                onPrev();
+                playClickSound();
+              }}
           >
               <Text style={styles.btnPrimaryText}>
               {currentPlayerIndex == 0 ? 'ZURÜCK' : '◀ VORHERIGER SPIELER'}
