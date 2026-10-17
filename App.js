@@ -8,6 +8,7 @@ import {
   SafeAreaView, 
   StatusBar,
   Platform,
+  AppState,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
  
@@ -67,6 +68,7 @@ export default function App() {
 
   const [voteCount, setVoteCount] = useState([]);
   const [burnCount, setBurnCount] = useState([]);
+  const [previousPoints, setPreviousPoints] = useState([]);
 
 
   //Test Modus
@@ -122,7 +124,7 @@ export default function App() {
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
     //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.EBAY]
+    const testRounds = [ROUND_TYPE.GOFUNDME, ROUND_TYPE.YOUTUBE, ROUND_TYPE.GOFUNDME]
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -172,20 +174,47 @@ export default function App() {
   
   const player = useVideoPlayer(
     require('./assets/background2_fixed.mp4'),
-    player => {
-      player.loop = true;
+    (p) => {
+      p.loop = true;
+      p.muted = true;
+      p.audioMixingMode = 'mixWithOthers';
     }
   );
 
   useEffect(() => {
     player.play();
-  },[player]);
+
+    // Nach Rückkehr in die App weiterspielen
+    const appSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') player.play();
+    });
+
+    // Falls der Player von außen pausiert wird: wieder starten
+    const playSub = player.addListener('playingChange', ({ isPlaying }) => {
+      if (!isPlaying && AppState.currentState === 'active') {
+        setTimeout(() => player.play(), 100);
+      }
+    });
+
+    // Fehler sichtbar machen
+    const statusSub = player.addListener('statusChange', ({ status, error }) => {
+      if (status === 'error') console.warn('Video-Fehler:', error);
+    });
+
+    return () => {
+      appSub.remove();
+      playSub.remove();
+      statusSub.remove();
+    };
+  }, [player]);
 
   const screenMusic = {
     main: 'mainMenu',
     options: 'mainMenu',
     gameSettings: 'mainMenu',
     playerSetup: 'mainMenu',
+    game: 'questionMenu',
+    answer: 'questionMenu',
   }
 
   useEffect(() => {
@@ -286,6 +315,9 @@ export default function App() {
   const handleNextRound = () => {
     const nextIndex = currentRoundIndex + 1;
     if (nextIndex < gameRounds.length){
+      setPreviousPoints(
+        players.map((_, i) => (voteCount[i] ?? 0) * 100 + (burnCount[i] ?? 0) * 50)
+      );
       setCurrentRoundIndex(nextIndex);
       setCurrentPlayerIndex(0);
  
@@ -497,6 +529,7 @@ export default function App() {
             resetPlayerSetup();
             setCurrentScreen('main');            
           }}
+          previousPoints={previousPoints}
 
         />
       )}
@@ -598,6 +631,11 @@ export default function App() {
             <GameTransitionScreen 
                 onFinish={() => setCurrentScreen('game')}
                 roundName={currentCategoryName} 
+                currentLogo={currentLogo}
+                primaryColor={currentRoundObj?.color[0]}
+                secondaryColor={currentRoundObj?.color[2]}
+                currentRoundNumber={currentRoundIndex}
+                totalRounds={gameRounds.length}
             />
         )}
  

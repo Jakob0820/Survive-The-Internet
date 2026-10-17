@@ -46,7 +46,7 @@ export const QUESTIONS = [
         color: [
             '#79acff',
             '#FFFFFF',
-            '#000000',
+            '#5a97f9',
         ],
         logo: googleMapsLogo,
     },
@@ -78,7 +78,7 @@ export const QUESTIONS = [
         color: [
             '#ff9772',
             '#FFFFFF',
-            '#000000',
+            '#f97d50',
         ],
         logo: redditLogo,
     },
@@ -109,7 +109,7 @@ export const QUESTIONS = [
         color: [
             '#ffb8b8',
             '#FFFFFF',
-            '#000000',
+            '#f79393',
         ],
         logo: youtubeLogo,
     },
@@ -164,9 +164,8 @@ export const QUESTIONS = [
         answer: ['wäre eine peinliche Empfehlung für diese Person:'],
         color: [
             '#8bd3ff',
-            //'#0d2d41',
             '#FFFFFF',
-            '#000000',
+            '#51b8f8',
         ],
         logo: linkedinLogo,
     },
@@ -200,7 +199,7 @@ export const QUESTIONS = [
         color: [
             '#adccff',
             '#FFFFFF',
-            '#000000',
+            '#7babf9',
         ],
         logo: tagesschauLogo,
     },
@@ -237,7 +236,7 @@ export const QUESTIONS = [
         color: [
             '#6cceff',
             '#FFFFFF',
-            '#000000',
+            '#3fb9f6',
         ],
         logo:gutefrageLogo,
     },
@@ -269,9 +268,10 @@ export const QUESTIONS = [
         ],
         answer: ['wäre ein lustiger Kommentar auf eine Crowdfunding-Kampagne mit diesem namens:'],
         color: [
-            '#00ab55',
+            '#59e59f',
+            //'#00ab55',
             '#FFFFFF',
-            '#000000',
+            '#42a975',
         ],
         logo:gofundmeLogo,
     },
@@ -303,7 +303,7 @@ export const QUESTIONS = [
         color: [
             '#ade0ff',
             '#FFFFFF',
-            '#000000',
+            '#94d6ff',
         ],
         logo:twitterLogo,
 
@@ -334,7 +334,7 @@ export const QUESTIONS = [
         color: [
             '#c8f364',
             '#FFFFFF',
-            '#000000',
+            '#beeb53',
         ],
         logo:ebayLogo,
     }

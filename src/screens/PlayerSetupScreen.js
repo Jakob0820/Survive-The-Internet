@@ -119,7 +119,7 @@ export default function PlayerSetupScreen({
               }}
           >
               <Text style={styles.btnPrimaryText}>
-              {currentPlayerIndex == 0 ? 'ZURÜCK' : '◀ VORHERIGER SPIELER'}
+              {currentPlayerIndex == 0 ? 'ZURÜCK' : '◀ SPIELER ZURÜCK'}
               </Text>
           </TouchableOpacity>
           </View>

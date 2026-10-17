@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import podium from '../../assets/podium.png';
 import confettiAnimation from '../../assets/celebrate.json'
+import { playCountingSound, stopSound, playPopSound } from '../constants/sounds';
 import {
     StyleSheet,
     Text,
@@ -11,11 +12,40 @@ import {
     SafeAreaView,
     FlatList,
     TouchableOpacity,
+    Animated,
+    Easing,
 } from 'react-native';
 
 
-const POINTS_PER_VOTE = 100;
-const POINTS_PER_BURN = 50;
+const POINTS_PER_VOTE = 80;
+const POINTS_PER_BURN = 30;
+
+const ROW_HEIGHT = 72;
+
+function CountUpText({ progress, from, to, style }) {
+    const [value, setValue] = useState(from);
+
+    useEffect(() => {
+        setValue(from);
+        const id = progress.addListener(({ value: p }) =>
+            setValue(Math.round(from + (to - from) * p))
+        );
+        return () => progress.removeListener(id);
+    }, [from, to]);
+
+    return <Text style={style}>{value}</Text>;
+}
+
+// Rang pro Spielerindex; bei Gleichstand entscheidet der Index
+const rankOf = (points) => {
+    const rank = [];
+    points
+        .map((p, i) => ({ p, i }))
+        .sort((a, b) => b.p - a.p || a.i - b.i)
+        .forEach((o, r) => { rank[o.i] = r; });
+    return rank;
+};
+
 
 export default function ResultScreen({
     voteCount,
@@ -24,7 +54,9 @@ export default function ResultScreen({
     onNext,
     onBack,
     isLastRound,
+    previousPoints,
 }) {
+
     const ranking = useMemo(() => {
         return players
             .map((player, i) => ({
@@ -48,6 +80,85 @@ export default function ResultScreen({
         }
     }, [isLastRound]);
 
+    const totals = useMemo(
+        () => players.map((_, i) =>
+            (voteCount[i] ?? 0) * POINTS_PER_VOTE + (burnCount[i] ?? 0) * POINTS_PER_BURN),
+        [players, voteCount, burnCount]
+    );
+    const prevTotals = useMemo(
+        () => players.map((_, i) => previousPoints[i] ?? 0),
+        [players, previousPoints]
+    );
+    const prevRank = useMemo(() => rankOf(prevTotals), [prevTotals]);
+    const newRank = useMemo(() => rankOf(totals), [totals]);
+
+    const progress = useRef(new Animated.Value(0)).current;
+    const positions = useRef(players.map((_, i) => new Animated.Value(prevRank[i] * ROW_HEIGHT))).current;
+    const scales = useRef(players.map(() => new Animated.Value(1))).current;
+    const [settled, setSettled] = useState(false);
+
+    useEffect(() => {
+        if (isLastRound) return;
+
+        const COUNT_DELAY = 600;
+        const COUNT_DURATION = 1500;
+        const hasChange = totals.some((t, i) => t !== prevTotals[i]);
+        const hasSwap = newRank.some((r, i) => r !== prevRank[i]);
+
+        setSettled(false);
+        progress.setValue(0);
+        positions.forEach((v, i) => v.setValue(prevRank[i] * ROW_HEIGHT));
+        scales.forEach((v) => v.setValue(1));
+
+        const soundStart = setTimeout(() => hasChange && playCountingSound(), COUNT_DELAY);
+        const soundStop = setTimeout(() => stopSound(), COUNT_DELAY + COUNT_DURATION);
+
+        const anim = Animated.sequence([
+            Animated.delay(COUNT_DELAY),
+            Animated.timing(progress, {
+                toValue: 1,
+                duration: COUNT_DURATION,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: false,
+            }),
+            Animated.delay(400),
+            Animated.parallel(
+                players.flatMap((_, i) => {
+                    const moves = [
+                        Animated.spring(positions[i], {
+                            toValue: newRank[i] * ROW_HEIGHT,
+                            friction: 7,
+                            tension: 60,
+                            useNativeDriver: true,
+                        }),
+                    ];
+                    if (newRank[i] < prevRank[i]) {
+                        moves.push(
+                            Animated.sequence([
+                                Animated.timing(scales[i], { toValue: 1.06, duration: 200, useNativeDriver: true }),
+                                Animated.timing(scales[i], { toValue: 1, duration: 300, useNativeDriver: true }),
+                            ])
+                        );
+                    }
+                    return moves;
+                })
+            ),
+        ]);
+
+        anim.start(({ finished }) => {
+            if (!finished) return;
+            setSettled(true);
+            playPopSound();
+        });
+
+        return () => {
+            clearTimeout(soundStart);
+            clearTimeout(soundStop);
+            stopSound();
+            anim.stop();
+        };
+    }, [isLastRound, totals, prevTotals]);
+
     return (
         <>
             {!isLastRound && (
@@ -57,36 +168,44 @@ export default function ResultScreen({
                             <Text style={styles.headerText}>AKTUELLE PUNKTE</Text>
                         </View>
 
-                        <FlatList
-                            data={ranking}
-                            keyExtractor={(item) => String(item.index)}
-                            contentContainerStyle={styles.listContent}
-                            renderItem={({ item, index }) => (
-                                <View style={styles.row}>
-                                    <View style={styles.avatarBox}>
-                                        {index === 0 && (
-                                            <Ionicons
-                                                name="trophy"
-                                                size={28}
-                                                color="#F5C518"
-                                                style={styles.crownIcon}
-                                            />
-                                        )}
-                                        <Image
-                                            source={item.player?.image}
-                                            style={styles.avatarImage}
-                                            resizeMode="contain"
+                        <View style={styles.listContent}>
+                            <View style={{ height: players.length * ROW_HEIGHT }}>
+                                {players.map((player, i) => (
+                                    <Animated.View
+                                        key={i}
+                                        style={[
+                                            styles.row,
+                                            {
+                                                position: 'absolute',
+                                                left: 0,
+                                                right: 0,
+                                                height: ROW_HEIGHT,
+                                                zIndex: newRank[i] < prevRank[i] ? 2 : 1,
+                                                transform: [{ translateY: positions[i] }, { scale: scales[i] }],
+                                            },
+                                        ]}
+                                    >
+                                        <View style={styles.avatarBox}>
+                                            {settled && newRank[i] === 0 && (
+                                                <Ionicons name="trophy" size={28} color="#F5C518" style={styles.crownIcon} />
+                                            )}
+                                            <Image source={player?.image} style={styles.avatarImage} resizeMode="contain" />
+                                        </View>
+
+                                        <Text style={[styles.name, { color: player?.color }]} numberOfLines={1}>
+                                            {player?.name}
+                                        </Text>
+
+                                        <CountUpText
+                                            progress={progress}
+                                            from={prevTotals[i]}
+                                            to={totals[i]}
+                                            style={styles.points}
                                         />
-                                    </View>
-
-                                    <Text style={[styles.name, {color: item.player?.color}]} numberOfLines={1}>
-                                        {item.player?.name}
-                                    </Text>
-
-                                    <Text style={styles.points}>{item.points}</Text>
-                                </View>
-                            )}
-                        />
+                                    </Animated.View>
+                                ))}
+                            </View>
+                        </View>
                         <View style={styles.btnBox}>
                             <TouchableOpacity
                                 style={[styles.btn, styles.btnPrimary, { marginTop: 5}]}

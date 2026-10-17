@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Animated, useWindowDimensions
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
 import { Ionicons } from '@expo/vector-icons';
+import { playClickSound } from '../constants/sounds';
 
 export default function AnswerScreen({
     onBack,
@@ -134,7 +135,10 @@ return (
                         
                                 ]}
                                 activeOpacity={1}
-                                onPress={openQuestion}
+                                onPress={() => {
+                                    openQuestion();
+                                    playClickSound();
+                                }}
                                 disabled={isQuestionOpen}
                             >
                                 <Text style={[styles.btnQuestionText, {color: lightPlayerColor}]}>
@@ -211,7 +215,10 @@ return (
                                         style={[styles.btn, styles.btnSecondary,
                                             { marginTop: 20 }]}
                                         activeOpacity={0.8}
-                                        onPress={onNext}
+                                        onPress={() => {
+                                            onNext();
+                                            playClickSound();
+                                        }}
                                     >
                                         <Text style={styles.btnSecondaryText}>
                                             {currentPlayerIndex < playerCount - 1 ? 'Nächster Spieler' : 'Fertigstellen'}
@@ -226,7 +233,10 @@ return (
                 <TouchableOpacity
                     style={[styles.btn, styles.btnSecondary, { marginTop: 5 }]}
                     activeOpacity={0.8}
-                    onPress={() => setShowConfirm(true)}
+                    onPress={() => {
+                        setShowConfirm(true);
+                        playClickSound();
+                    }}
                 >
                     <Text style={styles.btnSecondaryText}>SPIEL BEENDEN</Text>
                 </TouchableOpacity>
@@ -237,9 +247,13 @@ return (
                 <ConfirmationScreen
                     onYes={() => {
                         setShowConfirm(false);
+                        playClickSound();
                         onBack();
                     }}
-                    onNo={() => setShowConfirm(false)}
+                    onNo={() => {
+                        setShowConfirm(false);
+                        playClickSound();
+                    }}
                 />
             )}
         </View>

@@ -1,7 +1,9 @@
 import { createAudioPlayer } from 'expo-audio';
 
 const tracks = {
-  mainMenu: createAudioPlayer(require('../../assets/backgroundSoundIntro.mp3')),
+  mainMenu: createAudioPlayer(require('../../assets/backgroundSoundIntro2.mp3')),
+  questionMenu: createAudioPlayer(require('../../assets/backgroundSoundQuestions.mp3')),
+  evaluationMenu: createAudioPlayer(require('../../assets/backgroundSoundEvaluation.mp3')),
 };
 
 Object.values(tracks).forEach((p) => {
@@ -52,3 +54,50 @@ export const setMusicVolume = (value) => {
     p.volume = volume;
   });
 };
+
+let fadeTimer = null;
+let fadeResolve = null;
+
+const cancelFade = () => {
+  if (fadeTimer) {
+    clearInterval(fadeTimer);
+    fadeTimer = null;
+  }
+  if (fadeResolve) {
+    fadeResolve();
+    fadeResolve = null;
+  }
+};
+
+export const playFadeOut = (duration = 1) =>
+  new Promise((resolve) => {
+    cancelFade(); // laufenden Fade abbrechen
+
+    const player = tracks[currentName];
+    if (!player || !player.playing) {
+      resolve();
+      return;
+    }
+
+    fadeResolve = resolve;
+
+    const startVolume = player.volume;
+    const stepMs = 50;
+    const steps = Math.max(1, Math.round((duration * 1000) / stepMs));
+    let step = 0;
+
+    fadeTimer = setInterval(() => {
+      step += 1;
+      player.volume = Math.max(0, startVolume * (1 - step / steps));
+
+      if (step >= steps) {
+        clearInterval(fadeTimer);
+        fadeTimer = null;
+        player.pause();
+        player.volume = volume; // Lautstärke für den nächsten Start zurücksetzen
+        currentName = null;
+        fadeResolve = null;
+        resolve();
+      }
+    }, stepMs);
+  });

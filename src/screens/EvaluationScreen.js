@@ -4,7 +4,8 @@ import {COLOR_IMAGES } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import thumbsUp from '../../assets/Thumbs up.json';
-import { playStampSound, playTypingSound, playVoteSound,stopSound } from '../constants/sounds';
+import { playStampSound, playTypingSound, playVoteSound,stopSound, playPopSound, playCountingSound } from '../constants/sounds';
+import { playMusic, stopMusic, playFadeOut } from '../constants/music';
 import {
 StyleSheet,
 Text,
@@ -252,8 +253,8 @@ const handleVote = () => {
     playVoteSound();
 };
 
-const POINTS_RESPONSE = 100;
-const POINTS_ANSWER = 50;  
+const POINTS_RESPONSE = 80;
+const POINTS_ANSWER = 30;  
 
 const [cardVotes, setCardVotes] = useState(() => Array(playerCount).fill(0));
 const [tallyActive, setTallyActive] = useState(false);
@@ -262,14 +263,31 @@ const tallyOrderIdx = evaluationOrder[tallyIndex];
 const tallyVotes = cardVotes[tallyOrderIdx] ?? 0;
 const tallyResponseAuthor = players[tallyOrderIdx];
 const tallyAnswerAuthor = players[evaluationData[tallyOrderIdx]?.originalIndex];
+const popTimers = useRef([]);
 
 //Hochzählanimation bei Punkten von den einzelnen Spielern
 const countAnim = useRef(new Animated.Value(0)).current;
 const [countProgress, setCountProgress] = useState(0);
+const countSoundOn = useRef(false);
 
+//Punkte hochzählen und dabei Sound abspielen
 useEffect(() => {
-    const id = countAnim.addListener(({ value }) => setCountProgress(value));
-    return () => countAnim.removeListener(id);
+    const id = countAnim.addListener(({ value }) => {
+        setCountProgress(value);
+
+        if (value > 0 && value < 1 && !countSoundOn.current) {
+            countSoundOn.current = true;
+            playCountingSound();
+        }
+        if (value >= 1 && countSoundOn.current) {
+            countSoundOn.current = false;
+            stopSound();
+        }
+    });
+    return () => {
+        countAnim.removeListener(id);
+        stopSound();
+    };
 }, []);
 
 const flameScales = useRef(
@@ -321,9 +339,20 @@ const playTallyReveal = (votes, onDone) => {
     flameScales.forEach((v) => v.setValue(0));
     pointsAnim.setValue(0);
     countAnim.setValue(0);
+    countSoundOn.current = votes === 0;
+
+    // alte Timer aufräumen
+    popTimers.current.forEach(clearTimeout);
+    popTimers.current = [];
+
+    // Pop-Sound passend zu jeder Flamme
+    for (let i = 0; i < votes; i++) {
+        popTimers.current.push(setTimeout(() => playPopSound(), i * 180));
+    }
+
 
     Animated.sequence([
-        // Flammen poppen nacheinander auf
+        // Daumen poppen nacheinander auf
         Animated.stagger(
             180,
             flameScales.slice(0, votes).map((v) =>
@@ -388,7 +417,10 @@ useEffect(() => {
     return () => clearTimeout(t);
 }, [votingDone]);
 
-useEffect(() => () => clearTimeout(tallyTimer.current), []);
+useEffect(() => () => {
+    clearTimeout(tallyTimer.current);
+    popTimers.current.forEach(clearTimeout);
+}, []);
 
 
 useEffect(() => {
@@ -543,6 +575,13 @@ const handleShowResult = () => {
 useEffect(() => {
     if (!allRevealed) return;
 
+    let cancelled = false;
+
+    (async () => {
+        await playFadeOut(1);
+        if (!cancelled) playMusic('questionMenu');
+    })();
+
     Animated.parallel([
         Animated.timing(logoOpacity, {
             toValue: 0,
@@ -577,6 +616,10 @@ useEffect(() => {
             useNativeDriver: true,
         }),
     ]).start();
+
+    return () => {
+        cancelled = true;
+    };
 
 }, [allRevealed]);
 
@@ -1567,7 +1610,10 @@ return (
             <TouchableOpacity
                 style={[styles.btn, styles.btnSecondary]}
                 activeOpacity={0.8}
-                onPress={handleShowResult}
+                onPress={() => {
+                    playMusic('evaluationMenu');
+                    handleShowResult();
+                }}
             >
                 <Text style={styles.btnText}>ERGEBNIS ANZEIGEN</Text>
             </TouchableOpacity>

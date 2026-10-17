@@ -55,7 +55,7 @@ export default function MainScreen ({
     )
 }
 const styles = StyleSheet.create({
-    header: {
+  header: {
     alignItems: 'center',
     marginBottom: 40,
   },

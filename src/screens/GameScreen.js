@@ -1,10 +1,11 @@
 GameScreen.js
 import React, { useState, useEffect, useRef, useReducer } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, useWindowDimensions, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, useWindowDimensions, TextInput, Image } from 'react-native';
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
 import { Ionicons } from '@expo/vector-icons';
 import { QUESTIONS } from '../constants/questions';
+import { playClickSound } from '../constants/sounds';
 
 export default function GameScreen({
     onBack,
@@ -114,7 +115,10 @@ export default function GameScreen({
                         
                                 ]}
                                 activeOpacity={1}
-                                onPress={openQuestion}
+                                onPress={() => {
+                                    openQuestion();
+                                    playClickSound();
+                                }}
                                 disabled={isQuestionOpen}
                             >
                                 <Text style={[styles.btnQuestionText, {color: lightPlayerColor}]}>
@@ -180,7 +184,10 @@ export default function GameScreen({
                                         style={[styles.btn, styles.btnSecondary,
                                             { marginTop: 20 }]}
                                         activeOpacity={0.8}
-                                        onPress={onNext}
+                                        onPress={() => {
+                                            onNext();
+                                            playClickSound();
+                                        }}
                                     >
                                         <Text style={styles.btnSecondaryText}>
                                             {currentPlayerIndex < playerCount - 1 ? 'Nächster Spieler' : 'Fertigstellen'}
@@ -195,7 +202,10 @@ export default function GameScreen({
                 <TouchableOpacity
                     style={[styles.btn, styles.btnSecondary, { marginTop: 5 }]}
                     activeOpacity={0.8}
-                    onPress={() => setShowConfirm(true)}
+                    onPress={() => {
+                        setShowConfirm(true);
+                        playClickSound();
+                    }}
                 >
                     <Text style={styles.btnSecondaryText}>SPIEL BEENDEN</Text>
                 </TouchableOpacity>
@@ -206,9 +216,13 @@ export default function GameScreen({
                 <ConfirmationScreen
                     onYes={() => {
                         setShowConfirm(false);
+                        playClickSound();
                         onBack();
                     }}
-                    onNo={() => setShowConfirm(false)}
+                    onNo={() => {
+                        setShowConfirm(false);
+                        playClickSound();
+                    }}
                 />
             )}
         </View>

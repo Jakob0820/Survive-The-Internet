@@ -7,6 +7,8 @@ const soundPlayers = {
     stamp: createAudioPlayer(require('../../assets/punchSound.mp3')),
     typing: createAudioPlayer(require('../../assets/typingSound.mp3')),
     vote: createAudioPlayer(require('../../assets/voteSound.mp3')),
+    pop: createAudioPlayer(require('../../assets/popSound.mp3')),
+    count: createAudioPlayer(require('../../assets/countingSound.mp3')),
     //weitere Sounds hier
 };
 
@@ -52,4 +54,6 @@ export const playClickSound = () => play(soundPlayers.click);
 export const playStampSound = () => play(soundPlayers.stamp);
 export const playTypingSound = () => play(soundPlayers.typing);
 export const playVoteSound = () => play(soundPlayers.vote);
+export const playPopSound = () => play(soundPlayers.pop);
+export const playCountingSound = () => play(soundPlayers.count);
 //weitere Sounds hier

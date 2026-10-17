@@ -1,6 +1,7 @@
 import {useEffect} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
+import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../constants/sounds';
 
 export default function GameSettingsScreen({
@@ -21,22 +22,26 @@ export default function GameSettingsScreen({
                     <Text style={styles.sectionTitle}>Einstellungen</Text>
 
                 <View style={styles.optionRow}>
-                    <Text style={styles.optionLabel}>Rundendauer</Text>
-                    <Text style={styles.optionValue}>{duration} Sek.</Text>
+                  <Text style={styles.optionLabel}>Rundendauer</Text>
+                  <Text style={styles.optionValue}>
+                    {duration === 0 ? "Unbegrenzt" : `${duration} Sek.`}
+                  </Text>
                 </View>
 
                 <View style={styles.durationBarContainer}>
-                    <Slider
-                      style={{ flex: 1, height: 36 }}
-                      minimumValue={60}
-                      maximumValue={120}
-                      step={10}
-                      value={duration}
-                      onValueChange={setDuration}
-                      minimumTrackTintColor="#3799d1"
-                      maximumTrackTintColor="#e5e5ea"
-                      thumbTintColor="#3799d1"
-                    />
+                  <Slider
+                    style={{ flex: 1, height: 36 }}
+                    minimumValue={60}
+                    maximumValue={130}
+                    step={10}
+                    value={duration === 0 ? 130 : duration}
+                    onValueChange={(value) => {
+                      setDuration(value === 130 ? 0 : value);
+                    }}
+                    minimumTrackTintColor="#3799d1"
+                    maximumTrackTintColor="#e5e5ea"
+                    thumbTintColor="#3799d1"
+                  />
                 </View>
 
                 {!isOnline && (
@@ -46,16 +51,22 @@ export default function GameSettingsScreen({
                         <View style={styles.playerControlGroup}>
                         <TouchableOpacity
                         style={styles.playerBtn}
-                        onPress={() => setPlayerCount(Math.max(3, playerCount - 1 ))}
+                        onPress={() => {
+                          setPlayerCount(Math.max(3, playerCount - 1 ));
+                          playClickSound();
+                        }}
                         >
-                            <Text style={styles.optionLabel}>{"<"}</Text> 
+                          <Ionicons name="chevron-back" size={16} color="#000000"/>
                         </TouchableOpacity>
                         <Text style={styles.optionValue}>{playerCount}</Text>
                         <TouchableOpacity
                         style={styles.playerBtn}
-                        onPress={() => setPlayerCount(Math.min(8, playerCount + 1 ))}
+                        onPress={() => {
+                          setPlayerCount(Math.min(8, playerCount + 1 ));
+                          playClickSound();
+                        }}
                         >
-                            <Text style={styles.optionLabel}>{">"}</Text> 
+                          <Ionicons name="chevron-forward" size={16} color="#000000"/>
                         </TouchableOpacity>
                         </View>
                     </View>

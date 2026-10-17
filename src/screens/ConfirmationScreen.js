@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, Modal } from 'react-native';
 
 export default function ConfirmationScreen({ onYes, onNo, title = "Bist du sicher?", message = "Deine Einstellungen werden nicht gespeichert" }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -41,6 +41,13 @@ export default function ConfirmationScreen({ onYes, onNo, title = "Bist du siche
   };
 
   return (
+    <Modal
+      visible
+      transparent
+      animationType="none" 
+      statusBarTranslucent
+      onRequestClose={() => handleClose(onNo)}
+    >
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
       <Animated.View style={[styles.modalCard, { transform: [{ scale: scaleAnim }] }]}>
         <Text style={styles.title}>{title}</Text>
@@ -66,20 +73,16 @@ export default function ConfirmationScreen({ onYes, onNo, title = "Bist du siche
         </View>
       </Animated.View>
     </Animated.View>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dunkelt den Hintergrund ab
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000, // Stellt sicher, dass das Fenster über allem liegt
   },
   modalCard: {
     width: '85%',
