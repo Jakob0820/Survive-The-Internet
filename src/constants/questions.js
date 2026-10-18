@@ -45,7 +45,7 @@ export const QUESTIONS = [
         answer: ['wäre eine peinliche Rezension für diesen Standort:'],
         color: [
             '#79acff',
-            '#FFFFFF',
+            '#1a55b5',
             '#5a97f9',
         ],
         logo: googleMapsLogo,
@@ -77,7 +77,7 @@ export const QUESTIONS = [
         answer: ['wäre eine peinliche Antwort auf diesen Kommentar:'],
         color: [
             '#ff9772',
-            '#FFFFFF',
+            '#be4012',
             '#f97d50',
         ],
         logo: redditLogo,
@@ -108,7 +108,7 @@ export const QUESTIONS = [
         answer: ['wäre ein peinlicher Kommentar auf ein Video mit diesem Titel:'],
         color: [
             '#ffb8b8',
-            '#FFFFFF',
+            '#bb1f1f',
             '#f79393',
         ],
         logo: youtubeLogo,
@@ -164,7 +164,7 @@ export const QUESTIONS = [
         answer: ['wäre eine peinliche Empfehlung für diese Person:'],
         color: [
             '#8bd3ff',
-            '#FFFFFF',
+            '#1673ad',
             '#51b8f8',
         ],
         logo: linkedinLogo,
@@ -198,7 +198,7 @@ export const QUESTIONS = [
         answer: ['wäre ein schrecklicher Kommentar auf diese Schlagzeile:'],
         color: [
             '#adccff',
-            '#FFFFFF',
+            '#2160c5',
             '#7babf9',
         ],
         logo: tagesschauLogo,
@@ -235,7 +235,7 @@ export const QUESTIONS = [
         answer: ['wäre eine peinliche Antwort auf diese Frage:'],
         color: [
             '#6cceff',
-            '#FFFFFF',
+            '#1a8dc7',
             '#3fb9f6',
         ],
         logo:gutefrageLogo,
@@ -270,7 +270,7 @@ export const QUESTIONS = [
         color: [
             '#59e59f',
             //'#00ab55',
-            '#FFFFFF',
+            '#00ab55',
             '#42a975',
         ],
         logo:gofundmeLogo,
@@ -302,7 +302,7 @@ export const QUESTIONS = [
         answer: ['wäre ein peinlicher Kommentar zu diesem Hashtag:'],
         color: [
             '#ade0ff',
-            '#FFFFFF',
+            '#1484c9',
             '#94d6ff',
         ],
         logo:twitterLogo,
@@ -333,7 +333,7 @@ export const QUESTIONS = [
         answer: ['wäre eine peinliche Rezension für dieses Produkt:'],
         color: [
             '#c8f364',
-            '#FFFFFF',
+            '#668e08',
             '#beeb53',
         ],
         logo:ebayLogo,

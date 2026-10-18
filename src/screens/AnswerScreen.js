@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, useWindowDimensions, TextInput} from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image} from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,10 @@ export default function AnswerScreen({
     setAnswerText,
     shuffledAnswers,
     answerPrompt,
+    currentLogo,
+    primaryColor,
+    secondaryColor,
+    tertiaryColor,
 }) {
 
     const [showConfirm, setShowConfirm] = useState(false);
@@ -31,15 +36,64 @@ export default function AnswerScreen({
 
     const [isEvaluating, setIsEvaluating] = useState(true);
 
+    const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+    const TIMER_SIZE = 52;
+    const TIMER_STROKE = 4;
+    const TIMER_RADIUS = (TIMER_SIZE - TIMER_STROKE) / 2;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+
+    const [remaining, setRemaining] = useState(duration);
+    const ringAnim = useRef(new Animated.Value(0)).current;
+    const onNextRef = useRef(onNext);
+
+    // immer die aktuelle onNext-Funktion nutzen
+    useEffect(() => {
+        onNextRef.current = onNext;
+    }, [onNext]);
+
     useEffect(() => {
         setIsEvaluating(true);
 
         const timer = setTimeout(() => {
             setIsEvaluating(false);
-        }, 2000);
+        }, 3000);
 
         return () => clearTimeout(timer);
     }, [currentPlayerIndex]);
+
+    useEffect(() => {
+        if (duration != 0 && !isEvaluating){
+            let left = duration;
+            setRemaining(duration);
+            ringAnim.setValue(0);
+
+            const interval = setInterval(() => {
+                left -= 1;
+                setRemaining(left);
+
+                // Ring läuft jede Sekunde einmal in 0,25 s um
+                ringAnim.setValue(0);
+                Animated.timing(ringAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    easing: Easing.linear,
+                    useNativeDriver: false,
+                }).start();
+
+                if (left <= 0) {
+                    clearInterval(interval);
+                    onNextRef.current();
+                }
+            }, 1000);
+
+            return () => clearInterval(interval);
+        }
+    }, [currentPlayerIndex, duration, isEvaluating]);
+
+    const ringOffset = ringAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [TIMER_CIRCUMFERENCE, 0],
+    });
 
     useEffect(() => {
         Animated.parallel([
@@ -102,9 +156,29 @@ export default function AnswerScreen({
     if (isEvaluating && currentPlayerIndex == 0) {
         return (
             <View style={styles.screenContainer}>
-                <View style={[styles.card, styles.evaluatingCard]}>
-                    <Text style={styles.evaluatingText}>Auswertung</Text>
-                </View>
+                    <View style={[styles.evaluatingCard]}>
+                        <View style={styles.circleWrapper}>
+                            <View style={[styles.circleBack, { backgroundColor: secondaryColor }]}>
+                                <View style={styles.darkOverlay} />
+                            </View>
+                            <View style={[styles.halfCircle, { backgroundColor: primaryColor }]} />
+
+                            {/* Textebene über den Kreisen */}
+                            <View style={styles.circleTextOverlay}>
+                                <Text style={styles.evaluatingText}>GESCHAFFT!</Text>
+                                <Text style={[styles.evaluatingSubText, {color: tertiaryColor}]}>
+                                    Jetzt ist es an der Zeit die Anworten aus dem Kontext zu reißen!
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={styles.logoBox}>
+                            <Image
+                                source={currentLogo}
+                                style={{ width: '100%', height: 150 }}
+                                resizeMode="contain"
+                            />
+                        </View>
+                    </View>
             </View>
         );
     }  
@@ -121,9 +195,44 @@ return (
                 ]}
             >
                 <View style={styles.topContent}>
-                    <Text style={styles.sectionTitle}>
-                        {playerName} ist dran!
-                    </Text>
+                    <View style={styles.header}>
+                        <Text
+                            style={[
+                                styles.sectionTitle,
+                                duration === 0 && styles.sectionTitleCentered,
+                            ]}
+                        >
+                            {playerName} ist dran!
+                        </Text>
+                        {duration != 0 && (                                
+                            <View style={styles.timer}>
+                                <Svg width={TIMER_SIZE} height={TIMER_SIZE}>
+                                    <Circle
+                                        cx={TIMER_SIZE / 2}
+                                        cy={TIMER_SIZE / 2}
+                                        r={TIMER_RADIUS}
+                                        stroke="rgba(0,0,0,0.1)"
+                                        strokeWidth={TIMER_STROKE}
+                                        fill="none"
+                                    />
+                                    <AnimatedCircle
+                                        cx={TIMER_SIZE / 2}
+                                        cy={TIMER_SIZE / 2}
+                                        r={TIMER_RADIUS}
+                                        stroke={playerColor}
+                                        strokeWidth={TIMER_STROKE}
+                                        fill="none"
+                                        strokeLinecap="round"
+                                        strokeDasharray={TIMER_CIRCUMFERENCE}
+                                        strokeDashoffset={ringOffset}
+                                        rotation="-90"
+                                        origin={`${TIMER_SIZE / 2}, ${TIMER_SIZE / 2}`}
+                                    />
+                                </Svg>
+                                <Text style={styles.timerText}>{Math.max(remaining, 0)}</Text>
+                            </View>
+                        )}
+                    </View>
                         <View style={[
                             styles.accordionContainer,
                             ]}>
@@ -279,6 +388,12 @@ const styles = StyleSheet.create({
         width: '100%',
         flex: 1,
         },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 15,
+    },
     card: {
         width: '100%',
         backgroundColor: 'rgba(255, 255, 255, 0.92)',
@@ -295,11 +410,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     sectionTitle: {
+        flex: 1,
         fontSize: 22,
         fontWeight: 'bold',
         color: '#1c1c1e',
-        textAlign: 'center',
-        marginBottom: 16,
+        textAlign: 'left',
         letterSpacing: 2,
     },
     btnSecondary: {
@@ -428,19 +543,88 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     evaluatingCard: {
-        justifyContent: 'center',
-        alignItems: 'center',     
-        flex: 0,                  
-        width: '70%',            
-        maxWidth: 260,   
-        height: 120,              
-        borderRadius: 16,            
+        width: '100%',
+        backgroundColor: 'rgba(255, 255, 255, 0.92)',
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.25,
+        shadowRadius: 15,
+        elevation: 8,
+        gap: 0,
+        overflow: 'hidden',           
     },
     evaluatingText: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        color: '#1c1c1e',
+        fontSize: 40,
+        marginTop: 40,
+        fontWeight: '800',
+        color: '#FFFFFF',
         textAlign: 'center',
         letterSpacing: 2,
+    },
+    evaluatingSubText: {
+        fontSize: 20,
+        fontWeight: '600',
+        marginTop: 5,
+        color: '#FFFFFF',
+        textAlign: 'center',
+        letterSpacing: 2,
+    },
+    timer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    timerText: {
+        position: 'absolute',
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#1c1c1e',
+    },
+    sectionTitleCentered: {
+        textAlign: 'center',
+    },
+    logoBox: {
+        width:'100%',
+        alignSelf: 'center',
+        paddingHorizontal: 20,
+    },
+    circleWrapper: {
+        width: '100%',
+        height: 240,
+        overflow: 'hidden',
+    },
+
+    circleTextOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        paddingBottom: 30,
+    },
+
+    circleBack: {
+        position: 'absolute',
+        bottom: 0,
+        left: '-20%',
+        width: '140%',
+        aspectRatio: 1,
+        borderRadius: 9999,
+    },
+
+    halfCircle: {
+        position: 'absolute',
+        bottom: 30,
+        left: '-20%',
+        width: '140%',
+        aspectRatio: 1,
+        borderRadius: 9999,
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        paddingBottom: 10,
+    },
+    darkOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 9999,
+        backgroundColor: 'rgba(0,0,0,0.22)',
     },
 });

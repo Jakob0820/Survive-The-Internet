@@ -73,7 +73,7 @@ export default function App() {
 
   //Test Modus
   const TEST_MODE = false;
-  const TEST_SCREEN = 'evaluation';
+  const TEST_SCREEN = 'answer';
 
   useEffect(() => {
     if (!TEST_MODE) return;
@@ -624,6 +624,10 @@ export default function App() {
             shuffledAnswers={shuffledFirstAnswers}
             onNext={nextAnswer}
             answerPrompt={currentRoundObj?.answer?.[0]}
+            currentLogo={currentLogo}
+            primaryColor={currentRoundObj?.color[0]}
+            secondaryColor={currentRoundObj?.color[2]}
+            tertiaryColor={currentRoundObj?.color[1]}
           />
         )}
  

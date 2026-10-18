@@ -1,6 +1,7 @@
 GameScreen.js
 import React, { useState, useEffect, useRef, useReducer } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, useWindowDimensions, TextInput, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +31,54 @@ export default function GameScreen({
 
     const [isFocused, setIsFocused] = useState(false);
     const [inputHeight, setInputHeight] = useState(50);
+
+    const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+    const TIMER_SIZE = 52;
+    const TIMER_STROKE = 4;
+    const TIMER_RADIUS = (TIMER_SIZE - TIMER_STROKE) / 2;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+
+    const [remaining, setRemaining] = useState(duration);
+    const ringAnim = useRef(new Animated.Value(0)).current;
+    const onNextRef = useRef(onNext);
+
+    // immer die aktuelle onNext-Funktion nutzen
+    useEffect(() => {
+        onNextRef.current = onNext;
+    }, [onNext]);
+
+    useEffect(() => {
+        if (duration != 0) {
+            let left = duration;
+            setRemaining(duration);
+            ringAnim.setValue(0);
+
+            const interval = setInterval(() => {
+                left -= 1;
+                setRemaining(left);
+
+                // Ring läuft jede Sekunde einmal in 0,25 s um
+                ringAnim.setValue(0);
+                Animated.timing(ringAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    easing: Easing.linear,
+                    useNativeDriver: false,
+                }).start();
+
+                if (left <= 0) {
+                    clearInterval(interval);
+                    onNextRef.current();
+                }
+            }, 1000);
+        return () => clearInterval(interval);
+        }
+    }, [currentPlayerIndex, duration]);
+
+    const ringOffset = ringAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [TIMER_CIRCUMFERENCE, 0],
+    });
 
     useEffect(() => {
         Animated.parallel([
@@ -90,6 +139,7 @@ export default function GameScreen({
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
     return (
+        
         <View style={styles.screenContainer}>
             <Animated.View
                 style={[
@@ -101,9 +151,44 @@ export default function GameScreen({
                 ]}
             >
                 <View style={styles.topContent}>
-                    <Text style={styles.sectionTitle}>
-                        {playerName} ist dran!
-                    </Text>
+                     <View style={styles.header}>
+                        <Text
+                            style={[
+                                styles.sectionTitle,
+                                duration === 0 && styles.sectionTitleCentered,
+                            ]}
+                        >
+                            {playerName} ist dran!
+                        </Text>
+                        {duration != 0 && (                                
+                            <View style={styles.timer}>
+                                <Svg width={TIMER_SIZE} height={TIMER_SIZE}>
+                                    <Circle
+                                        cx={TIMER_SIZE / 2}
+                                        cy={TIMER_SIZE / 2}
+                                        r={TIMER_RADIUS}
+                                        stroke="rgba(0,0,0,0.1)"
+                                        strokeWidth={TIMER_STROKE}
+                                        fill="none"
+                                    />
+                                    <AnimatedCircle
+                                        cx={TIMER_SIZE / 2}
+                                        cy={TIMER_SIZE / 2}
+                                        r={TIMER_RADIUS}
+                                        stroke={playerColor}
+                                        strokeWidth={TIMER_STROKE}
+                                        fill="none"
+                                        strokeLinecap="round"
+                                        strokeDasharray={TIMER_CIRCUMFERENCE}
+                                        strokeDashoffset={ringOffset}
+                                        rotation="-90"
+                                        origin={`${TIMER_SIZE / 2}, ${TIMER_SIZE / 2}`}
+                                    />
+                                </Svg>
+                                <Text style={styles.timerText}>{Math.max(remaining, 0)}</Text>
+                            </View>
+                        )}
+                    </View>
                         <View style={[
                             styles.accordionContainer,
                             ]}>
@@ -246,7 +331,13 @@ const styles = StyleSheet.create({
     accordionWrapper: {
         width: '100%',
         flex: 1,
-        },
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 15,
+    },
     card: {
         width: '100%',
         backgroundColor: 'rgba(255, 255, 255, 0.92)',
@@ -262,11 +353,11 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     sectionTitle: {
+        flex: 1,
         fontSize: 22,
         fontWeight: 'bold',
         color: '#1c1c1e',
-        textAlign: 'center',
-        marginBottom: 16,
+        textAlign: 'left',
         letterSpacing: 2,
     },
     btnSecondary: {
@@ -360,5 +451,19 @@ const styles = StyleSheet.create({
         width: '100%',
         outlineStyle: 'none',
         overflow: 'hidden',
+    },
+
+    timer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    timerText: {
+        position: 'absolute',
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#1c1c1e',
+    },
+    sectionTitleCentered: {
+        textAlign: 'center',
     },
 });
