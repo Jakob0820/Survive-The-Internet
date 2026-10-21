@@ -48,36 +48,40 @@ export default function GameScreen({
     }, [onNext]);
 
     useEffect(() => {
-        if (duration != 0) {
-            let left = duration;
-            setRemaining(duration);
-            ringAnim.setValue(0);
+        if (duration === 0) return;
 
-            const interval = setInterval(() => {
-                left -= 1;
-                setRemaining(left);
+        let left = duration;
+        setRemaining(duration);
 
-                // Ring läuft jede Sekunde einmal in 0,25 s um
-                ringAnim.setValue(0);
-                Animated.timing(ringAnim, {
-                    toValue: 1,
-                    duration: 1000,
-                    easing: Easing.linear,
-                    useNativeDriver: false,
-                }).start();
+        // Ring: eine Animation über die komplette Dauer
+        ringAnim.setValue(0);
+        const anim = Animated.timing(ringAnim, {
+            toValue: 1,
+            duration: duration * 1000,
+            easing: Easing.linear,
+            useNativeDriver: false, // strokeDashoffset kann nicht nativ animiert werden
+        });
+        anim.start();
 
-                if (left <= 0) {
-                    clearInterval(interval);
-                    onNextRef.current();
-                }
-            }, 1000);
-        return () => clearInterval(interval);
-        }
+        const interval = setInterval(() => {
+            left -= 1;
+            setRemaining(left);
+
+            if (left <= 0) {
+                clearInterval(interval);
+                onNextRef.current();
+            }
+        }, 1000);
+
+        return () => {
+            clearInterval(interval);
+            anim.stop();
+        };
     }, [currentPlayerIndex, duration]);
 
     const ringOffset = ringAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [TIMER_CIRCUMFERENCE, 0],
+        outputRange: [0, TIMER_CIRCUMFERENCE],
     });
 
     useEffect(() => {

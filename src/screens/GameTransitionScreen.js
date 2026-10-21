@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import LottieView from 'lottie-react-native';
 import shoppingCart from '../../assets/shoppingCart.json';
 
@@ -9,22 +9,26 @@ export default function GameTransitionScreen({
     currentLogo,
     primaryColor,
     secondaryColor,
+    tertiaryColor,
     currentRoundNumber,
     totalRounds,
+    evaluation,
+    onNext,
 }) {
     const shoppingCartLottieRef = useRef(null);
 
     useEffect(() => {
-        // Startet den 3-Sekunden-Timer beim Laden der Komponente
-        const timer = setTimeout(() => {
-            if (onFinish) {
-                onFinish();
-            }
-        }, 3000);
+        if(evaluation) return;
+            // Startet den 3-Sekunden-Timer beim Laden der Komponente
+            const timer = setTimeout(() => {
+                if (onFinish) {
+                    onFinish();
+                }
+            }, 3000);
 
-        // Säubert den Timer, falls der Screen vorzeitig verlassen wird
-        return () => clearTimeout(timer); 
-    }, []); 
+            // Säubert den Timer, falls der Screen vorzeitig verlassen wird
+            return () => clearTimeout(timer); 
+    }, [evaluation]); 
 
     function ProgressDots({ total, current, color }) {
         return (
@@ -46,42 +50,87 @@ export default function GameTransitionScreen({
             </View>
         );
     }
-
-    return (
-        <View style={[styles.card]}>
-            <View style={styles.header}>
-                <Text style={styles.text}>
-                    Runde {currentRoundNumber + 1}
-                </Text>
-                <ProgressDots
-                    total={totalRounds}
-                    current={currentRoundNumber}
-                    color={primaryColor}
-                />
-            </View>
-            <View style={styles.logoBox}>
-                <Image
-                    source={currentLogo}
-                    style={{ width: '100%', height: 150 }}
-                    resizeMode="contain"
-                />
-            </View>
-            <View style={styles.circleWrapper}>
-                <View style={[styles.circleBack, { backgroundColor: secondaryColor }]}>
-                    <View style={styles.darkOverlay} />
-                </View>
-                <View style={[styles.halfCircle, {backgroundColor: primaryColor}]}>
-                    <LottieView
-                        ref={shoppingCartLottieRef}
-                        source={shoppingCart}
-                        autoPlay={true}
-                        loop={true}
-                        style={styles.shoppingCartLottie}
+    if(!evaluation){
+        return (
+            <View style={[styles.card]}>
+                <View style={styles.header}>
+                    <Text style={styles.text}>
+                        Runde {currentRoundNumber + 1}
+                    </Text>
+                    <ProgressDots
+                        total={totalRounds}
+                        current={currentRoundNumber}
+                        color={primaryColor}
                     />
                 </View>
+                <View style={styles.logoBox}>
+                    <Image
+                        source={currentLogo}
+                        style={{ width: '100%', height: 150 }}
+                        resizeMode="contain"
+                    />
+                </View>
+                <View style={styles.circleWrapper}>
+                    <View style={[styles.circleBack, { backgroundColor: secondaryColor }]}>
+                        <View style={styles.darkOverlay} />
+                    </View>
+                    <View style={[styles.halfCircle, {backgroundColor: primaryColor}]}>
+                        <LottieView
+                            ref={shoppingCartLottieRef}
+                            source={shoppingCart}
+                            autoPlay={true}
+                            loop={true}
+                            style={styles.shoppingCartLottie}
+                        />
+                    </View>
+                </View>
             </View>
-        </View>
-    );
+        );
+    }
+
+    if(evaluation){
+        return (
+            <View style={styles.card}>
+                <View style={styles.header}>
+                    <View style={styles.logoBox}>
+                        <Image
+                            source={currentLogo}
+                            style={{ width: '100%', height: 130 }}
+                            resizeMode="contain"
+                        />
+                        <Text style={styles.headerText}>
+                            Na dann wollen wir uns mal ansehen, was ihr geschaffen habt!
+                        </Text>
+                    </View>
+                </View>
+                
+                <View style={styles.circleWrapper}>
+                    <View style={[styles.circleBack, { backgroundColor: secondaryColor }]}>
+                        <View style={styles.darkOverlay} />
+                    </View>
+                    <View style={[styles.halfCircle, { backgroundColor: primaryColor }]} />
+
+                    <TouchableOpacity
+                        style={[
+                            styles.btn,
+                            styles.resultBtn,
+                            {
+                                backgroundColor: secondaryColor,
+                            },
+                        ]}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                            onNext();
+                        }}
+                    >
+                        <Text style={styles.btnText}>
+                            ERGEBNIS ANZEIGEN
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
 }
 
 const styles = StyleSheet.create({
@@ -165,5 +214,38 @@ const styles = StyleSheet.create({
     dotActive: {
         width: 20,
     },
+
+    btn: {
+        position: 'absolute',
+        paddingVertical: 24,
+        paddingHorizontal: 24,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    btnText: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: 'bold',
+        letterSpacing: 2,
+        textAlign: 'center',
+    },
+    resultBtn: {
+        top: 120,
+        alignSelf: 'center',
+    },
+    evaluatingText: {
+        fontSize: 36,
+        fontWeight: '900',
+        color: '#1c1c1e',
+        textAlign: 'center',
+        marginTop: 30,
+    },
+    headerText: {
+        fontSize: 22,
+        fontWeight: '700',
+        color: "#000000",
+        textAlign: 'center',
+    }
 
 });

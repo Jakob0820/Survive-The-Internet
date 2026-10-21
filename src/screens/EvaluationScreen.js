@@ -179,12 +179,13 @@ evaluationOrder,
 currentLogo,
 primaryColor,
 secondaryColor,
+tertiaryColor,
 gameMode,
 onVote,
 
 }) {
 
-const [showResult, setShowResult] = useState(false);
+const [showResult, setShowResult] = useState(true);
 const [showResponse, setShowResponse] = useState(false);
 
 const [typedChars, setTypedChars] = useState(0);
@@ -568,9 +569,6 @@ useEffect(() => {
     });
 }, [showResponse]);
 
-const handleShowResult = () => {
-    setShowResult(true);
-};
 //Logo raus, VotingBar , VotingButton und WeiterButton rein.
 useEffect(() => {
     if (!allRevealed) return;
@@ -1591,60 +1589,24 @@ if (showResult) {
     );
 }
 
-return (
-    <View style={styles.screenContainer}>
-        <Animated.View
-            style={[
-                styles.card,
-                {
-                    opacity: cardOpacity,
-                    transform: [{ scale: cardScale }],
-                },
-            ]}
-        >
-            <Text style={styles.evaluatingText}>
-                Auswertung
-            </Text>
-            
-
-            <TouchableOpacity
-                style={[styles.btn, styles.btnSecondary]}
-                activeOpacity={0.8}
-                onPress={() => {
-                    playMusic('evaluationMenu');
-                    handleShowResult();
-                }}
-            >
-                <Text style={styles.btnText}>ERGEBNIS ANZEIGEN</Text>
-            </TouchableOpacity>
-        </Animated.View>
-    </View>
-);
 
 }
 
 // ── Shared / Grundgerüst ─────────────────────────────
 const sharedStyles = {
 screenContainer: {
-    flex: 1,
-    width: '100%',
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
 },
 
 card: {
-    width: '75%',
-    maxWidth: 300,
-    minHeight: 180,
+    width: '80%',
+    height: 520,
 
     backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderRadius: 20,
-
-    padding: 28,
-
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    overflow: 'hidden',
 
     shadowColor: '#000',
     shadowOffset: {
@@ -1653,14 +1615,6 @@ card: {
     },
     shadowOpacity: 0.25,
     shadowRadius: 15,
-    elevation: 8,
-},
-
-evaluatingText: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#1c1c1e',
-    textAlign: 'center',
 },
 
 evaluationBox: {
@@ -1688,9 +1642,10 @@ evaluationBox: {
 },
 
 btn: {
-    paddingVertical: 16,
+    position: 'absolute',
+    paddingVertical: 24,
     paddingHorizontal: 24,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
 },
@@ -1707,7 +1662,6 @@ btnText: {
     letterSpacing: 2,
     textAlign: 'center',
 },
-
 
 resultContainer: {
     position: 'absolute',
@@ -1955,6 +1909,54 @@ tallyLabel: {
     textAlign: 'left',
     marginLeft: 14,
     marginTop: 5,
+},
+
+circleWrapper: {
+    width: '100%',
+    height: 300,
+    overflow: 'hidden',
+    marginTop: 10,
+},
+
+halfCircle: {
+    position: 'absolute',
+    top: 45,
+    left: '-20%',
+    width: '140%',
+    aspectRatio: 1,
+    borderRadius: 9999,
+},
+
+circleBack: {
+    position: 'absolute',
+    top: 0,
+    left: '-20%',
+    width: '140%', 
+    aspectRatio: 1,
+    borderRadius: 9999,
+},
+darkOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 9999,
+    backgroundColor: 'rgba(0,0,0,0.22)',
+},
+
+resultBtn: {
+    top: 90,
+    alignSelf: 'center',
+},
+
+logoBox: {
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+},
+
+circleBox: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
 },
 
 };

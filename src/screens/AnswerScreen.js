@@ -65,34 +65,37 @@ export default function AnswerScreen({
         if (duration != 0 && !isEvaluating){
             let left = duration;
             setRemaining(duration);
+    
+            // Ring: eine Animation über die komplette Dauer
             ringAnim.setValue(0);
-
+            const anim = Animated.timing(ringAnim, {
+                toValue: 1,
+                duration: duration * 1000,
+                easing: Easing.linear,
+                useNativeDriver: false, // strokeDashoffset kann nicht nativ animiert werden
+            });
+            anim.start();
+    
             const interval = setInterval(() => {
                 left -= 1;
                 setRemaining(left);
-
-                // Ring läuft jede Sekunde einmal in 0,25 s um
-                ringAnim.setValue(0);
-                Animated.timing(ringAnim, {
-                    toValue: 1,
-                    duration: 1000,
-                    easing: Easing.linear,
-                    useNativeDriver: false,
-                }).start();
-
+    
                 if (left <= 0) {
                     clearInterval(interval);
                     onNextRef.current();
                 }
             }, 1000);
-
-            return () => clearInterval(interval);
+    
+            return () => {
+                clearInterval(interval);
+                anim.stop();
+            };
         }
     }, [currentPlayerIndex, duration, isEvaluating]);
 
     const ringOffset = ringAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [TIMER_CIRCUMFERENCE, 0],
+        outputRange: [0, TIMER_CIRCUMFERENCE],
     });
 
     useEffect(() => {
@@ -158,7 +161,7 @@ export default function AnswerScreen({
             <View style={styles.screenContainer}>
                     <View style={[styles.evaluatingCard]}>
                         <View style={styles.circleWrapper}>
-                            <View style={[styles.circleBack, { backgroundColor: secondaryColor }]}>
+                            <View style={[styles.circleBack, { backgroundColor: tertiaryColor }]}>
                                 <View style={styles.darkOverlay} />
                             </View>
                             <View style={[styles.halfCircle, { backgroundColor: primaryColor }]} />
@@ -166,7 +169,7 @@ export default function AnswerScreen({
                             {/* Textebene über den Kreisen */}
                             <View style={styles.circleTextOverlay}>
                                 <Text style={styles.evaluatingText}>GESCHAFFT!</Text>
-                                <Text style={[styles.evaluatingSubText, {color: tertiaryColor}]}>
+                                <Text style={[styles.evaluatingSubText, {color: secondaryColor}]}>
                                     Jetzt ist es an der Zeit die Anworten aus dem Kontext zu reißen!
                                 </Text>
                             </View>

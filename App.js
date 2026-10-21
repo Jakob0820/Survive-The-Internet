@@ -36,6 +36,7 @@ export default function App() {
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [duration, setDuration] = useState(90);
   const [playerCount, setPlayerCount] = useState(3);
+  const [isEvaluating, setIsEvaluating] = useState(false);
 
   // Logik für Spieler Setup
   const [players, setPlayers] = useState([]);
@@ -73,7 +74,7 @@ export default function App() {
 
   //Test Modus
   const TEST_MODE = false;
-  const TEST_SCREEN = 'answer';
+  const TEST_SCREEN = 'transition';
 
   useEffect(() => {
     if (!TEST_MODE) return;
@@ -124,7 +125,7 @@ export default function App() {
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
     //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.GOFUNDME, ROUND_TYPE.YOUTUBE, ROUND_TYPE.GOFUNDME]
+    const testRounds = [ROUND_TYPE.GOFUNDME]
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -215,6 +216,7 @@ export default function App() {
     playerSetup: 'mainMenu',
     game: 'questionMenu',
     answer: 'questionMenu',
+    evaluation: 'evaluationMenu',
   }
 
   useEffect(() => {
@@ -252,6 +254,7 @@ export default function App() {
     setEvaluationOrder([]);
     setVoteCount([]);
     setBurnCount([]);
+    setIsEvaluating(false);
 
   }
  
@@ -333,6 +336,7 @@ export default function App() {
       setShuffledIndices([]);
       setEvaluationOrder([]);
       setEvaluationData([]);
+      setIsEvaluating(false);
  
       setCurrentScreen('transition');
     } else {
@@ -346,6 +350,7 @@ export default function App() {
         setEvaluationData([]);
         setVoteCount(Array(playerCount).fill(0));
         setBurnCount(Array(playerCount).fill(0));
+        setIsEvaluating(false);
 
         const rounds = generateGameRounds(5);
         setGameRounds(rounds);
@@ -435,7 +440,8 @@ export default function App() {
       setEvaluationOrder(order);
 
       setCurrentPlayerIndex(0);
-      setCurrentScreen('evaluation');
+      setIsEvaluating(true);
+      setCurrentScreen('transition');
     }
   };
 
@@ -513,6 +519,7 @@ export default function App() {
           currentLogo={currentLogo}
           primaryColor={currentRoundObj?.color[0]}
           secondaryColor={currentRoundObj?.color[1]}
+          tertiaryColor={currentRoundObj?.color[2]}
           gameMode={currentRoundObj?.categoryName}
           onVote={handleVote}
         />
@@ -626,8 +633,8 @@ export default function App() {
             answerPrompt={currentRoundObj?.answer?.[0]}
             currentLogo={currentLogo}
             primaryColor={currentRoundObj?.color[0]}
-            secondaryColor={currentRoundObj?.color[2]}
-            tertiaryColor={currentRoundObj?.color[1]}
+            secondaryColor={currentRoundObj?.color[1]}
+            tertiaryColor={currentRoundObj?.color[2]}
           />
         )}
  
@@ -638,8 +645,11 @@ export default function App() {
                 currentLogo={currentLogo}
                 primaryColor={currentRoundObj?.color[0]}
                 secondaryColor={currentRoundObj?.color[2]}
+                tertiaryColor={currentRoundObj?.color[3]}
                 currentRoundNumber={currentRoundIndex}
                 totalRounds={gameRounds.length}
+                evaluation={isEvaluating}
+                onNext={() => setCurrentScreen('evaluation')}
             />
         )}
  
