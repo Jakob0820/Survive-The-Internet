@@ -1,8 +1,9 @@
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../constants/sounds';
+import RoundSelectionScreen from './RoundSelectionScreen';
 
 export default function GameSettingsScreen({
     isOnline,
@@ -14,7 +15,14 @@ export default function GameSettingsScreen({
     onNextJoin,
     onNext,
     onBack,
+    roundColors,
+    roundNames,
+    randomRounds,
+    setRandomRounds,
+    roundLogos,
+    setSelectedRounds,
 }) {
+    const [showConfirm, setShowConfirm] = useState(false);
 
     return (
         <View style={styles.screenContainer}>
@@ -109,6 +117,16 @@ export default function GameSettingsScreen({
                         >
                             <Text style={styles.btnPrimaryText}>WEITER</Text>
                         </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.btn, styles.btnPrimary, { marginTop: 15}]}
+                            activeOpacity={0.8}
+                            onPress={() => {
+                              playClickSound();
+                              setShowConfirm(true);
+                            }}
+                        >
+                            <Text style={styles.btnPrimaryText}>SPIELMODUS</Text>
+                        </TouchableOpacity>
                     </View>
                 )}
 
@@ -123,6 +141,20 @@ export default function GameSettingsScreen({
                     <Text style={styles.btnSecondaryText}>HAUPTMENÜ</Text>
                 </TouchableOpacity>
             </View>
+          {showConfirm && (
+              <RoundSelectionScreen
+                  onNext={() => {
+                      setShowConfirm(false);
+                      playClickSound();
+                  }}
+                 roundNames={roundNames}
+                 roundColors={roundColors} 
+                 randomRounds={randomRounds}
+                 setRandomRounds={setRandomRounds}
+                 roundLogos={roundLogos}
+                 setSelectedRounds={setSelectedRounds}
+              />
+          )}
         </View>
 
     );

@@ -51,6 +51,8 @@ export default function App() {
   const [textValue, setTextValue] = useState('');
  
   const [gameRounds, setGameRounds] = useState([]);
+  const [randomRounds, setRandomRounds] = useState(true);
+  const [selectedRounds, setSelectedRounds] = useState([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
  
   const currentType = gameRounds[currentRoundIndex];
@@ -255,7 +257,7 @@ export default function App() {
     setVoteCount([]);
     setBurnCount([]);
     setIsEvaluating(false);
-
+    setSelectedRounds([]);
   }
  
   const handleNextPlayer = () => {
@@ -365,9 +367,14 @@ export default function App() {
   }
  
   const generateGameRounds = (count = 5) => {
-    const allTypes = Object.values(ROUND_TYPE);
-    const shuffledTypes = shuffleArray(allTypes);
-    return shuffledTypes.slice(0, count);
+    if(randomRounds){
+      const allTypes = Object.values(ROUND_TYPE);
+      const shuffledTypes = shuffleArray(allTypes);
+      return shuffledTypes.slice(0, count);
+    }
+    else {
+      return selectedRounds.map((index) => QUESTIONS[index].type);
+    }
   }
  
   const generateQuestions = (roundType, count = playerCount) => {
@@ -595,6 +602,12 @@ export default function App() {
               resetPlayerSetup();
               setCurrentScreen('main');
             }}
+            roundColors={QUESTIONS.map(question => question.color[0])}
+            roundNames={QUESTIONS.map(question => question.categoryName)}
+            randomRounds={randomRounds}
+            setRandomRounds={setRandomRounds}
+            roundLogos={QUESTIONS.map(question => question.logo)}
+            setSelectedRounds={setSelectedRounds}
  
           />
         )}

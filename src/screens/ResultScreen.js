@@ -16,7 +16,6 @@ import {
     Easing,
 } from 'react-native';
 
-
 const POINTS_PER_VOTE = 80;
 const POINTS_PER_BURN = 30;
 
