@@ -55,6 +55,27 @@ export default function ResultScreen({
     isLastRound,
     previousPoints,
 }) {
+    const popScale = useRef(new Animated.Value(0.85)).current;
+    const popOpacity = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        popScale.setValue(0.85);
+        popOpacity.setValue(0);
+
+        Animated.parallel([
+            Animated.spring(popScale, {
+                toValue: 1,
+                friction: 6,
+                tension: 80,
+                useNativeDriver: true,
+            }),
+            Animated.timing(popOpacity, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [isLastRound]);
 
     const ranking = useMemo(() => {
         return players
@@ -162,7 +183,12 @@ export default function ResultScreen({
         <>
             {!isLastRound && (
                 <View style={styles.roundResultContainer}>
-                    <View style={styles.card}>
+                    <Animated.View
+                        style={[
+                            styles.card,
+                            { opacity: popOpacity, transform: [{ scale: popScale }] },
+                        ]}
+                    >
                         <View style={styles.header}>
                             <Text style={styles.headerText}>AKTUELLE PUNKTE</Text>
                         </View>
@@ -216,7 +242,7 @@ export default function ResultScreen({
                                 </Text>
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </Animated.View>
                 </View>
             )}
             {isLastRound && (
@@ -230,7 +256,12 @@ export default function ResultScreen({
                         resizeMode="cover"
                         pointerEvents="none"
                     />
-                    <View style={styles.podiumWrapper}>
+                    <Animated.View
+                        style={[
+                            styles.podiumWrapper,
+                            { opacity: popOpacity, transform: [{ scale: popScale }] },
+                        ]}
+                    >
                         <View style={styles.screenContainer}>
                             <View style={styles.podiumBox}>
                                 <Image
@@ -371,7 +402,7 @@ export default function ResultScreen({
                                 </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
+                    </Animated.View>
                 </>
             )}
         </>

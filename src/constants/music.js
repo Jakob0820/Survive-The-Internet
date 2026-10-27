@@ -29,6 +29,7 @@ export const playMusic = (name) => {
   if (!player || !enabled) return;
 
   player.volume = volume;
+  player.seekTo(0);
   player.play();
 };
 

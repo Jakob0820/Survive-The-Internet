@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, Modal, Image } from 'react-native';
 import { playClickSound } from '../constants/sounds';
 import { Ionicons } from '@expo/vector-icons';
-import { preload } from 'expo-audio';
+import Slider from '@react-native-community/slider';
 
 export default function ConfirmationScreen({ 
     onNext,
@@ -12,12 +12,14 @@ export default function ConfirmationScreen({
     roundLogos,
     setRandomRounds,
     setSelectedRounds,
+    roundLength,
+    setRoundLength,
 }) {
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
-  const [modes, setModes] = useState([0,0,0,0,0,0,0,0]);
+  const [modes, setModes] = useState([0,0,0,0,0,0,0]);
   const [sliderCount, setSliderCount] = useState(1);
 
   const setMode = (index, value) => setModes((prev) => prev.map((m, i) => (i === index ? value : m)));
@@ -80,6 +82,7 @@ export default function ConfirmationScreen({
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {
+                console.log('switch pressed, randomRounds =', randomRounds);
                 playClickSound();
                 setRandomRounds(!randomRounds)
                 }}
@@ -96,6 +99,32 @@ export default function ConfirmationScreen({
             />
             </TouchableOpacity>
         </View>
+        {randomRounds && (
+          <View style={[{marginTop: 10}]}>
+            <View style={styles.optionRow}>
+              <Text style={styles.optionLabel}>Rundendauer</Text>
+              <Text style={styles.optionValue}>
+                {roundLength}
+              </Text>
+            </View>
+
+            <View style={styles.durationBarContainer}>
+              <Slider
+                style={{ flex: 1, height: 36 }}
+                minimumValue={1}
+                maximumValue={9}
+                step={1}
+                value={roundLength}
+                onValueChange={(value) => {
+                  setRoundLength(value);
+                }}
+                minimumTrackTintColor="#3799d1"
+                maximumTrackTintColor="#e5e5ea"
+                thumbTintColor="#3799d1"
+              />
+            </View>
+          </View>
+        )}
         {!randomRounds && (
             <View style={styles.roundCointainer}>
                 {modes.slice(0, sliderCount).map((modeValue, index) => (
@@ -132,19 +161,35 @@ export default function ConfirmationScreen({
                 </View>
                 ))}
 
-                {sliderCount < modes.length && (
-                <TouchableOpacity
-                    style={[styles.btn, styles.btnSecondary, {marginTop: 10}]}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                    playClickSound();
-                    setSliderCount((c) => c + 1);
-                    }}
-                >
-                    <Ionicons name="add-circle-outline" size={18} color="#000000" />
-                    <Text style={styles.btnSecondaryText}>Runde hinzufügen</Text>
-                </TouchableOpacity>
-                )}
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                      style={[styles.btn, styles.btnSecondary]}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                      setMode(sliderCount, (modes[sliderCount - 1] + 1) % roundNames.length);
+                      playClickSound();
+                      if (sliderCount < modes.length){
+                        setSliderCount((c) => c + 1);
+                      }
+                      }}
+                  >
+                      <Ionicons name="add-circle-outline" size={18} color="#000000" />
+                      <Text style={styles.btnSecondaryText}> Runde</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                      style={[styles.btn, styles.btnSecondary]}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                      playClickSound();
+                      if (sliderCount > 1){
+                        setSliderCount((c) => c - 1);
+                      }
+                      }}
+                  >
+                      <Ionicons name="remove-circle-outline" size={18} color="#000000" />
+                      <Text style={styles.btnSecondaryText}> Runde</Text>
+                  </TouchableOpacity>
+                </View>
             </View>
         )}
         <TouchableOpacity
@@ -198,10 +243,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%'
   },
   btnPrimary: {
     backgroundColor: '#3799d1',
+    width: '100%',
   },
   btnPrimaryText: {
     color: '#ffffff',
@@ -214,7 +259,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e5ea',
     flexDirection: 'row',
-    gap: 10,
+    width: '48%',
   },
   btnSecondaryText: {
     color: '#1c1c1e',
@@ -228,6 +273,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 8,
     width: '100%',
+    flexShrink: 0, 
   },
   optionLabel: {
     color: '#1c1c1e',
@@ -235,12 +281,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
   },
+  optionValue: {
+    color: '#3799d1',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   customSwitchTrack: {
     width: 50,
     height: 28,
     borderRadius: 14,
     padding: 3,
     justifyContent: 'center',
+    flexShrink: 0, 
   },
   customSwitchThumb: {
     width: 22,
@@ -295,5 +347,17 @@ const styles = StyleSheet.create({
   roundSliderLogo: {
     width: '100%',
     height: '100%',
+  },
+   buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    gap: 12,
+  },
+  durationBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
   },
 });

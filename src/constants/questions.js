@@ -230,7 +230,7 @@ export const QUESTIONS = [
             'Wenn du ab morgen nie wieder arbeiten müsstest, womit würdest du deinen Alltag füllen?',
             'Welchen Ratschlag würdest du jemandem geben, der nach Jahren immer noch nicht über seine erste große Liebe hinweg ist?',
             'Was würdest du zu einem schlechten Servicemitarbeiter sagen?',
-            'Was denkst du über Leute, die nicht recyclen?'
+            'Was denkst du über Leute, die nicht recyclen?',
         ],
         answer: ['wäre eine peinliche Antwort auf diese Frage:'],
         color: [

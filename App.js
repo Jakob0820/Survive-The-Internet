@@ -53,6 +53,7 @@ export default function App() {
   const [gameRounds, setGameRounds] = useState([]);
   const [randomRounds, setRandomRounds] = useState(true);
   const [selectedRounds, setSelectedRounds] = useState([]);
+  const [roundLength, setRoundLength] = useState(5);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
  
   const currentType = gameRounds[currentRoundIndex];
@@ -76,7 +77,7 @@ export default function App() {
 
   //Test Modus
   const TEST_MODE = false;
-  const TEST_SCREEN = 'transition';
+  const TEST_SCREEN = 'evaluation';
 
   useEffect(() => {
     if (!TEST_MODE) return;
@@ -127,7 +128,7 @@ export default function App() {
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
     //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.GOFUNDME]
+    const testRounds = [ROUND_TYPE.GOFUNDME, ROUND_TYPE.GOOGLE_MAPS]
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -281,7 +282,7 @@ export default function App() {
     setSelectedColor(nextFreeColor);
     }
     else {
-      const rounds = generateGameRounds(5);
+      const rounds = generateGameRounds(roundLength);
       setGameRounds(rounds);
       setCurrentRoundIndex(0);
       setCurrentPlayerIndex(0);
@@ -354,7 +355,7 @@ export default function App() {
         setBurnCount(Array(playerCount).fill(0));
         setIsEvaluating(false);
 
-        const rounds = generateGameRounds(5);
+        const rounds = generateGameRounds(roundLength);
         setGameRounds(rounds);
         setCurrentRoundIndex(0);
 
@@ -366,7 +367,7 @@ export default function App() {
     }
   }
  
-  const generateGameRounds = (count = 5) => {
+  const generateGameRounds = (count) => {
     if(randomRounds){
       const allTypes = Object.values(ROUND_TYPE);
       const shuffledTypes = shuffleArray(allTypes);
@@ -608,7 +609,8 @@ export default function App() {
             setRandomRounds={setRandomRounds}
             roundLogos={QUESTIONS.map(question => question.logo)}
             setSelectedRounds={setSelectedRounds}
- 
+            roundLength={roundLength}
+            setRoundLength={setRoundLength}
           />
         )}
  

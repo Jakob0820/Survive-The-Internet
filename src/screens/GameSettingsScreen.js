@@ -21,6 +21,8 @@ export default function GameSettingsScreen({
     setRandomRounds,
     roundLogos,
     setSelectedRounds,
+    roundLength,
+    setRoundLength,
 }) {
     const [showConfirm, setShowConfirm] = useState(false);
 
@@ -153,6 +155,8 @@ export default function GameSettingsScreen({
                  setRandomRounds={setRandomRounds}
                  roundLogos={roundLogos}
                  setSelectedRounds={setSelectedRounds}
+                 roundLength={roundLength}
+                 setRoundLength={setRoundLength}
               />
           )}
         </View>
