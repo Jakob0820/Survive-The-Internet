@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
-import { playClickSound } from '../constants/sounds';
+import { playClickSound, playSliderHaptic } from '../constants/sounds';
 import Slider from '@react-native-community/slider';
 
 export default function OptionsScreen({
@@ -9,6 +9,8 @@ export default function OptionsScreen({
     setSoundEnabled,
     musicEnabled,
     setMusicEnabled,
+    vibrationEnabled,
+    setVibrationEnabled,
     onBack,
 }) {
 
@@ -29,7 +31,10 @@ export default function OptionsScreen({
                 maximumValue={100}
                 step={10}
                 value={volume}
-                onValueChange={setVolume}
+                onValueChange={(value) => {
+                  if (value !== volume) playSliderHaptic();
+                  setVolume(value);
+                }}
                 minimumTrackTintColor="#3799d1"
                 maximumTrackTintColor="#e5e5ea"
                 thumbTintColor="#3799d1"
@@ -75,6 +80,27 @@ export default function OptionsScreen({
                   style={[
                     styles.customSwitchThumb,
                     musicEnabled ? styles.switchOn : styles.switchOff
+                  ]}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.optionRow}>
+              <Text style={styles.optionLabel}>Vibration</Text>
+              <TouchableOpacity
+                 activeOpacity={0.8}
+                  onPress={() => {
+                    setVibrationEnabled(!vibrationEnabled);
+                    playClickSound();
+                  }}
+                  style={[
+                  styles.customSwitchTrack,
+                    { backgroundColor: vibrationEnabled ? '#3799d1' : '#e5e5ea' }
+                  ]}
+              >
+                <View
+                  style={[
+                    styles.customSwitchThumb,
+                    vibrationEnabled ? styles.switchOn : styles.switchOff
                   ]}
                 />
               </TouchableOpacity>

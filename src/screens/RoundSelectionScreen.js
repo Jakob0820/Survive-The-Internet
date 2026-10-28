@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, Modal, Image } from 'react-native';
-import { playClickSound } from '../constants/sounds';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, Modal, Image, ScrollView, useWindowDimensions } from 'react-native';
+import { playClickSound, playSliderHaptic } from '../constants/sounds';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 
@@ -10,6 +10,7 @@ export default function ConfirmationScreen({
     roundColors,
     randomRounds,
     roundLogos,
+    selectedRounds,
     setRandomRounds,
     setSelectedRounds,
     roundLength,
@@ -19,8 +20,16 @@ export default function ConfirmationScreen({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
-  const [modes, setModes] = useState([0,0,0,0,0,0,0]);
-  const [sliderCount, setSliderCount] = useState(1);
+  const MAX_ROUNDS = 10;
+
+  // Gespeicherte Auswahl übernehmen, Rest mit 0 auffüllen
+  const [modes, setModes] = useState(() =>
+    Array.from({ length: MAX_ROUNDS }, (_, i) => selectedRounds?.[i] ?? 0)
+  );
+  const [sliderCount, setSliderCount] = useState(() => Math.max(1, selectedRounds?.length ?? 0));
+
+  const { height: screenHeight } = useWindowDimensions();
+  const scrollRef = useRef(null);
 
   const setMode = (index, value) => setModes((prev) => prev.map((m, i) => (i === index ? value : m)));
 
@@ -116,6 +125,7 @@ export default function ConfirmationScreen({
                 step={1}
                 value={roundLength}
                 onValueChange={(value) => {
+                  if (value !== roundLength) playSliderHaptic();
                   setRoundLength(value);
                 }}
                 minimumTrackTintColor="#3799d1"
@@ -127,6 +137,13 @@ export default function ConfirmationScreen({
         )}
         {!randomRounds && (
             <View style={styles.roundCointainer}>
+                <ScrollView
+                    ref={scrollRef}
+                    style={[styles.roundScroll, { maxHeight: screenHeight * 0.45 }]}
+                    contentContainerStyle={styles.roundScrollContent}
+                    showsVerticalScrollIndicator={false}
+                    onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+                >
                 {modes.slice(0, sliderCount).map((modeValue, index) => (
                 <View key={index} style={styles.roundSliderRow}>
                     <TouchableOpacity
@@ -160,15 +177,16 @@ export default function ConfirmationScreen({
                     </TouchableOpacity>
                 </View>
                 ))}
+                </ScrollView>
 
                 <View style={styles.buttonContainer}>
                   <TouchableOpacity
                       style={[styles.btn, styles.btnSecondary]}
                       activeOpacity={0.8}
                       onPress={() => {
-                      setMode(sliderCount, (modes[sliderCount - 1] + 1) % roundNames.length);
                       playClickSound();
                       if (sliderCount < modes.length){
+                        setMode(sliderCount, (modes[sliderCount - 1] + 1) % roundNames.length);
                         setSliderCount((c) => c + 1);
                       }
                       }}
@@ -317,6 +335,13 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
+  },
+  roundScroll: {
+    width: '100%',
+    flexGrow: 0,
+  },
+  roundScrollContent: {
     gap: 10,
   },
   roundSlider: {

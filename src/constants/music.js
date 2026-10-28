@@ -1,9 +1,10 @@
 import { createAudioPlayer } from 'expo-audio';
+import { PLAYER_OPTIONS } from './audioSession';
 
 const tracks = {
-  mainMenu: createAudioPlayer(require('../../assets/backgroundSoundIntro2.mp3')),
-  questionMenu: createAudioPlayer(require('../../assets/backgroundSoundQuestions.mp3')),
-  evaluationMenu: createAudioPlayer(require('../../assets/backgroundSoundEvaluation.mp3')),
+  mainMenu: createAudioPlayer(require('../../assets/backgroundSoundIntro2.mp3'), PLAYER_OPTIONS),
+  questionMenu: createAudioPlayer(require('../../assets/backgroundSoundQuestions.mp3'), PLAYER_OPTIONS),
+  evaluationMenu: createAudioPlayer(require('../../assets/backgroundSoundEvaluation.mp3'), PLAYER_OPTIONS),
 };
 
 Object.values(tracks).forEach((p) => {

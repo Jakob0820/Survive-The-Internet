@@ -1,19 +1,32 @@
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
-
-setAudioModeAsync({ playsInSilentMode: true });
+import { createAudioPlayer } from 'expo-audio';
+import * as Haptics from 'expo-haptics';
+import { PLAYER_OPTIONS } from './audioSession';
 
 const soundPlayers = {
-    click: createAudioPlayer(require('../../assets/clickSound.mp3')),
-    stamp: createAudioPlayer(require('../../assets/punchSound.mp3')),
-    typing: createAudioPlayer(require('../../assets/typingSound.mp3')),
-    vote: createAudioPlayer(require('../../assets/voteSound.mp3')),
-    pop: createAudioPlayer(require('../../assets/popSound.mp3')),
-    count: createAudioPlayer(require('../../assets/countingSound.mp3')),
+    click: createAudioPlayer(require('../../assets/clickSound.mp3'), PLAYER_OPTIONS),
+    stamp: createAudioPlayer(require('../../assets/punchSound.mp3'), PLAYER_OPTIONS),
+    typing: createAudioPlayer(require('../../assets/typingSound.mp3'), PLAYER_OPTIONS),
+    vote: createAudioPlayer(require('../../assets/voteSound.mp3'), PLAYER_OPTIONS),
+    pop: createAudioPlayer(require('../../assets/popSound.mp3'), PLAYER_OPTIONS),
+    count: createAudioPlayer(require('../../assets/countingSound.mp3'), PLAYER_OPTIONS),
     //weitere Sounds hier
 };
 
 let enabled = true;
 let volume = 0.8;
+let hapticsEnabled = true;
+
+export const setHapticsEnabled = (value) => {
+  hapticsEnabled = value;
+};
+
+// Kurzer Vibrationsimpuls, unabhängig davon ob Sounds an sind
+const vibrate = (style) => {
+  if (!hapticsEnabled) return;
+  Haptics.impactAsync(style).catch((e) => {
+    console.warn('Vibration konnte nicht ausgeführt werden', e);
+  });
+};
 
 export const setSoundsMuted = (value) => {
   enabled = value;
@@ -50,10 +63,30 @@ export const setSoundVolume = (value) => {
   });
 };
 
-export const playClickSound = () => play(soundPlayers.click);
-export const playStampSound = () => play(soundPlayers.stamp);
+export const playClickSound = () => {
+  vibrate(Haptics.ImpactFeedbackStyle.Light);
+  return play(soundPlayers.click);
+};
+
+// Feines Ticken bei jedem Schritt eines Sliders
+export const playSliderHaptic = () => {
+  if (!hapticsEnabled) return;
+  Haptics.selectionAsync().catch((e) => {
+    console.warn('Vibration konnte nicht ausgeführt werden', e);
+  });
+};
+export const playStampSound = () => {
+  vibrate(Haptics.ImpactFeedbackStyle.Heavy);
+  return play(soundPlayers.stamp);
+};
 export const playTypingSound = () => play(soundPlayers.typing);
-export const playVoteSound = () => play(soundPlayers.vote);
-export const playPopSound = () => play(soundPlayers.pop);
+export const playVoteSound = () => {
+  vibrate(Haptics.ImpactFeedbackStyle.Medium);
+  return play(soundPlayers.vote);
+};
+export const playPopSound = () => {
+  vibrate(Haptics.ImpactFeedbackStyle.Soft);
+  return play(soundPlayers.pop);
+};
 export const playCountingSound = () => play(soundPlayers.count);
 //weitere Sounds hier

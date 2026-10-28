@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
-import { playClickSound } from '../constants/sounds';
+import { playClickSound, playSliderHaptic } from '../constants/sounds';
 import RoundSelectionScreen from './RoundSelectionScreen';
 
 export default function GameSettingsScreen({
@@ -20,6 +20,7 @@ export default function GameSettingsScreen({
     randomRounds,
     setRandomRounds,
     roundLogos,
+    selectedRounds,
     setSelectedRounds,
     roundLength,
     setRoundLength,
@@ -46,7 +47,9 @@ export default function GameSettingsScreen({
                     step={10}
                     value={duration === 0 ? 130 : duration}
                     onValueChange={(value) => {
-                      setDuration(value === 130 ? 0 : value);
+                      const newDuration = value === 130 ? 0 : value;
+                      if (newDuration !== duration) playSliderHaptic();
+                      setDuration(newDuration);
                     }}
                     minimumTrackTintColor="#3799d1"
                     maximumTrackTintColor="#e5e5ea"
@@ -154,6 +157,7 @@ export default function GameSettingsScreen({
                  randomRounds={randomRounds}
                  setRandomRounds={setRandomRounds}
                  roundLogos={roundLogos}
+                 selectedRounds={selectedRounds}
                  setSelectedRounds={setSelectedRounds}
                  roundLength={roundLength}
                  setRoundLength={setRoundLength}

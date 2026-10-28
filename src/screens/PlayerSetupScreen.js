@@ -1,7 +1,6 @@
 import {useEffect} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { playClickSound } from '../constants/sounds';
 
 export default function PlayerSetupScreen({

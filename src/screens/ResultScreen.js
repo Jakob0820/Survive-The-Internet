@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import podium from '../../assets/podium.png';
 import confettiAnimation from '../../assets/celebrate.json'
-import { playCountingSound, stopSound, playPopSound } from '../constants/sounds';
+import { playCountingSound, stopSound, playPopSound, playClickSound } from '../constants/sounds';
 import {
     StyleSheet,
     Text,
@@ -235,7 +235,10 @@ export default function ResultScreen({
                             <TouchableOpacity
                                 style={[styles.btn, styles.btnPrimary, { marginTop: 5}]}
                                 activeOpacity={0.8}
-                                onPress={onNext}
+                                onPress={ () => {
+                                    onNext();
+                                    playClickSound();
+                                }}
                             >
                                 <Text style={styles.btnPrimaryText}>
                                     {isLastRound == true ? 'NOCHMAL SPIELEN' : 'NÄCHSTE RUNDE' }
@@ -381,6 +384,7 @@ export default function ResultScreen({
                                     onPress={() => {
                                         confettiRef.current?.reset();
                                         onNext();
+                                        playClickSound();
                                     }}
                                 >
                                     <Text style={styles.btnPrimaryText}>
@@ -394,6 +398,7 @@ export default function ResultScreen({
                                         onPress={() => {
                                             confettiRef.current?.reset();
                                             onBack();
+                                            playClickSound();
                                         }}
                                 >
                                     <Text style={styles.btnPrimaryText}>

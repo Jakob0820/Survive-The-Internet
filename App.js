@@ -25,7 +25,7 @@ import AnswerScreen from './src/screens/AnswerScreen';
 import EvaluationScreen from './src/screens/EvaluationScreen';
 import { createFakeStats } from './src/constants/stats';
 import ResultScreen from './src/screens/ResultScreen';
-import { setSoundsMuted, setSoundVolume } from './src/constants/sounds';
+import { setSoundsMuted, setSoundVolume, setHapticsEnabled } from './src/constants/sounds';
 import { playMusic, stopMusic, applyMusicEnabled, setMusicVolume } from './src/constants/music';
  
 export default function App() {
@@ -34,6 +34,7 @@ export default function App() {
   const [volume, setVolume] = useState(80);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [musicEnabled, setMusicEnabled] = useState(true);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [duration, setDuration] = useState(90);
   const [playerCount, setPlayerCount] = useState(3);
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -235,6 +236,10 @@ export default function App() {
   useEffect(() => {
     setSoundsMuted(soundEnabled);
   }, [soundEnabled])
+
+  useEffect(() => {
+    setHapticsEnabled(vibrationEnabled);
+  }, [vibrationEnabled]);
 
   useEffect(() => {
     setMusicVolume(volume / 100);
@@ -569,6 +574,7 @@ export default function App() {
             volume={volume} setVolume={setVolume}
             soundEnabled={soundEnabled} setSoundEnabled={setSoundEnabled}
             musicEnabled={musicEnabled} setMusicEnabled={setMusicEnabled}
+            vibrationEnabled={vibrationEnabled} setVibrationEnabled={setVibrationEnabled}
             onBack={() => {
               setCurrentScreen('main');
             }}
@@ -608,6 +614,7 @@ export default function App() {
             randomRounds={randomRounds}
             setRandomRounds={setRandomRounds}
             roundLogos={QUESTIONS.map(question => question.logo)}
+            selectedRounds={selectedRounds}
             setSelectedRounds={setSelectedRounds}
             roundLength={roundLength}
             setRoundLength={setRoundLength}

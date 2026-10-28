@@ -168,9 +168,21 @@ export default function AnswerScreen({
 
                             {/* Textebene über den Kreisen */}
                             <View style={styles.circleTextOverlay}>
-                                <Text style={styles.evaluatingText}>GESCHAFFT!</Text>
-                                <Text style={[styles.evaluatingSubText, {color: secondaryColor}]}>
-                                    Jetzt ist es an der Zeit die Anworten aus dem Kontext zu reißen!
+                                <Text
+                                    style={styles.evaluatingText}
+                                    numberOfLines={1}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.5}
+                                >
+                                    GESCHAFFT!
+                                </Text>
+                                <Text
+                                    style={[styles.evaluatingSubText, {color: secondaryColor}]}
+                                    numberOfLines={3}
+                                    adjustsFontSizeToFit
+                                    minimumFontScale={0.6}
+                                >
+                                    Jetzt ist es an der Zeit die Antworten aus dem Kontext zu reißen!
                                 </Text>
                             </View>
                         </View>
@@ -559,11 +571,12 @@ const styles = StyleSheet.create({
     },
     evaluatingText: {
         fontSize: 40,
-        marginTop: 40,
+        marginTop: 30,
         fontWeight: '800',
         color: '#FFFFFF',
         textAlign: 'center',
         letterSpacing: 2,
+        alignSelf: 'stretch',
     },
     evaluatingSubText: {
         fontSize: 20,
@@ -572,6 +585,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         textAlign: 'center',
         letterSpacing: 2,
+        alignSelf: 'stretch',
     },
     timer: {
         alignItems: 'center',
@@ -601,8 +615,8 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingHorizontal: 24,
-        paddingBottom: 30,
+        paddingHorizontal: 36,
+        paddingBottom: 20,
     },
 
     circleBack: {

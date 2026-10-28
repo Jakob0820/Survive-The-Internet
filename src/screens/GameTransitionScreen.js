@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import LottieView from 'lottie-react-native';
 import shoppingCart from '../../assets/shoppingCart.json';
+import { playClickSound } from '../constants/sounds';
 
 export default function GameTransitionScreen({ 
     onFinish,
@@ -121,6 +122,7 @@ export default function GameTransitionScreen({
                         activeOpacity={0.8}
                         onPress={() => {
                             onNext();
+                            playClickSound();
                         }}
                     >
                         <Text style={styles.btnText}>
