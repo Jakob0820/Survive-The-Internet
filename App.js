@@ -263,7 +263,6 @@ export default function App() {
     setVoteCount([]);
     setBurnCount([]);
     setIsEvaluating(false);
-    setSelectedRounds([]);
   }
  
   const handleNextPlayer = () => {
@@ -373,7 +372,8 @@ export default function App() {
   }
  
   const generateGameRounds = (count) => {
-    if(randomRounds){
+    // Ohne gespeicherte manuelle Auswahl auf zufällige Runden ausweichen
+    if(randomRounds || selectedRounds.length === 0){
       const allTypes = Object.values(ROUND_TYPE);
       const shuffledTypes = shuffleArray(allTypes);
       return shuffledTypes.slice(0, count);

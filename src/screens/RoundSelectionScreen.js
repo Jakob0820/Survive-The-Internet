@@ -29,12 +29,19 @@ export default function ConfirmationScreen({
   const [sliderCount, setSliderCount] = useState(() => Math.max(1, selectedRounds?.length ?? 0));
 
   const { height: screenHeight } = useWindowDimensions();
+  // Feste Kartenhöhe im manuellen Modus, damit sich die Größe beim Hinzufügen von Runden nicht ändert
+  const cardHeight = Math.min(screenHeight * 0.7, 640);
   const scrollRef = useRef(null);
 
   const setMode = (index, value) => setModes((prev) => prev.map((m, i) => (i === index ? value : m)));
 
-  const changeMode = (index, delta) =>
-  setMode(index, (modes[index] + delta + roundNames.length) % roundNames.length);
+  // Letzte Wechselrichtung pro Runde, damit die Animation von der richtigen Seite kommt
+  const directionsRef = useRef([]);
+
+  const changeMode = (index, delta) => {
+    directionsRef.current[index] = delta;
+    setMode(index, (modes[index] + delta + roundNames.length) % roundNames.length);
+  };
 
   useEffect(() => {
     // Beim Öffnen sanft einblenden und vergrößern
@@ -80,7 +87,7 @@ export default function ConfirmationScreen({
       onRequestClose={() => handleClose(onNo)}
     >
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-      <Animated.View style={[styles.modalCard, { transform: [{ scale: scaleAnim }] }]}>
+      <Animated.View style={[styles.modalCard, !randomRounds && { height: cardHeight }, { transform: [{ scale: scaleAnim }] }]}>
         <Text style={styles.title}>Spielmodis</Text>
 
         <View style={styles.optionRow}>
@@ -108,8 +115,9 @@ export default function ConfirmationScreen({
             />
             </TouchableOpacity>
         </View>
+        <View style={[styles.content, !randomRounds && { flex: 1 }]}>
         {randomRounds && (
-          <View style={[{marginTop: 10}]}>
+          <View style={[{marginTop: 10, width: '100%'}]}>
             <View style={styles.optionRow}>
               <Text style={styles.optionLabel}>Rundendauer</Text>
               <Text style={styles.optionValue}>
@@ -139,7 +147,7 @@ export default function ConfirmationScreen({
             <View style={styles.roundCointainer}>
                 <ScrollView
                     ref={scrollRef}
-                    style={[styles.roundScroll, { maxHeight: screenHeight * 0.45 }]}
+                    style={styles.roundScroll}
                     contentContainerStyle={styles.roundScrollContent}
                     showsVerticalScrollIndicator={false}
                     onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
@@ -157,13 +165,12 @@ export default function ConfirmationScreen({
                     <Ionicons name="chevron-back" size={16} color="#000000" />
                     </TouchableOpacity>
 
-                    <View style={[styles.roundSlider, { backgroundColor: roundColors[modeValue] }]}>
-                    <Image
-                        source={roundLogos[modeValue]}
-                        style={styles.roundSliderLogo}
-                        resizeMode="contain"
+                    <RoundSlot
+                        modeValue={modeValue}
+                        direction={directionsRef.current[index] ?? 1}
+                        color={roundColors[modeValue]}
+                        logo={roundLogos[modeValue]}
                     />
-                    </View>
 
                     <TouchableOpacity
                     style={styles.roundSliderButton}
@@ -185,6 +192,19 @@ export default function ConfirmationScreen({
                       activeOpacity={0.8}
                       onPress={() => {
                       playClickSound();
+                      if (sliderCount > 1){
+                        setSliderCount((c) => c - 1);
+                      }
+                      }}
+                  >
+                      <Ionicons name="remove-circle-outline" size={18} color="#000000" />
+                      <Text style={styles.btnSecondaryText}> Runde</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                      style={[styles.btn, styles.btnSecondary]}
+                      activeOpacity={0.8}
+                      onPress={() => {
+                      playClickSound();
                       if (sliderCount < modes.length){
                         setMode(sliderCount, (modes[sliderCount - 1] + 1) % roundNames.length);
                         setSliderCount((c) => c + 1);
@@ -194,22 +214,10 @@ export default function ConfirmationScreen({
                       <Ionicons name="add-circle-outline" size={18} color="#000000" />
                       <Text style={styles.btnSecondaryText}> Runde</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                      style={[styles.btn, styles.btnSecondary]}
-                      activeOpacity={0.8}
-                      onPress={() => {
-                      playClickSound();
-                      if (sliderCount > 1){
-                        setSliderCount((c) => c - 1);
-                      }
-                      }}
-                  >
-                      <Ionicons name="remove-circle-outline" size={18} color="#000000" />
-                      <Text style={styles.btnSecondaryText}> Runde</Text>
-                  </TouchableOpacity>
                 </View>
             </View>
         )}
+        </View>
         <TouchableOpacity
             style={[styles.btn, styles.btnPrimary, { marginTop: 15}]}
             activeOpacity={0.8}
@@ -224,6 +232,48 @@ export default function ConfirmationScreen({
       </Animated.View>
     </Animated.View>
     </Modal>
+  );
+}
+
+// Einzelne Runde: neuer Modus gleitet aus der Klickrichtung herein
+function RoundSlot({ modeValue, direction, color, logo }) {
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    slideAnim.setValue(direction);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [modeValue]);
+
+  const translateX = slideAnim.interpolate({
+    inputRange: [-1, 1],
+    outputRange: [-60, 60],
+  });
+  const opacity = slideAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: [0, 1, 0],
+  });
+
+  return (
+    <View style={styles.roundSliderClip}>
+      <Animated.View
+        style={[
+          styles.roundSlider,
+          { backgroundColor: color, opacity, transform: [{ translateX }] },
+        ]}
+      >
+        <Image source={logo} style={styles.roundSliderLogo} resizeMode="contain" />
+      </Animated.View>
+    </View>
   );
 }
 
@@ -331,7 +381,11 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     backgroundColor: '#8a99ad',
   },
+  content: {
+    width: '100%',
+  },
   roundCointainer: {
+    flex: 1,
     width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -339,7 +393,7 @@ const styles = StyleSheet.create({
   },
   roundScroll: {
     width: '100%',
-    flexGrow: 0,
+    flex: 1,
   },
   roundScrollContent: {
     gap: 10,
@@ -352,6 +406,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
+  },
+  roundSliderClip: {
+    flex: 1,
+    height: 60,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   roundSliderRow: {
     flexDirection: 'row',

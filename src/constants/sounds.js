@@ -21,8 +21,8 @@ export const setHapticsEnabled = (value) => {
 };
 
 // Kurzer Vibrationsimpuls, unabhängig davon ob Sounds an sind
-const vibrate = (style) => {
-  if (!hapticsEnabled) return;
+const vibrate = (style, force = false) => {
+  if (!hapticsEnabled && !force) return;
   Haptics.impactAsync(style).catch((e) => {
     console.warn('Vibration konnte nicht ausgeführt werden', e);
   });
@@ -36,8 +36,9 @@ export const setSoundsMuted = (value) => {
   }
 };
 
-const play = async (player) => {
-  if (!enabled) return;
+//Force ist für den offswitch
+const play = async (player, force = false) => {
+  if (!enabled && !force) return;
   try {
     await player.seekTo(0);
     player.play();
@@ -65,6 +66,18 @@ export const setSoundVolume = (value) => {
 
 export const playClickSound = () => {
   vibrate(Haptics.ImpactFeedbackStyle.Light);
+  return play(soundPlayers.click);
+};
+
+// Klick beim Umschalten der Soundeffekte: Sound spielt beim An- und Ausschalten
+export const playSoundToggleClick = () => {
+  vibrate(Haptics.ImpactFeedbackStyle.Light);
+  return play(soundPlayers.click, true);
+};
+
+// Klick beim Umschalten der Vibration: Vibration kommt beim An- und Ausschalten
+export const playVibrationToggleClick = () => {
+  vibrate(Haptics.ImpactFeedbackStyle.Light, true);
   return play(soundPlayers.click);
 };
 

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
-import { playClickSound, playSliderHaptic } from '../constants/sounds';
+import { playClickSound, playSliderHaptic, playSoundToggleClick, playVibrationToggleClick } from '../constants/sounds';
 import Slider from '@react-native-community/slider';
 
 export default function OptionsScreen({
@@ -48,7 +48,7 @@ export default function OptionsScreen({
                  activeOpacity={0.8}
                   onPress={() => {
                     setSoundEnabled(!soundEnabled);
-                    playClickSound();
+                    playSoundToggleClick();
                   }}
                   style={[
                   styles.customSwitchTrack,
@@ -90,7 +90,7 @@ export default function OptionsScreen({
                  activeOpacity={0.8}
                   onPress={() => {
                     setVibrationEnabled(!vibrationEnabled);
-                    playClickSound();
+                    playVibrationToggleClick();
                   }}
                   style={[
                   styles.customSwitchTrack,

@@ -105,7 +105,11 @@ export default function PlayerSetupScreen({
                 playClickSound();
               }}
           >
-              <Text style={styles.btnPrimaryText}>
+              <Text 
+              style={styles.btnPrimaryText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              >
               {currentPlayerIndex < playerCount - 1 ? 'NÄCHSTER SPIELER ▶' : 'SPIEL STARTEN '}
               </Text>
           </TouchableOpacity>
