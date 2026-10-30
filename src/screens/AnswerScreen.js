@@ -5,6 +5,7 @@ import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound } from '../constants/sounds';
+import { useLanguage } from '../constants/translations';
 
 export default function AnswerScreen({
     onBack,
@@ -22,6 +23,7 @@ export default function AnswerScreen({
     secondaryColor,
     tertiaryColor,
 }) {
+    const { t } = useLanguage();
 
     const [showConfirm, setShowConfirm] = useState(false);
     const [isQuestionOpen, setIsQuestionOpen] = useState(false);
@@ -152,7 +154,7 @@ export default function AnswerScreen({
     });
 
     const activePlayer = players[currentPlayerIndex];
-    const playerName = activePlayer?.name || `Spieler ${currentPlayerIndex + 1}`;
+    const playerName = activePlayer?.name || t('common.player', { number: currentPlayerIndex + 1 });
     const playerColor = activePlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
@@ -172,17 +174,17 @@ export default function AnswerScreen({
                                     style={styles.evaluatingText}
                                     numberOfLines={1}
                                     adjustsFontSizeToFit
-                                    minimumFontScale={0.5}
+                                    minimumFontScale={0.4}
                                 >
-                                    GESCHAFFT!
+                                    {t('answer.done')}
                                 </Text>
                                 <Text
                                     style={[styles.evaluatingSubText, {color: secondaryColor}]}
                                     numberOfLines={3}
                                     adjustsFontSizeToFit
-                                    minimumFontScale={0.6}
+                                    minimumFontScale={0.8}
                                 >
-                                    Jetzt ist es an der Zeit die Antworten aus dem Kontext zu reißen!
+                                    {t('answer.doneMessage')}
                                 </Text>
                             </View>
                         </View>
@@ -217,7 +219,7 @@ return (
                                 duration === 0 && styles.sectionTitleCentered,
                             ]}
                         >
-                            {playerName} ist dran!
+                            {t('game.turn', { name: playerName })}
                         </Text>
                         {duration != 0 && (                                
                             <View style={styles.timer}>
@@ -266,7 +268,7 @@ return (
                                 disabled={isQuestionOpen}
                             >
                                 <Text style={[styles.btnQuestionText, {color: lightPlayerColor}]}>
-                                        {isQuestionOpen ? 'Frage' : 'Frage anzeigen'}
+                                        {isQuestionOpen ? t('game.question') : t('game.showQuestion')}
                                 </Text>
 
                                 {!isQuestionOpen && (
@@ -307,7 +309,7 @@ return (
                                                     style={styles.textInput}
                                                     value={answerText}
                                                     onChangeText={setAnswerText}
-                                                    placeholder="Schreibe einen Kommentar"
+                                                    placeholder={t('game.commentPlaceholder')}
                                                     placeholderTextColor="#8a99ad"
                                                     maxLength={100}
                                                     multiline={true}
@@ -345,7 +347,7 @@ return (
                                         }}
                                     >
                                         <Text style={styles.btnSecondaryText}>
-                                            {currentPlayerIndex < playerCount - 1 ? 'Nächster Spieler' : 'Fertigstellen'}
+                                            {currentPlayerIndex < playerCount - 1 ? t('game.nextPlayer') : t('game.finish')}
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
@@ -362,7 +364,7 @@ return (
                         playClickSound();
                     }}
                 >
-                    <Text style={styles.btnSecondaryText}>SPIEL BEENDEN</Text>
+                    <Text style={styles.btnSecondaryText}>{t('game.quit')}</Text>
                 </TouchableOpacity>
             </Animated.View>
         

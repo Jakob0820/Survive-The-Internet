@@ -1,4 +1,4 @@
-import React, {useState, useEffect } from 'react';
+import React, {useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -19,7 +19,8 @@ import GameSettingsScreen from './src/screens/GameSettingsScreen';
 import PlayerSetupScreen from './src/screens/PlayerSetupScreen';
 import GameScreen from './src/screens/GameScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
-import { QUESTIONS, ROUND_TYPE } from './src/constants/questions';
+import { QUESTIONS, ROUND_TYPE, getLocalizedRound } from './src/constants/questions';
+import { DEFAULT_LANGUAGE, LanguageContext, translate } from './src/constants/translations';
 import GameTransitionScreen from './src/screens/GameTransitionScreen';
 import AnswerScreen from './src/screens/AnswerScreen';
 import EvaluationScreen from './src/screens/EvaluationScreen';
@@ -29,6 +30,10 @@ import { setSoundsMuted, setSoundVolume, setHapticsEnabled } from './src/constan
 import { playMusic, stopMusic, applyMusicEnabled, setMusicVolume } from './src/constants/music';
  
 export default function App() {
+  // Sprache
+  const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
+  const t = useCallback((key, params) => translate(language, key, params), [language]);
+
   // Screen Steuerung
   const [currentScreen, setCurrentScreen] = useState('main');
   const [volume, setVolume] = useState(80);
@@ -42,7 +47,7 @@ export default function App() {
   // Logik für Spieler Setup
   const [players, setPlayers] = useState([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
-  const [playerName, setPlayerName] = useState(`Spieler ${currentPlayerIndex + 1}`);
+  const [playerName, setPlayerName] = useState(t('common.player', { number: currentPlayerIndex + 1 }));
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
   const [isOnline, setOnlineStatus] = useState(false);
 
@@ -58,8 +63,8 @@ export default function App() {
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
  
   const currentType = gameRounds[currentRoundIndex];
-  const currentRoundObj = QUESTIONS.find((q) => q.type === currentType);
-  const currentCategoryName = currentRoundObj?.categoryName || 'Nächste Runde';
+  const currentRoundObj = getLocalizedRound(QUESTIONS.find((q) => q.type === currentType), language);
+  const currentCategoryName = currentRoundObj?.categoryName || t('common.nextRound');
   const [currentQuestions, setCurrentQuestions ] = useState([]);
 
   const [answerText, setAnswerText] = useState('');
@@ -76,9 +81,19 @@ export default function App() {
   const [previousPoints, setPreviousPoints] = useState([]);
 
 
+  // Die Optionen sind nur vom Hauptmenü aus erreichbar, also läuft beim Wechsel kein Spiel
+  const languageContext = useMemo(() => ({
+    language,
+    t,
+    setLanguage: (nextLanguage) => {
+      setLanguage(nextLanguage);
+      setPlayerName(translate(nextLanguage, 'common.player', { number: 1 }));
+    },
+  }), [language, t]);
+
   //Test Modus
-  const TEST_MODE = false;
-  const TEST_SCREEN = 'evaluation';
+  const TEST_MODE = true;
+  const TEST_SCREEN = 'result';
 
   useEffect(() => {
     if (!TEST_MODE) return;
@@ -98,7 +113,7 @@ export default function App() {
             name: 'Spieler 3',
             color: COLOR_OPTIONS[6],
             image: COLOR_IMAGES[6],
-        }, /*
+        }, 
         {
             name: 'Spieler 4',
             color: COLOR_OPTIONS[2],
@@ -124,12 +139,12 @@ export default function App() {
             name: 'Spieler 8',
             color: COLOR_OPTIONS[7],
             image: COLOR_IMAGES[7],
-        }, */
+        }, 
     ];
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
     //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.GOFUNDME, ROUND_TYPE.GOOGLE_MAPS]
+    const testRounds = [ROUND_TYPE.GOFUNDME, ROUND_TYPE.REDDIT]
 
     setPlayers(testPlayers);
     setPlayerCount(3);
@@ -250,7 +265,7 @@ export default function App() {
     setPlayerCount(3);
     setCurrentPlayerIndex(0);
     setCurrentRoundIndex(0);
-    setPlayerName(`Spieler 1`);
+    setPlayerName(t('common.player', { number: 1 }));
     setSelectedColor(COLOR_OPTIONS[0]);
     setPlayers([]);
     setFirstAnswer([]);
@@ -269,7 +284,7 @@ export default function App() {
     const updatedPlayers = [...players];
     updatedPlayers[currentPlayerIndex] = {
       ...updatedPlayers[currentPlayerIndex],
-      name: playerName.trim() || `Spieler ${currentPlayerIndex + 1}`,
+      name: playerName.trim() || t('common.player', { number: currentPlayerIndex + 1 }),
       color: selectedColor,
       image: COLOR_IMAGES[colorIndex],
     };
@@ -278,7 +293,7 @@ export default function App() {
   if (currentPlayerIndex < playerCount - 1) {
     const nextIndex = currentPlayerIndex + 1;
     setCurrentPlayerIndex(nextIndex);
-    setPlayerName(`Spieler ${nextIndex + 1}`);
+    setPlayerName(t('common.player', { number: nextIndex + 1 }));
  
     const usedColors = updatedPlayers.slice(0, nextIndex).map((p) => p.color);
     const nextFreeColor = COLOR_OPTIONS.find((c) => !usedColors.includes(c)) || COLOR_OPTIONS[0];
@@ -304,7 +319,7 @@ export default function App() {
     const updatedPlayers = [...players];
     updatedPlayers[currentPlayerIndex] = {
       ...updatedPlayers[currentPlayerIndex],
-      name: playerName.trim() || `Spieler ${currentPlayerIndex + 1}`,
+      name: playerName.trim() || t('common.player', { number: currentPlayerIndex + 1 }),
       color: selectedColor,
     };
     setPlayers(updatedPlayers);
@@ -326,7 +341,7 @@ export default function App() {
     const nextIndex = currentRoundIndex + 1;
     if (nextIndex < gameRounds.length){
       setPreviousPoints(
-        players.map((_, i) => (voteCount[i] ?? 0) * 100 + (burnCount[i] ?? 0) * 50)
+        players.map((_, i) => (voteCount[i] ?? 0) * 80 + (burnCount[i] ?? 0) * 30)
       );
       setCurrentRoundIndex(nextIndex);
       setCurrentPlayerIndex(0);
@@ -384,7 +399,7 @@ export default function App() {
   }
  
   const generateQuestions = (roundType, count = playerCount) => {
-    const roundObj = QUESTIONS.find((q) => q.type === roundType);
+    const roundObj = getLocalizedRound(QUESTIONS.find((q) => q.type === roundType), language);
  
     const availableQuestions = roundObj?.questions || [];
     const shuffledQuestions = shuffleArray(availableQuestions);
@@ -507,6 +522,7 @@ export default function App() {
   
  
     return (
+      <LanguageContext.Provider value={languageContext}>
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" />
         
@@ -677,6 +693,7 @@ export default function App() {
  
       </View>
     </SafeAreaView>
+    </LanguageContext.Provider>
   );
 
 }

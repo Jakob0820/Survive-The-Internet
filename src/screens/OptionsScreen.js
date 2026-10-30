@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import { playClickSound, playSliderHaptic, playSoundToggleClick, playVibrationToggleClick } from '../constants/sounds';
 import Slider from '@react-native-community/slider';
+import { useLanguage } from '../constants/translations';
+import LanguageSelectionScreen from './LanguageSelectionScreen';
 
 export default function OptionsScreen({
     volume,
@@ -13,15 +16,17 @@ export default function OptionsScreen({
     setVibrationEnabled,
     onBack,
 }) {
+    const { t } = useLanguage();
+    const [showLanguage, setShowLanguage] = useState(false);
 
     return (
         <View style={styles.screenContainer}>
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>OPTIONEN</Text>
+            <Text style={styles.sectionTitle}>{t('options.title')}</Text>
 
             {/* Lautstärke Einstellung */}
             <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Lautstärke</Text>
+              <Text style={styles.optionLabel}>{t('options.volume')}</Text>
               <Text style={styles.optionValue}>{volume}%</Text>
             </View>
             <View style={styles.volumeBarContainer}>
@@ -43,7 +48,7 @@ export default function OptionsScreen({
 
             {/* Soundeffekte Toggle */}
             <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Soundeffekte</Text>
+              <Text style={styles.optionLabel}>{t('options.sound')}</Text>
               <TouchableOpacity
                  activeOpacity={0.8}
                   onPress={() => {
@@ -64,7 +69,7 @@ export default function OptionsScreen({
               </TouchableOpacity>
             </View>
             <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Musik</Text>
+              <Text style={styles.optionLabel}>{t('options.music')}</Text>
               <TouchableOpacity
                  activeOpacity={0.8}
                   onPress={() => {
@@ -85,7 +90,7 @@ export default function OptionsScreen({
               </TouchableOpacity>
             </View>
             <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Vibration</Text>
+              <Text style={styles.optionLabel}>{t('options.vibration')}</Text>
               <TouchableOpacity
                  activeOpacity={0.8}
                   onPress={() => {
@@ -106,18 +111,33 @@ export default function OptionsScreen({
               </TouchableOpacity>
             </View>
 
+            {/* Sprache Button */}
+            <TouchableOpacity
+              style={[styles.btn, styles.btnSecondary, { marginTop: 20 }]}
+              activeOpacity={0.8}
+              onPress={() => {
+                setShowLanguage(true);
+                playClickSound();
+              }}
+            >
+              <Text style={styles.btnSecondaryText}>{t('options.language')}</Text>
+            </TouchableOpacity>
+
             {/* Zurück Button */}
             <TouchableOpacity
-              style={[styles.btn, styles.btnPrimary, { marginTop: 20 }]}
+              style={[styles.btn, styles.btnPrimary]}
               activeOpacity={0.8}
               onPress={ () => {
                 onBack();
                 playClickSound();
               }}
             >
-              <Text style={styles.btnPrimaryText}>ZURÜCK</Text>
+              <Text style={styles.btnPrimaryText}>{t('common.back')}</Text>
             </TouchableOpacity>
           </View>
+          {showLanguage && (
+            <LanguageSelectionScreen onClose={() => setShowLanguage(false)} />
+          )}
         </View>
     )
 }

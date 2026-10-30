@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, Modal } from 'react-native';
+import { useLanguage } from '../constants/translations';
 
-export default function ConfirmationScreen({ onYes, onNo, title = "Bist du sicher?", message = "Deine Einstellungen werden nicht gespeichert" }) {
+export default function ConfirmationScreen({ onYes, onNo, title, message }) {
+  const { t } = useLanguage();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
@@ -50,8 +52,8 @@ export default function ConfirmationScreen({ onYes, onNo, title = "Bist du siche
     >
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
       <Animated.View style={[styles.modalCard, { transform: [{ scale: scaleAnim }] }]}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.message}>{message}</Text>
+        <Text style={styles.title}>{title ?? t('confirm.title')}</Text>
+        <Text style={styles.message}>{message ?? t('confirm.message')}</Text>
 
         <View style={styles.buttonContainer}>
 
@@ -60,7 +62,7 @@ export default function ConfirmationScreen({ onYes, onNo, title = "Bist du siche
             activeOpacity={0.8}
             onPress={() => handleClose(onYes)}
           >
-            <Text style={styles.btnYesText}>JA</Text>
+            <Text style={styles.btnYesText}>{t('common.yes')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -68,7 +70,7 @@ export default function ConfirmationScreen({ onYes, onNo, title = "Bist du siche
             activeOpacity={0.8}
             onPress={() => handleClose(onNo)}
           >
-            <Text style={styles.btnNoText}>NEIN</Text>
+            <Text style={styles.btnNoText}>{t('common.no')}</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>

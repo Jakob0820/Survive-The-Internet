@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import { COLOR_OPTIONS, COLOR_IMAGES } from '../constants/colors';
 import { playClickSound } from '../constants/sounds';
+import { useLanguage } from '../constants/translations';
 
 export default function PlayerSetupScreen({
   currentPlayerIndex,
@@ -15,6 +16,7 @@ export default function PlayerSetupScreen({
   onPrev,
 })
 {
+  const { t } = useLanguage();
 
   useEffect(() => {
       playClickSound();
@@ -25,24 +27,24 @@ export default function PlayerSetupScreen({
       <View style={styles.screenContainer}>
           <View style={styles.card}>
           <Text style={styles.sectionTitle}>
-              Spieler {currentPlayerIndex + 1}
+              {t('common.player', { number: currentPlayerIndex + 1 })}
           </Text>
       
           {/* Namensfeld */}
           <View style={{ marginBottom: 15 }}>
-              <Text style={styles.optionLabel}>Name:</Text>
+              <Text style={styles.optionLabel}>{t('setup.name')}</Text>
               <TextInput
                   style={styles.textInput}
                   value={playerName}
                   onChangeText={setPlayerName}
-                  placeholder="Namen eingeben"
+                  placeholder={t('setup.namePlaceholder')}
                   placeholderTextColor="#8a99ad"
                   maxLength={12}
               />
           </View>
       
           {/* Farbauswahl */}
-          <Text style={styles.optionLabel}>Farbe wählen:</Text>
+          <Text style={styles.optionLabel}>{t('setup.color')}</Text>
           <View style={{ gap: 12, marginVertical: 10 }}>
               {/* Zeile 1: Erste 4 Farben */}
               <View style={styles.colorRow}>
@@ -110,7 +112,7 @@ export default function PlayerSetupScreen({
               numberOfLines={1}
               adjustsFontSizeToFit
               >
-              {currentPlayerIndex < playerCount - 1 ? 'NÄCHSTER SPIELER ▶' : 'SPIEL STARTEN '}
+              {currentPlayerIndex < playerCount - 1 ? t('setup.nextPlayer') : t('setup.startGame')}
               </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -122,7 +124,7 @@ export default function PlayerSetupScreen({
               }}
           >
               <Text style={styles.btnPrimaryText}>
-              {currentPlayerIndex == 0 ? 'ZURÜCK' : '◀ SPIELER ZURÜCK'}
+              {currentPlayerIndex == 0 ? t('common.back') : t('setup.prevPlayer')}
               </Text>
           </TouchableOpacity>
           </View>

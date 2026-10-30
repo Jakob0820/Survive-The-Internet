@@ -4,6 +4,7 @@ import LottieView from 'lottie-react-native';
 import podium from '../../assets/podium.png';
 import confettiAnimation from '../../assets/celebrate.json'
 import { playCountingSound, stopSound, playPopSound, playClickSound } from '../constants/sounds';
+import { useLanguage } from '../constants/translations';
 import {
     StyleSheet,
     Text,
@@ -11,6 +12,7 @@ import {
     Image,
     SafeAreaView,
     FlatList,
+    ScrollView,
     TouchableOpacity,
     Animated,
     Easing,
@@ -20,6 +22,71 @@ const POINTS_PER_VOTE = 80;
 const POINTS_PER_BURN = 30;
 
 const ROW_HEIGHT = 72;
+const REMAINING_ROW_HEIGHT = 60;
+
+// Ab dieser Spielerzahl werden die Listen scrollbar.
+const SCROLL_MIN_PLAYERS = 5;
+const VISIBLE_ROWS = 5;
+const VISIBLE_REMAINING_ROWS = 2;
+const AUTO_SCROLL_SPEED = 10; // Pixel pro Sekunde
+const AUTO_SCROLL_DELAY = 1500;
+
+// Scrollt langsam bis zum Listenende; eine Berührung beendet das endgültig
+function useAutoScroll(enabled) {
+    const scrollRef = useRef(null);
+    const touched = useRef(false);
+    const viewHeight = useRef(0);
+    const contentHeight = useRef(0);
+
+    useEffect(() => {
+        if (!enabled || touched.current) return;
+
+        let frame;
+        let y = 0;
+        let lastTime = null;
+
+        const step = (now) => {
+            if (touched.current) return;
+
+            const elapsed = lastTime === null ? 0 : now - lastTime;
+            lastTime = now;
+
+            if (viewHeight.current > 0 && contentHeight.current > 0) {
+                const maxY = Math.max(0, contentHeight.current - viewHeight.current);
+                y = Math.min(y + (AUTO_SCROLL_SPEED * elapsed) / 1000, maxY);
+                scrollRef.current?.scrollTo({ y, animated: false });
+                if (y >= maxY) return;
+            }
+
+            frame = requestAnimationFrame(step);
+        };
+
+        const timer = setTimeout(() => {
+            frame = requestAnimationFrame(step);
+        }, AUTO_SCROLL_DELAY);
+
+        return () => {
+            clearTimeout(timer);
+            cancelAnimationFrame(frame);
+        };
+    }, [enabled]);
+
+    const stop = () => {
+        touched.current = true;
+    };
+
+    return {
+        ref: scrollRef,
+        onTouchStart: stop,
+        onScrollBeginDrag: stop,
+        onLayout: (e) => {
+            viewHeight.current = e.nativeEvent.layout.height;
+        },
+        onContentSizeChange: (_, height) => {
+            contentHeight.current = height;
+        },
+    };
+}
 
 function CountUpText({ progress, from, to, style }) {
     const [value, setValue] = useState(from);
@@ -55,6 +122,8 @@ export default function ResultScreen({
     isLastRound,
     previousPoints,
 }) {
+    const { t } = useLanguage();
+    const isScrollable = players.length >= SCROLL_MIN_PLAYERS;
     const popScale = useRef(new Animated.Value(0.85)).current;
     const popOpacity = useRef(new Animated.Value(0)).current;
 
@@ -116,6 +185,9 @@ export default function ResultScreen({
     const positions = useRef(players.map((_, i) => new Animated.Value(prevRank[i] * ROW_HEIGHT))).current;
     const scales = useRef(players.map(() => new Animated.Value(1))).current;
     const [settled, setSettled] = useState(false);
+
+    // Im Zwischenstand erst starten, wenn die Rangänderungen durchgelaufen sind
+    const autoScrollProps = useAutoScroll(isScrollable && (isLastRound || settled));
 
     useEffect(() => {
         if (isLastRound) return;
@@ -190,10 +262,16 @@ export default function ResultScreen({
                         ]}
                     >
                         <View style={styles.header}>
-                            <Text style={styles.headerText}>AKTUELLE PUNKTE</Text>
+                            <Text style={styles.headerText}>{t('result.currentPoints')}</Text>
                         </View>
 
-                        <View style={styles.listContent}>
+                        <ScrollView
+                            {...autoScrollProps}
+                            style={[styles.list, isScrollable && { height: VISIBLE_ROWS * ROW_HEIGHT }]}
+                            contentContainerStyle={styles.listContent}
+                            scrollEnabled={isScrollable}
+                            persistentScrollbar={isScrollable}
+                        >
                             <View style={{ height: players.length * ROW_HEIGHT }}>
                                 {players.map((player, i) => (
                                     <Animated.View
@@ -230,7 +308,7 @@ export default function ResultScreen({
                                     </Animated.View>
                                 ))}
                             </View>
-                        </View>
+                        </ScrollView>
                         <View style={styles.btnBox}>
                             <TouchableOpacity
                                 style={[styles.btn, styles.btnPrimary, { marginTop: 5}]}
@@ -241,7 +319,7 @@ export default function ResultScreen({
                                 }}
                             >
                                 <Text style={styles.btnPrimaryText}>
-                                    {isLastRound == true ? 'NOCHMAL SPIELEN' : 'NÄCHSTE RUNDE' }
+                                    {isLastRound == true ? t('result.playAgain') : t('result.nextRound') }
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -345,7 +423,15 @@ export default function ResultScreen({
 
                             {/* AB PLATZ 4 */}
                             {ranking.length > 3 && (
-                                <View style={styles.remainingPlayers}>
+                                <ScrollView
+                                    {...autoScrollProps}
+                                    style={[
+                                        styles.remainingPlayers,
+                                        isScrollable && { height: VISIBLE_REMAINING_ROWS * REMAINING_ROW_HEIGHT },
+                                    ]}
+                                    scrollEnabled={isScrollable}
+                                    persistentScrollbar={isScrollable}
+                                >
                                     {ranking.slice(3).map((item, index) => (
                                         <View style={styles.row} key={String(item.index)}>
                                             <Text style={styles.placement}>
@@ -374,7 +460,7 @@ export default function ResultScreen({
                                             </Text>
                                         </View>
                                     ))}
-                                </View>
+                                </ScrollView>
                             )}
 
                             <View style={styles.btnBox}>
@@ -388,7 +474,7 @@ export default function ResultScreen({
                                     }}
                                 >
                                     <Text style={styles.btnPrimaryText}>
-                                        NOCHMAL SPIELEN
+                                        {t('result.playAgain')}
                                     </Text>
                                 </TouchableOpacity>
 
@@ -402,7 +488,7 @@ export default function ResultScreen({
                                         }}
                                 >
                                     <Text style={styles.btnPrimaryText}>
-                                        HAUPTMENÜ
+                                        {t('common.mainMenu')}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -483,10 +569,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 
+    list: {
+        flexGrow: 0,
+        marginTop: 10,
+    },
+
     listContent: {
         paddingHorizontal: 16,
-        paddingTop: 5,
-        paddingBottom: 10,
     },
 
     row: {
@@ -519,7 +608,7 @@ const styles = StyleSheet.create({
     },
 
     points: {
-        fontSize: 32,
+        fontSize: 26,
         fontWeight: '900',
         color: '#000000',
         marginLeft: 12,
@@ -527,11 +616,12 @@ const styles = StyleSheet.create({
 
     btnBox: {
         marginBottom: 5,
-        padding: 12,
+        padding: 20,
+        paddingTop: 5,
     },
 
     btn: {
-        paddingVertical: 16,
+        paddingVertical: 18,
         paddingHorizontal: 24,
         borderRadius: 15,
         alignItems: 'center',
@@ -547,7 +637,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         letterSpacing: 2,
-        marginVertical: 5,
+
     },
 
     crownIcon: {
@@ -587,7 +677,8 @@ const styles = StyleSheet.create({
     },
 
     remainingPlayers: {
-        marginTop: 5,
+        flexGrow: 0,
+        marginTop: 10,
     },
 
     podiumPlayerImage: {
@@ -622,7 +713,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: '900',
         color: '#000000',
-        minWidth: 0,
+        width: 26, // Feste Breite, damit die Avatare unabhängig von der Ziffer untereinander stehen
         marginLeft: 20,
     },
 

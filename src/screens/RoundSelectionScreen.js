@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, Modal, Imag
 import { playClickSound, playSliderHaptic } from '../constants/sounds';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import { useLanguage } from '../constants/translations';
 
 export default function ConfirmationScreen({ 
     onNext,
@@ -16,6 +17,7 @@ export default function ConfirmationScreen({
     roundLength,
     setRoundLength,
 }) {
+  const { t } = useLanguage();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -88,11 +90,11 @@ export default function ConfirmationScreen({
     >
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
       <Animated.View style={[styles.modalCard, !randomRounds && { height: cardHeight }, { transform: [{ scale: scaleAnim }] }]}>
-        <Text style={styles.title}>Spielmodis</Text>
+        <Text style={styles.title}>{t('rounds.title')}</Text>
 
         <View style={styles.optionRow}>
             <Text style={styles.optionLabel}>
-                Zufällige Reihenfolge
+                {t('rounds.random')}
             </Text>
 
             <TouchableOpacity
@@ -119,7 +121,7 @@ export default function ConfirmationScreen({
         {randomRounds && (
           <View style={[{marginTop: 10, width: '100%'}]}>
             <View style={styles.optionRow}>
-              <Text style={styles.optionLabel}>Rundendauer</Text>
+              <Text style={styles.optionLabel}>{t('rounds.count')}</Text>
               <Text style={styles.optionValue}>
                 {roundLength}
               </Text>
@@ -198,7 +200,7 @@ export default function ConfirmationScreen({
                       }}
                   >
                       <Ionicons name="remove-circle-outline" size={18} color="#000000" />
-                      <Text style={styles.btnSecondaryText}> Runde</Text>
+                      <Text style={styles.btnSecondaryText}>{t('rounds.round')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                       style={[styles.btn, styles.btnSecondary]}
@@ -212,7 +214,7 @@ export default function ConfirmationScreen({
                       }}
                   >
                       <Ionicons name="add-circle-outline" size={18} color="#000000" />
-                      <Text style={styles.btnSecondaryText}> Runde</Text>
+                      <Text style={styles.btnSecondaryText}>{t('rounds.round')}</Text>
                   </TouchableOpacity>
                 </View>
             </View>
@@ -227,7 +229,7 @@ export default function ConfirmationScreen({
                 setSelectedRounds(modes.slice(0, sliderCount));
             }}
         >
-            <Text style={styles.btnPrimaryText}>SPEICHERN</Text>
+            <Text style={styles.btnPrimaryText}>{t('rounds.save')}</Text>
         </TouchableOpacity>
       </Animated.View>
     </Animated.View>

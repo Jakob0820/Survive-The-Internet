@@ -4,6 +4,7 @@ import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { playClickSound, playSliderHaptic } from '../constants/sounds';
 import RoundSelectionScreen from './RoundSelectionScreen';
+import { useLanguage } from '../constants/translations';
 
 export default function GameSettingsScreen({
     isOnline,
@@ -25,17 +26,18 @@ export default function GameSettingsScreen({
     roundLength,
     setRoundLength,
 }) {
+    const { t } = useLanguage();
     const [showConfirm, setShowConfirm] = useState(false);
 
     return (
         <View style={styles.screenContainer}>
                 <View style={styles.card}>
-                    <Text style={styles.sectionTitle}>Einstellungen</Text>
+                    <Text style={styles.sectionTitle}>{t('settings.title')}</Text>
 
                 <View style={styles.optionRow}>
-                  <Text style={styles.optionLabel}>Rundendauer</Text>
+                  <Text style={styles.optionLabel}>{t('settings.roundDuration')}</Text>
                   <Text style={styles.optionValue}>
-                    {duration === 0 ? "Unbegrenzt" : `${duration} Sek.`}
+                    {duration === 0 ? t('settings.unlimited') : t('settings.seconds', { seconds: duration })}
                   </Text>
                 </View>
 
@@ -59,7 +61,7 @@ export default function GameSettingsScreen({
 
                 {!isOnline && (
                     <View style={styles.optionRow}>
-                        <Text style={styles.optionLabel}>Spieleranzahl</Text>
+                        <Text style={styles.optionLabel}>{t('settings.playerCount')}</Text>
                     
                         <View style={styles.playerControlGroup}>
                         <TouchableOpacity
@@ -95,7 +97,7 @@ export default function GameSettingsScreen({
                           playClickSound();
                         }}
                     >
-                        <Text style={styles.btnPrimaryText}>RAUM ERSTELLEN</Text>
+                        <Text style={styles.btnPrimaryText}>{t('settings.createRoom')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.btn, styles.btnPrimary, { marginTop: 20}]}
@@ -105,7 +107,7 @@ export default function GameSettingsScreen({
                           playClickSound();
                         }}
                     >
-                        <Text style={styles.btnPrimaryText}>RAUM BEITRETEN</Text>
+                        <Text style={styles.btnPrimaryText}>{t('settings.joinRoom')}</Text>
                     </TouchableOpacity>
                     </View>
                 )}
@@ -120,7 +122,7 @@ export default function GameSettingsScreen({
                               playClickSound();
                             }}
                         >
-                            <Text style={styles.btnPrimaryText}>WEITER</Text>
+                            <Text style={styles.btnPrimaryText}>{t('settings.next')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.btn, styles.btnPrimary, { marginTop: 15}]}
@@ -130,7 +132,7 @@ export default function GameSettingsScreen({
                               setShowConfirm(true);
                             }}
                         >
-                            <Text style={styles.btnPrimaryText}>SPIELMODUS</Text>
+                            <Text style={styles.btnPrimaryText}>{t('settings.gameMode')}</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -143,7 +145,7 @@ export default function GameSettingsScreen({
                           playClickSound();
                         }}
                 >
-                    <Text style={styles.btnSecondaryText}>HAUPTMENÜ</Text>
+                    <Text style={styles.btnSecondaryText}>{t('common.mainMenu')}</Text>
                 </TouchableOpacity>
             </View>
           {showConfirm && (

@@ -7,6 +7,7 @@ import tinycolor from 'tinycolor2';
 import { Ionicons } from '@expo/vector-icons';
 import { QUESTIONS } from '../constants/questions';
 import { playClickSound } from '../constants/sounds';
+import { useLanguage } from '../constants/translations';
 
 export default function GameScreen({
     onBack,
@@ -20,6 +21,7 @@ export default function GameScreen({
     currentQuestion,
 
 }) {
+    const { t } = useLanguage();
 
     const [showConfirm, setShowConfirm] = useState(false);
     const [isQuestionOpen, setIsQuestionOpen] = useState(false);
@@ -138,7 +140,7 @@ export default function GameScreen({
     });
 
     const activePlayer = players[currentPlayerIndex];
-    const playerName = activePlayer?.name || `Spieler ${currentPlayerIndex + 1}`;
+    const playerName = activePlayer?.name || t('common.player', { number: currentPlayerIndex + 1 });
     const playerColor = activePlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
@@ -162,7 +164,7 @@ export default function GameScreen({
                                 duration === 0 && styles.sectionTitleCentered,
                             ]}
                         >
-                            {playerName} ist dran!
+                            {t('game.turn', { name: playerName })}
                         </Text>
                         {duration != 0 && (                                
                             <View style={styles.timer}>
@@ -211,7 +213,7 @@ export default function GameScreen({
                                 disabled={isQuestionOpen}
                             >
                                 <Text style={[styles.btnQuestionText, {color: lightPlayerColor}]}>
-                                        {isQuestionOpen ? 'Frage' : 'Frage anzeigen'}
+                                        {isQuestionOpen ? t('game.question') : t('game.showQuestion')}
                                 </Text>
 
                                 {!isQuestionOpen && (
@@ -242,7 +244,7 @@ export default function GameScreen({
                                                     style={styles.textInput}
                                                     value={textValue}
                                                     onChangeText={setTextValue}
-                                                    placeholder="Schreibe einen Kommentar"
+                                                    placeholder={t('game.commentPlaceholder')}
                                                     placeholderTextColor="#8a99ad"
                                                     maxLength={100}
                                                     multiline={true}
@@ -279,7 +281,7 @@ export default function GameScreen({
                                         }}
                                     >
                                         <Text style={styles.btnSecondaryText}>
-                                            {currentPlayerIndex < playerCount - 1 ? 'Nächster Spieler' : 'Fertigstellen'}
+                                            {currentPlayerIndex < playerCount - 1 ? t('game.nextPlayer') : t('game.finish')}
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
@@ -296,7 +298,7 @@ export default function GameScreen({
                         playClickSound();
                     }}
                 >
-                    <Text style={styles.btnSecondaryText}>SPIEL BEENDEN</Text>
+                    <Text style={styles.btnSecondaryText}>{t('game.quit')}</Text>
                 </TouchableOpacity>
             </Animated.View>
         

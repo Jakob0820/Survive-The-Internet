@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
 import { playClickSound } from '../constants/sounds';
+import { useLanguage } from '../constants/translations';
 
 export default function MainScreen ({
   online,
@@ -8,6 +9,8 @@ export default function MainScreen ({
 })
 
 {
+  const { t } = useLanguage();
+
   return (
           <View style={styles.screenContainer}>
             {/* Titel-Header */}
@@ -26,7 +29,7 @@ export default function MainScreen ({
                   playClickSound();
                 }}
               >
-                <Text style={styles.btnPrimaryText}>▶   LOKALES SPIEL</Text>
+                <Text style={styles.btnPrimaryText}>{t('main.local')}</Text>
               </TouchableOpacity>
   
               <TouchableOpacity
@@ -37,7 +40,7 @@ export default function MainScreen ({
                   playClickSound();
                 }}
               >
-                <Text style={styles.btnPrimaryText}>▶   ONLINE</Text>
+                <Text style={styles.btnPrimaryText}>{t('main.online')}</Text>
               </TouchableOpacity>
   
               <TouchableOpacity
@@ -48,7 +51,7 @@ export default function MainScreen ({
                   playClickSound();
                 }}
               >
-                <Text style={styles.btnSecondaryText}>⚙   OPTIONEN</Text>
+                <Text style={styles.btnSecondaryText}>{t('main.options')}</Text>
               </TouchableOpacity>
             </View>
           </View>

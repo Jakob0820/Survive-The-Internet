@@ -6,6 +6,7 @@ import LottieView from 'lottie-react-native';
 import thumbsUp from '../../assets/Thumbs up.json';
 import { playStampSound, playTypingSound, playVoteSound,stopSound, playPopSound, playCountingSound } from '../constants/sounds';
 import { playMusic, stopMusic, playFadeOut } from '../constants/music';
+import { getDateLocale, useLanguage } from '../constants/translations';
 import {
 StyleSheet,
 Text,
@@ -184,6 +185,7 @@ gameMode,
 onVote,
 
 }) {
+const { language, t } = useLanguage();
 
 const [showResult, setShowResult] = useState(true);
 const [showResponse, setShowResponse] = useState(false);
@@ -678,18 +680,18 @@ useEffect(() => {
 const getCurrentDateTime = () => {
     const now = new Date();
 
-    const date = now.toLocaleDateString('de-DE', {
+    const date = now.toLocaleDateString(getDateLocale(language), {
         day: '2-digit',
         month: 'long',
         year: 'numeric',
     });
 
-    const time = now.toLocaleTimeString('de-DE', {
+    const time = now.toLocaleTimeString(getDateLocale(language), {
         hour: '2-digit',
         minute: '2-digit',
     });
 
-    return `${date}, ${time} Uhr`;
+    return t('evaluation.dateTime', { date, time });
 };
 
 const renderCardContent = (entry) => {
@@ -746,7 +748,7 @@ const renderCardContent = (entry) => {
 
                         {/* Eingecheckt bei */}
                         <Text style={styles.googleMapsLabel}>
-                            Eingecheckt bei:
+                            {t('evaluation.checkedIn')}
                         </Text>
 
                         {/* Ort */}
@@ -810,9 +812,9 @@ const renderCardContent = (entry) => {
                         </View>
 
                         <View style={styles.redditActions}>
-                            <Text style={styles.redditAction}>👍 Like</Text>
-                            <Text style={styles.redditAction}>💬 Kommentar</Text>
-                            <Text style={styles.redditAction}>↗ Teilen</Text>
+                            <Text style={styles.redditAction}>{t('evaluation.like')}</Text>
+                            <Text style={styles.redditAction}>{t('evaluation.comment')}</Text>
+                            <Text style={styles.redditAction}>{t('evaluation.share')}</Text>
                         </View>
 
                     </View>
@@ -883,7 +885,7 @@ const renderCardContent = (entry) => {
                             <Text style={styles.youtubeStatIcon}>👎</Text>
                             <Text style={styles.youtubeStatText}>{s.dislikes}</Text>
 
-                            <Text style={styles.youtubeViewsText}>{s.views} Aufrufe</Text>
+                            <Text style={styles.youtubeViewsText}>{t('evaluation.views', { views: s.views })}</Text>
                         </View>
                     </View>
 
@@ -930,7 +932,7 @@ const renderCardContent = (entry) => {
                                 {player?.name}
                             </Text>
                             <Text style={styles.linkedinRecommends}>
-                                empfiehlt
+                                {t('evaluation.recommends')}
                             </Text>
 
                             <View style={[styles.linkedinSubjectBox, stampBox]}>
@@ -980,9 +982,9 @@ const renderCardContent = (entry) => {
                         </View>
 
                         <View style={[styles.tagesschauNavItems, { backgroundColor: pColor }]}>
-                            <Text style={styles.tagesschauNavItem}>Welt</Text>
-                            <Text style={styles.tagesschauNavItem}>Geld</Text>
-                            <Text style={styles.tagesschauNavItem}>Essen</Text>
+                            <Text style={styles.tagesschauNavItem}>{t('evaluation.navWorld')}</Text>
+                            <Text style={styles.tagesschauNavItem}>{t('evaluation.navMoney')}</Text>
+                            <Text style={styles.tagesschauNavItem}>{t('evaluation.navFood')}</Text>
                         </View>
                     </View>
 
@@ -1037,7 +1039,7 @@ const renderCardContent = (entry) => {
                     {/* Header */}
                     <View style={[styles.gutefrageHeader, { backgroundColor: pColor }]}>
                         <Text style={[styles.gutefrageHeaderTitle, {color: lightPColor}]}>
-                            Frag {player?.name} etwas!
+                            {t('evaluation.askPlayer', { name: player?.name })}
                         </Text>
                     </View>
 
@@ -1045,7 +1047,7 @@ const renderCardContent = (entry) => {
                     <View style={styles.gutefrageQuestionCard}>
                         <View style={[styles.gutefrageTimeBar, { backgroundColor: lightPColor }]}>
                             <Text style={styles.gutefrageTimeText}>
-                                Vor {s.hoursAgo} Stunden gestellt
+                                {t('evaluation.askedAgo', { hours: s.hoursAgo })}
                             </Text>
                         </View>
 
@@ -1128,10 +1130,10 @@ const renderCardContent = (entry) => {
                     <View style={styles.gofundmeStatsRow}>
                         <View style={styles.gofundmeStatBlock}>
                             <Text style={[styles.gofundmeStatValue, { color: pColor }]}>
-                                {s.funds}€
+                                {t('evaluation.funds', { amount: s.funds })}
                             </Text>
                             <Text style={styles.gofundmeStatLabel}>
-                                Bisher gesammelt
+                                {t('evaluation.raised')}
                             </Text>
                         </View>
 
@@ -1140,13 +1142,13 @@ const renderCardContent = (entry) => {
                                 {s.supporters}
                             </Text>
                             <Text style={styles.gofundmeStatLabel}>
-                                Unterstützer
+                                {t('evaluation.supporters')}
                             </Text>
                         </View>
 
                         <View style={[styles.gofundmeButton, { backgroundColor: lightPColor }]}>
                             <Text style={styles.gofundmeButtonText}>
-                                JETZT{'\n'}HELFEN
+                                {t('evaluation.helpNow')}
                             </Text>
                         </View>
                     </View>
@@ -1244,7 +1246,7 @@ const renderCardContent = (entry) => {
                     {/* Suchleiste */}
                     <View style={[styles.ebaySearchBar, { backgroundColor: pColor }]}>
                         <View style={styles.ebaySearchInput}>
-                            <Text style={styles.ebaySearchPlaceholder}>Wonach suchst du?</Text>
+                            <Text style={styles.ebaySearchPlaceholder}>{t('evaluation.search')}</Text>
 
                             <View style={[styles.ebaySearchButton, {backgroundColor: lightPColor}]}>
                                 <Ionicons name="search" size={20} color="#FFFFFF" />
@@ -1283,7 +1285,7 @@ const renderCardContent = (entry) => {
                         </View>
 
                         <View style={styles.ebayCartButton}>
-                            <Text style={styles.ebayCartButtonText}>IN DEN WARENKORB</Text>
+                            <Text style={styles.ebayCartButtonText}>{t('evaluation.addToCart')}</Text>
                         </View>
                     </View>
 
@@ -1325,7 +1327,7 @@ const renderTallyOverlay = (orderIdx) => {
         <View pointerEvents="none" style={styles.tallyFlames}>
             <View style={styles.tallyFlamesPill}>
                 {votes === 0 ? (
-                    <Text style={styles.tallyNoVotes}>Keine Stimmen</Text>
+                    <Text style={styles.tallyNoVotes}>{t('evaluation.noVotes')}</Text>
                 ) : (
                     Array.from({ length: votes }).map((_, j) => (
                         <Animated.Text
@@ -1483,7 +1485,7 @@ if (showResult) {
                             >
                                 {/* Einmalige Überschrift */}
                                 <Text style={styles.tallyLabel}>
-                                    PUNKTZAHL
+                                    {t('evaluation.score')}
                                 </Text>
 
                                 {/* Spieler */}
@@ -1535,10 +1537,10 @@ if (showResult) {
                             <View style={styles.voterInfo}>
                                 <Text style={styles.voterLabel} numberOfLines={1}>
                                     {votingDone
-                                        ? 'Alle Stimmen vergeben!'
+                                        ? t('evaluation.allVotesCast')
                                         : isOwnCard
-                                            ? 'Deine eigene Karte - Wische Weiter!'
-                                            : 'Am Zug – Karte antippen'}
+                                            ? t('evaluation.ownCard')
+                                            : t('evaluation.yourTurn')}
                                 </Text>
                                 <Text
                                     style={[styles.voterName, { color: voter?.color }]}
@@ -1580,8 +1582,8 @@ if (showResult) {
                     >
                         <Text style={styles.votingBarText}>
                             {tallyActive
-                                ? 'Die Stimmen sind ausgezählt!'
-                                : 'Wähle für den Spieler, der am lächerlichsten aussieht!'}
+                                ? t('evaluation.votesCounted')
+                                : t('evaluation.voteFor')}
                         </Text>
                     </Animated.View>
                 )}

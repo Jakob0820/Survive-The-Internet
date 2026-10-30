@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import LottieView from 'lottie-react-native';
 import shoppingCart from '../../assets/shoppingCart.json';
 import { playClickSound } from '../constants/sounds';
+import { useLanguage } from '../constants/translations';
 
 export default function GameTransitionScreen({ 
     onFinish,
@@ -16,6 +17,7 @@ export default function GameTransitionScreen({
     evaluation,
     onNext,
 }) {
+    const { t } = useLanguage();
     const shoppingCartLottieRef = useRef(null);
 
     useEffect(() => {
@@ -56,7 +58,7 @@ export default function GameTransitionScreen({
             <View style={[styles.card]}>
                 <View style={styles.header}>
                     <Text style={styles.text}>
-                        Runde {currentRoundNumber + 1}
+                        {t('transition.round', { number: currentRoundNumber + 1 })}
                     </Text>
                     <ProgressDots
                         total={totalRounds}
@@ -100,7 +102,7 @@ export default function GameTransitionScreen({
                             resizeMode="contain"
                         />
                         <Text style={styles.headerText}>
-                            Na dann wollen wir uns mal ansehen, was ihr geschaffen habt!
+                            {t('transition.evaluation')}
                         </Text>
                     </View>
                 </View>
@@ -126,7 +128,7 @@ export default function GameTransitionScreen({
                         }}
                     >
                         <Text style={styles.btnText}>
-                            ERGEBNIS ANZEIGEN
+                            {t('transition.showResult')}
                         </Text>
                     </TouchableOpacity>
                 </View>

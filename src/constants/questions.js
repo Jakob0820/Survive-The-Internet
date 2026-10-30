@@ -7,6 +7,7 @@ import gutefrageLogo from '../../assets/gutefrage.png';
 import gofundmeLogo from '../../assets/gofundme.png';
 import twitterLogo from '../../assets/twitter.png';
 import ebayLogo from '../../assets/ebay.png';
+import { QUESTIONS_EN } from './questions.en';
 
 export const ROUND_TYPE = {
     GOOGLE_MAPS: 'google_maps',
@@ -20,6 +21,12 @@ export const ROUND_TYPE = {
     EBAY: 'ebay',
 
 }
+
+// Fragen und Antworttexte einer Runde in der gewählten Sprache
+export const getLocalizedRound = (round, language) => {
+    if (!round || language !== 'en') return round;
+    return { ...round, ...QUESTIONS_EN[round.id] };
+};
 
 export const QUESTIONS = [
     {
