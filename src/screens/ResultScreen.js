@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import podium from '../../assets/podium.png';
 import confettiAnimation from '../../assets/celebrate.json'
-import { playCountingSound, stopSound, playPopSound, playClickSound } from '../constants/sounds';
+import { playCountingSound, stopSound, playPopSound, playClickSound, playWinnerSound } from '../constants/sounds';
+import { playMusic } from '../constants/music';
 import { useLanguage } from '../constants/translations';
 import {
     StyleSheet,
@@ -164,6 +165,16 @@ export default function ResultScreen({
         if (isLastRound) {
             confettiRef.current?.reset();
             confettiRef.current?.play();
+
+            let cancelled = false;
+            (async () => {
+                await playWinnerSound();
+                if (!cancelled) playMusic('questionMenu');
+            })();
+
+            return () => {
+                cancelled = true;
+            };
         } else {
             confettiRef.current?.reset();
         }

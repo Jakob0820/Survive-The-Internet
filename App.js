@@ -92,7 +92,7 @@ export default function App() {
   }), [language, t]);
 
   //Test Modus
-  const TEST_MODE = true;
+  const TEST_MODE = false;
   const TEST_SCREEN = 'result';
 
   useEffect(() => {
@@ -125,11 +125,11 @@ export default function App() {
             color: COLOR_OPTIONS[3],
             image: COLOR_IMAGES[3],
         },
-        {
+        /*{
             name: 'Spieler 6',
             color: COLOR_OPTIONS[4],
             image: COLOR_IMAGES[4],
-        },
+        }, 
         {
             name: 'Spieler 7',
             color: COLOR_OPTIONS[5],
@@ -139,12 +139,12 @@ export default function App() {
             name: 'Spieler 8',
             color: COLOR_OPTIONS[7],
             image: COLOR_IMAGES[7],
-        }, 
+        },*/
     ];
 
     const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
     //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.GOFUNDME, ROUND_TYPE.REDDIT]
+    const testRounds = [ROUND_TYPE.GOFUNDME]
 
     setPlayers(testPlayers);
     setPlayerCount(3);

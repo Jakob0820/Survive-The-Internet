@@ -9,6 +9,7 @@ const soundPlayers = {
     vote: createAudioPlayer(require('../../assets/voteSound.mp3'), PLAYER_OPTIONS),
     pop: createAudioPlayer(require('../../assets/popSound.mp3'), PLAYER_OPTIONS),
     count: createAudioPlayer(require('../../assets/countingSound.mp3'), PLAYER_OPTIONS),
+    winner: createAudioPlayer(require('../../assets/winnerSound.mp3'), PLAYER_OPTIONS)
     //weitere Sounds hier
 };
 
@@ -102,4 +103,25 @@ export const playPopSound = () => {
   return play(soundPlayers.pop);
 };
 export const playCountingSound = () => play(soundPlayers.count);
+
+// Das Promise endet erst, wenn der Sound fertig ist oder angehalten wurde
+export const playWinnerSound = () =>
+  new Promise((resolve) => {
+    if (!enabled) {
+      resolve();
+      return;
+    }
+
+    let started = false;
+    const subscription = soundPlayers.winner.addListener('playbackStatusUpdate', (status) => {
+      if (status.playing) started = true;
+
+      if (status.didJustFinish || (started && !status.playing)) {
+        subscription.remove();
+        resolve();
+      }
+    });
+
+    play(soundPlayers.winner);
+  });
 //weitere Sounds hier
