@@ -198,4 +198,30 @@ export const QUESTIONS_EN = {
         ],
         answer: ['would be an embarrassing review for this product:'],
     },
+    post: {
+        questions: [
+            {
+                question: 'How would you most like to travel on vacation?',
+                options: [
+                    { label: 'Car', image: 'jeep' },
+                    { label: 'Plane', image: 'plane' },
+                ],
+            },
+            {
+                question: 'Which sport would you love to master?',
+                options: [
+                    { label: 'Basketball', image: 'basketball' },
+                    { label: 'Tennis', image: 'tennis' },
+                ],
+            },
+            {
+                question: 'Which method would you rather use to have your package transported?',
+                options: [
+                    { label: 'Cargoship', image: 'cargoship' },
+                    { label: 'Freight train', image: 'train' },
+                ],
+            },
+        ],
+        answer: ['would look crazy if he/she were to post the picture with that caption.'],
+    },
 };

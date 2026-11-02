@@ -19,7 +19,7 @@ import GameSettingsScreen from './src/screens/GameSettingsScreen';
 import PlayerSetupScreen from './src/screens/PlayerSetupScreen';
 import GameScreen from './src/screens/GameScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
-import { QUESTIONS, ROUND_TYPE, getLocalizedRound } from './src/constants/questions';
+import { QUESTIONS, ROUND_TYPE, FACEBOOK_IMAGES, getLocalizedRound } from './src/constants/questions';
 import { DEFAULT_LANGUAGE, LanguageContext, translate } from './src/constants/translations';
 import GameTransitionScreen from './src/screens/GameTransitionScreen';
 import AnswerScreen from './src/screens/AnswerScreen';
@@ -66,6 +66,19 @@ export default function App() {
   const currentRoundObj = getLocalizedRound(QUESTIONS.find((q) => q.type === currentType), language);
   const currentCategoryName = currentRoundObj?.categoryName || t('common.nextRound');
   const [currentQuestions, setCurrentQuestions ] = useState([]);
+
+  // Facebook Modus: true, sobald die aktuelle Runde eine Facebook-Runde ist
+  const [isFacebookMode, setIsFacebookMode] = useState(false);
+
+  useEffect(() => {
+    setIsFacebookMode(currentType != null && currentType === ROUND_TYPE.FACEBOOK);
+  }, [currentType]);
+
+  // Facebook Runde: Fragen mit Antwortmöglichkeiten und daraus resultierende Bilder
+  const [facebookQuestions, setFacebookQuestions] = useState([]);
+  const [selectedFacebookOption, setSelectedFacebookOption] = useState(null);
+  const [facebookImages, setFacebookImages] = useState([]);
+  const [shuffledFacebookImages, setShuffledFacebookImages] = useState([]);
 
   const [answerText, setAnswerText] = useState('');
   const [shuffledFirstAnswers, setShuffledFirstAnswers] = useState([]);
@@ -156,9 +169,7 @@ export default function App() {
     setGameRounds(testRounds);
     setCurrentRoundIndex(0);
 
-    setCurrentQuestions(
-        generateQuestions(testRounds[0], 3)
-    );
+    setupRoundQuestions(testRounds[0], 3);
 
     const testFirstAnswers = [
         'Ultra geil, macht vor allem Spaß in der Badewanne zu benutzen',
@@ -269,6 +280,7 @@ export default function App() {
     setSelectedColor(COLOR_OPTIONS[0]);
     setPlayers([]);
     setFirstAnswer([]);
+    setSecondAnswer([]);
     setShuffledFirstAnswers([]);
     setTextValue('');
     setAnswerText('');
@@ -277,7 +289,12 @@ export default function App() {
     setEvaluationOrder([]);
     setVoteCount([]);
     setBurnCount([]);
+    setPreviousPoints([]);
     setIsEvaluating(false);
+    setFacebookQuestions([]);
+    setSelectedFacebookOption(null);
+    setFacebookImages([]);
+    setShuffledFacebookImages([]);
   }
  
   const handleNextPlayer = () => {
@@ -308,8 +325,7 @@ export default function App() {
       setVoteCount(Array(playerCount).fill(0));
       setBurnCount(Array(playerCount).fill(0));
  
-      const firstRoundQuestion = generateQuestions(rounds[0], playerCount);
-      setCurrentQuestions(firstRoundQuestion);
+      setupRoundQuestions(rounds[0], playerCount);
  
       setCurrentScreen('transition');
     }
@@ -347,8 +363,7 @@ export default function App() {
       setCurrentPlayerIndex(0);
  
       const nextRoundType = gameRounds[nextIndex];
-      const nextQuestions = generateQuestions(nextRoundType, playerCount);
-      setCurrentQuestions(nextQuestions);
+      setupRoundQuestions(nextRoundType, playerCount);
 
       setFirstAnswer([]);
       setShuffledFirstAnswers([]);
@@ -372,14 +387,14 @@ export default function App() {
         setEvaluationData([]);
         setVoteCount(Array(playerCount).fill(0));
         setBurnCount(Array(playerCount).fill(0));
+        setPreviousPoints([]);
         setIsEvaluating(false);
 
         const rounds = generateGameRounds(roundLength);
         setGameRounds(rounds);
         setCurrentRoundIndex(0);
 
-        const firstRoundQuestion = generateQuestions(rounds[0], playerCount);
-        setCurrentQuestions(firstRoundQuestion);
+        setupRoundQuestions(rounds[0], playerCount);
 
         setCurrentPlayerIndex(0);
         setCurrentScreen('transition');
@@ -407,6 +422,32 @@ export default function App() {
     return shuffledQuestions.slice(0, count);
  
   }
+
+  // Mischt die Facebook-Fragen (inkl. Antwortmöglichkeiten). Gibt es weniger Fragen
+  // als Spieler, werden sie der Reihe nach wiederholt.
+  const generateFacebookQuestions = (count = playerCount) => {
+    const roundObj = getLocalizedRound(QUESTIONS.find((q) => q.type === ROUND_TYPE.FACEBOOK), language);
+    const shuffledQuestions = shuffleArray(roundObj?.questions || []);
+    if (shuffledQuestions.length === 0) return [];
+
+    return Array.from({ length: count }, (_, i) => shuffledQuestions[i % shuffledQuestions.length]);
+  }
+
+  // Setzt die Fragen für eine Runde; in der Facebook-Runde zusätzlich die Antwortmöglichkeiten
+  const setupRoundQuestions = (roundType, count = playerCount) => {
+    setSelectedFacebookOption(null);
+    setFacebookImages([]);
+    setShuffledFacebookImages([]);
+
+    if (roundType === ROUND_TYPE.FACEBOOK) {
+      const fbQuestions = generateFacebookQuestions(count);
+      setFacebookQuestions(fbQuestions);
+      setCurrentQuestions(fbQuestions.map((q) => q.question));
+    } else {
+      setFacebookQuestions([]);
+      setCurrentQuestions(generateQuestions(roundType, count));
+    }
+  }
  
   const shuffleArray = (array) => {
     const shuffled = [...array];
@@ -433,6 +474,16 @@ export default function App() {
     setFirstAnswer(updatedAnswers);
     setTextValue('');
 
+    // Facebook: Bild anhand der gewählten Antwort festlegen (ohne Auswahl, z.B. Timer abgelaufen: erste Option)
+    let updatedImages = facebookImages;
+    if (isFacebookMode) {
+      const options = facebookQuestions[currentPlayerIndex]?.options || [];
+      const chosenOption = options[selectedFacebookOption ?? 0];
+      updatedImages = [...facebookImages, chosenOption ? FACEBOOK_IMAGES[chosenOption.image] : null];
+      setFacebookImages(updatedImages);
+      setSelectedFacebookOption(null);
+    }
+
     if (currentPlayerIndex < playerCount - 1) {
       setCurrentPlayerIndex(currentPlayerIndex + 1);
     } else {
@@ -441,6 +492,7 @@ export default function App() {
 
       setShuffledIndices(newShuffledIndices);
       setShuffledFirstAnswers(newShuffledIndices.map((i) => updatedAnswers[i]));
+      setShuffledFacebookImages(isFacebookMode ? newShuffledIndices.map((i) => updatedImages[i]) : []);
 
       setCurrentPlayerIndex(0);
       setCurrentScreen('answer');
@@ -460,6 +512,7 @@ export default function App() {
         originalAnswer: shuffledFirstAnswers[i],
         response: updatedResponses[i],
         stats: createFakeStats(),
+        image: shuffledFacebookImages[i] ?? null, // Facebook: Bild des Spielers, der die erste Frage beantwortet hat
       }));
 
       setEvaluationData(combined);
@@ -651,6 +704,10 @@ export default function App() {
                 textValue={textValue}
                 setTextValue={setTextValue}
                 currentQuestion={currentQuestions[currentPlayerIndex]}
+                isFacebookMode={isFacebookMode}
+                facebookQuestion={facebookQuestions[currentPlayerIndex]}
+                selectedFacebookOption={selectedFacebookOption}
+                setSelectedFacebookOption={setSelectedFacebookOption}
             />
         )}
 
@@ -673,6 +730,9 @@ export default function App() {
             primaryColor={currentRoundObj?.color[0]}
             secondaryColor={currentRoundObj?.color[1]}
             tertiaryColor={currentRoundObj?.color[2]}
+            isFacebookMode={isFacebookMode}
+            facebookImage={shuffledFacebookImages[currentPlayerIndex]}
+            answerAuthor={players[shuffledIndices[currentPlayerIndex]]}
           />
         )}
  

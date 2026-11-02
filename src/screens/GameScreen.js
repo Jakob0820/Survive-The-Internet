@@ -19,6 +19,10 @@ export default function GameScreen({
     textValue,
     setTextValue,
     currentQuestion,
+    isFacebookMode,
+    facebookQuestion,
+    selectedFacebookOption,
+    setSelectedFacebookOption,
 
 }) {
     const { t } = useLanguage();
@@ -235,6 +239,47 @@ export default function GameScreen({
                                 ]}
                             >
                                 <View style={styles.dropdownInnerContent}>
+                                    {isFacebookMode ? (
+                                        // Facebook-Modus: Frage mit Antwortmöglichkeiten
+                                        <View style={styles.topContent}>
+                                            <Text style={styles.questionText}>
+                                                {currentQuestion}
+                                            </Text>
+                                            <View style={styles.optionsContainer}>
+                                                {facebookQuestion?.options?.map((option, index) => (
+                                                    <TouchableOpacity
+                                                        key={`${option.label}-${index}`}
+                                                        style={[
+                                                            styles.optionBtn,
+                                                            selectedFacebookOption === index && [
+                                                                styles.optionBtnSelected,
+                                                                { backgroundColor: playerColor, borderColor: playerColor, shadowColor: playerColor },
+                                                            ],
+                                                        ]}
+                                                        activeOpacity={0.8}
+                                                        onPress={() => {
+                                                            setSelectedFacebookOption(index);
+                                                            playClickSound();
+                                                        }}
+                                                    >
+                                                        <Text
+                                                            style={[
+                                                                styles.optionLabel,
+                                                                selectedFacebookOption === index && { color: lightPlayerColor },
+                                                            ]}
+                                                        >
+                                                            {option.label}
+                                                        </Text>
+                                                        <Ionicons
+                                                            name={selectedFacebookOption === index ? 'checkmark-circle' : 'ellipse-outline'}
+                                                            size={22}
+                                                            color={selectedFacebookOption === index ? lightPlayerColor : '#c7c7cc'}
+                                                        />
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        </View>
+                                    ) : (
                                     <View style={styles.topContent}>
                                         <Text style={styles.questionText}>
                                             {currentQuestion}
@@ -271,6 +316,7 @@ export default function GameScreen({
                                                 />
                                         </View>
                                     </View>
+                                    )}
                                     <TouchableOpacity
                                         style={[styles.btn, styles.btnSecondary,
                                             { marginTop: 20 }]}
@@ -439,10 +485,34 @@ const styles = StyleSheet.create({
         lineHeight: 24,
         fontWeight: 'bold',
     },
+    optionsContainer: {
+        marginTop: 20,
+        gap: 10,
+    },
+    optionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#ffffff',
+        borderWidth: 2,
+        borderColor: '#ffffff',
+        borderRadius: 14,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+    },
+    optionBtnSelected: {
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
+        transform: [{ scale: 1.02 }],
+    },
     optionLabel: {
+        flex: 1,
         color: '#1c1c1e',
         fontSize: 16,
         fontWeight: '600',
+        letterSpacing: 0.5,
     },
     textInput: {
         backgroundColor: '#ffffff',

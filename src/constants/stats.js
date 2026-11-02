@@ -13,5 +13,6 @@ export function createFakeStats() {
         replies: rnd(50, 999),    // Twitter
         retweets: rnd(50, 999),
         hearts: rnd(1000, 9999),
+        facebookLikes: rnd(100, 999), // Facebook
     };
 }

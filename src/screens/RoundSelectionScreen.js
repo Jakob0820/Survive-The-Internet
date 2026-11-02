@@ -100,7 +100,6 @@ export default function ConfirmationScreen({
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => {
-                console.log('switch pressed, randomRounds =', randomRounds);
                 playClickSound();
                 setRandomRounds(!randomRounds)
                 }}
@@ -131,7 +130,7 @@ export default function ConfirmationScreen({
               <Slider
                 style={{ flex: 1, height: 36 }}
                 minimumValue={1}
-                maximumValue={9}
+                maximumValue={MAX_ROUNDS}
                 step={1}
                 value={roundLength}
                 onValueChange={(value) => {

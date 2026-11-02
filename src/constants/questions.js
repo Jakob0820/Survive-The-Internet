@@ -7,6 +7,7 @@ import gutefrageLogo from '../../assets/gutefrage.png';
 import gofundmeLogo from '../../assets/gofundme.png';
 import twitterLogo from '../../assets/twitter.png';
 import ebayLogo from '../../assets/ebay.png';
+import facebookLogo from '../../assets/facebook.png';
 import { QUESTIONS_EN } from './questions.en';
 
 export const ROUND_TYPE = {
@@ -19,8 +20,19 @@ export const ROUND_TYPE = {
     GOFUNDME: 'gofundme',
     TWITTER: 'twitter',
     EBAY: 'ebay',
+    FACEBOOK: 'facebook',
 
 }
+
+// Bilder für die Facebook-Runde, Optionen verweisen über den Key auf das Bild
+export const FACEBOOK_IMAGES = {
+    basketball: require('../../assets/facebook_images/basketballImage.png'),
+    cargoship: require('../../assets/facebook_images/cargoshipImage.png'),
+    jeep: require('../../assets/facebook_images/jeepImage.png'),
+    plane: require('../../assets/facebook_images/planeImage.png'),
+    tennis: require('../../assets/facebook_images/tennisImage.png'),
+    train: require('../../assets/facebook_images/trainImage.png'),
+};
 
 // Fragen und Antworttexte einer Runde in der gewählten Sprache
 export const getLocalizedRound = (round, language) => {
@@ -120,30 +132,6 @@ export const QUESTIONS = [
         ],
         logo: youtubeLogo,
     },
-    /*{
-        id: 'photo',
-        categoryName: 'Instagram',
-        //...Bild und Kommentar auf das Bild
-        questions: [
-            {
-                id: 'q1',
-                text: 'In welches Land würdest du eher reisen?',
-                //image: require()
-                options: [
-                    'Frankreich',
-                    'Russland',
-                ]
-            },
-            {
-                id: 'q2',
-                text: 'Wofür würdest du mehr Geld ausgeben?',
-                options: [
-                    'Hochzeit',
-                    'Eine Anzahlung fürs Haus',
-                ]
-            }
-        ]
-    },*/
     {
         id: 'recommendation',
         categoryName: 'LinkedIN',
@@ -273,7 +261,7 @@ export const QUESTIONS = [
             'Wie würdest du deine athletischen Fähigkeiten beschreiben?',
             'Du umarmst als Scherz einen Fremden auf der Straße! Was flüsterst du ihm ins Ohr?',
         ],
-        answer: ['wäre ein lustiger Kommentar auf eine Crowdfunding-Kampagne mit diesem namens:'],
+        answer: ['wäre ein lustiger Kommentar auf eine Crowdfunding-Kampagne mit diesem namen:'],
         color: [
             '#59e59f',
             //'#00ab55',
@@ -344,6 +332,41 @@ export const QUESTIONS = [
             '#beeb53',
         ],
         logo:ebayLogo,
+    },
+    {
+        id: 'post',
+        categoryName: 'Facebook',
+        type: ROUND_TYPE.FACEBOOK,
+        questions: [
+            {
+                question: 'Womit würdest du am liebsten in den Urlaub reisen?',
+                options: [
+                    { label: 'Auto', image: 'jeep' },
+                    { label: 'Flugzeug', image: 'plane' },
+                ],
+            },
+            {
+                question: 'Welche Sportart macht am meisten Spaß zu schauen?',
+                options: [
+                    { label: 'Basketball', image: 'basketball' },
+                    { label: 'Tennis', image: 'tennis' },
+                ],
+            },
+            {
+                question: 'Womit würdest du dein Paket eher transportieren',
+                options: [
+                    { label: 'Containerschiff', image: 'cargoship' },
+                    { label: 'Güterzug', image: 'train' },
+                ],
+            },
+        ],
+        answer: ['würde niemals diese Bildunterschrift posten:'],
+        color: [
+            '#8fb3ff',
+            '#1877f2',
+            '#6a9cf7',
+        ],
+        logo: facebookLogo,
     }
     
 ]

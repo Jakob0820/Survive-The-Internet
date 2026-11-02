@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image} from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image, ScrollView } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
@@ -22,6 +22,9 @@ export default function AnswerScreen({
     primaryColor,
     secondaryColor,
     tertiaryColor,
+    isFacebookMode,
+    facebookImage,
+    answerAuthor,
 }) {
     const { t } = useLanguage();
 
@@ -35,6 +38,9 @@ export default function AnswerScreen({
 
     const [isFocused, setIsFocused] = useState(false);
     const [inputHeight, setInputHeight] = useState(50);
+
+    // Breite des Dropdown-Inhalts, damit das Facebook-Bild genau diese Breite bekommt
+    const [contentWidth, setContentWidth] = useState(0);
 
     const [isEvaluating, setIsEvaluating] = useState(true);
 
@@ -289,7 +295,27 @@ return (
                                 ]}
                             >
                                 <View style={styles.dropdownInnerContent}>
+                                    {/* Alles außer dem Weiter-Button ist scrollbar */}
+                                    <ScrollView
+                                        style={styles.scrollArea}
+                                        contentContainerStyle={styles.scrollContent}
+                                        showsVerticalScrollIndicator={false}
+                                        keyboardShouldPersistTaps="handled"
+                                        onLayout={(e) => setContentWidth(e.nativeEvent.layout.width)}
+                                    >
                                     <View style={styles.topContent}>
+                                        {isFacebookMode ? (
+                                            // Facebook-Modus: Bild statt Sprechblase
+                                            <Image
+                                                source={facebookImage}
+                                                style={[
+                                                    styles.facebookImage,
+                                                    // Bilder sind 1000x600 px
+                                                    { width: contentWidth, height: contentWidth * 0.6 },
+                                                ]}
+                                                resizeMode="cover"
+                                            />
+                                        ) : (
                                         <View style={styles.container}>
                                             {/* Der kleine schwarze Pfeil oben links */}
                                             <View style={styles.arrow} />
@@ -301,7 +327,13 @@ return (
                                                 </Text>
                                             </View>
                                         </View>
+                                        )}
                                         <Text style={styles.questionText}>
+                                            {isFacebookMode && (
+                                                <Text>
+                                                    {answerAuthor?.name}{' '}
+                                                </Text>
+                                            )}
                                             {answerPrompt}
                                         </Text>
                                         <View style={{ marginTop: 20 }}>
@@ -337,6 +369,7 @@ return (
                                                 />
                                         </View>
                                     </View>
+                                    </ScrollView>
                                     <TouchableOpacity
                                         style={[styles.btn, styles.btnSecondary,
                                             { marginTop: 20 }]}
@@ -486,6 +519,13 @@ const styles = StyleSheet.create({
         zIndex: 1,
         flex: 1,
     },
+    scrollArea: {
+        flex: 1,
+        width: '100%',
+    },
+    scrollContent: {
+        flexGrow: 1,
+    },
     dropdownInnerContent: {
         padding: 20,
         flex: 1,
@@ -546,6 +586,10 @@ const styles = StyleSheet.create({
         borderBottomColor: '#000000', // Gleiche Farbe wie die Sprechblase
         borderLeftColor: 'transparent',
         zIndex: 2,
+    },
+    facebookImage: {
+        borderRadius: 12,
+        marginBottom: 20,
     },
     bubble: {
         backgroundColor: '#000000',

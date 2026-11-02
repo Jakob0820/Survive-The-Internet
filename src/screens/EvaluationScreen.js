@@ -271,6 +271,9 @@ const popTimers = useRef([]);
 //Hochzählanimation bei Punkten von den einzelnen Spielern
 const countAnim = useRef(new Animated.Value(0)).current;
 const [countProgress, setCountProgress] = useState(0);
+
+// Facebook: verfügbare Breite für das Bild (Höhe = 60 %, Bilder sind 1000x600 px)
+const [facebookImageWidth, setFacebookImageWidth] = useState(0);
 const countSoundOn = useRef(false);
 
 //Punkte hochzählen und dabei Sound abspielen
@@ -1311,6 +1314,67 @@ const renderCardContent = (entry) => {
                                     visibleChars={typed}
                                 />
                             </View>
+                        </View>
+                    </View>
+
+                </View>
+            )}
+            {gameMode === 'Facebook' && (
+                <View style={styles.facebookInterface}>
+
+                    {/* Bild: volle verfügbare Breite, Höhe aus dem Seitenverhältnis */}
+                    <View
+                        style={styles.facebookImageArea}
+                        onLayout={(e) => setFacebookImageWidth(e.nativeEvent.layout.width)}
+                    >
+                        <Image
+                            source={entry.image}
+                            style={[
+                                styles.facebookImage,
+                                { width: facebookImageWidth, height: facebookImageWidth * 0.6 },
+                            ]}
+                            resizeMode="contain"
+                        />
+                    </View>
+
+                    {/* Bildunterschrift */}
+                    <View style={styles.facebookCaptionSection}>
+                        <Image
+                            source={player?.image}
+                            style={styles.facebookAvatar}
+                            resizeMode="contain"
+                        />
+
+                        <View style={styles.facebookCaptionInfo}>
+                            <Text style={[styles.facebookName, { color: pColor }]}>
+                                {player?.name}
+                            </Text>
+
+                            <View style={[styles.facebookCaptionBox, stampBox]}>
+                                <AutoSizeText
+                                    text={response}
+                                    style={styles.facebookCaptionText}
+                                    minFontSize={10}
+                                    maxFontSize={35}
+                                    stamp={stamp}
+                                    overflowVisible={stampActiveNow}
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Likes + Aktionen */}
+                    <View style={styles.facebookActionRow}>
+                        <View style={styles.facebookLikes}>
+                            <View style={[styles.facebookLikeIcon, { backgroundColor: pColor }]}>
+                                <Ionicons name="thumbs-up" size={14} color="#FFFFFF" />
+                            </View>
+                            <Text style={styles.facebookLikesText}>{s.facebookLikes}</Text>
+                        </View>
+
+                        <View style={styles.facebookActions}>
+                            <Ionicons name="chatbubble-outline" size={22} color="#AAAAAA" />
+                            <Ionicons name="share-social-outline" size={22} color="#AAAAAA" style={{ marginLeft: 15 }} />
                         </View>
                     </View>
 
@@ -3033,6 +3097,102 @@ ebaySearchButton: {
 
 };
 
+// ── Facebook ─────────────────────────────────────────
+const facebookStyles = {
+facebookInterface: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    overflow: 'hidden',
+},
+
+facebookImageArea: {
+    marginTop: 15,
+    marginHorizontal: 15,
+},
+
+facebookImage: {
+    borderRadius: 16,
+},
+
+facebookCaptionSection: {
+    width: '100%',
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 15,
+    paddingBottom: 10,
+},
+
+facebookAvatar: {
+    width: 60,
+    height: 60,
+    marginRight: 15,
+},
+
+facebookCaptionInfo: {
+    flex: 1,
+    alignSelf: 'stretch',
+    minWidth: 0,
+},
+
+facebookName: {
+    fontSize: 26,
+    fontWeight: '900',
+},
+
+facebookCaptionBox: {
+    width: '100%',
+    flex: 1,
+    marginTop: 5,
+    overflow: 'hidden',
+},
+
+facebookCaptionText: {
+    fontWeight: '900',
+    color: '#000000',
+},
+
+facebookActionRow: {
+    width: '100%',
+    height: 55,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5E5',
+},
+
+facebookLikes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+},
+
+facebookLikeIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+},
+
+facebookLikesText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#555555',
+},
+
+facebookActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+},
+
+};
+
 // ── Zusammenführen ───────────────────────────────────
 const styles = StyleSheet.create({
 ...sharedStyles,
@@ -3045,4 +3205,5 @@ const styles = StyleSheet.create({
 ...gofundmeStyles,
 ...twitterStyles,
 ...ebayStyles,
+...facebookStyles,
 });
