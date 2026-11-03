@@ -208,17 +208,52 @@ export const QUESTIONS_EN = {
                 ],
             },
             {
-                question: 'Which sport would you love to master?',
+                question: 'Which sport is the most fun to watch?',
                 options: [
                     { label: 'Basketball', image: 'basketball' },
                     { label: 'Tennis', image: 'tennis' },
                 ],
             },
             {
-                question: 'Which method would you rather use to have your package transported?',
+                question: 'How would you rather have your package shipped?',
                 options: [
-                    { label: 'Cargoship', image: 'cargoship' },
+                    { label: 'Container ship', image: 'cargoship' },
                     { label: 'Freight train', image: 'train' },
+                ],
+            },
+            {
+                question: 'Where would you rather spend a weekend?',
+                options: [
+                    { label: 'In a cabin in the woods', image: 'cabin' },
+                    { label: 'In a hotel', image: 'motel' },
+                ],
+            },
+            {
+                question: 'Which animal would you rather go swimming with?',
+                options: [
+                    { label: 'Dolphin', image: 'dolphin' },
+                    { label: 'Seal', image: 'seal' },
+                ],
+            },
+            {
+                question: 'Who would you rather have as president?',
+                options: [
+                    { label: 'Donald Trump', image: 'trump' },
+                    { label: 'Benjamin Netanyahu', image: 'netanyahu' },
+                ],
+            },
+            {
+                question: 'Which one would you be more likely to beat in a fight?',
+                options: [
+                    { label: 'Gorilla', image: 'gorilla' },
+                    { label: 'Lion', image: 'lion' },
+                ],
+            },
+            {
+                question: 'What would you rather study?',
+                options: [
+                    { label: 'Law', image: 'lawyer' },
+                    { label: 'Computer Science', image: 'engineer' },
                 ],
             },
         ],

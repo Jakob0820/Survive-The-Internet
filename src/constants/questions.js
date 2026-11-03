@@ -32,6 +32,17 @@ export const FACEBOOK_IMAGES = {
     plane: require('../../assets/facebook_images/planeImage.png'),
     tennis: require('../../assets/facebook_images/tennisImage.png'),
     train: require('../../assets/facebook_images/trainImage.png'),
+    cabin: require('../../assets/facebook_images/cabinImage.png'),
+    motel: require('../../assets/facebook_images/motelImage.png'),
+    dolphin: require('../../assets/facebook_images/dolphinImage.png'),
+    seal: require('../../assets/facebook_images/sealImage.png'),
+    trump: require('../../assets/facebook_images/trumpImage.png'),
+    netanyahu: require('../../assets/facebook_images/netanyahuImage.png'),
+    lawyer: require('../../assets/facebook_images/lawyerImage.png'),
+    engineer: require('../../assets/facebook_images/engineerImage.png'),
+    gorilla: require('../../assets/facebook_images/gorillaImage.png'),
+    lion: require('../../assets/facebook_images/lionImage.png'),
+
 };
 
 // Fragen und Antworttexte einer Runde in der gewählten Sprache
@@ -353,11 +364,46 @@ export const QUESTIONS = [
                 ],
             },
             {
-                question: 'Womit würdest du dein Paket eher transportieren',
+                question: 'Womit würdest du dein Paket eher transportieren lassen?',
                 options: [
                     { label: 'Containerschiff', image: 'cargoship' },
                     { label: 'Güterzug', image: 'train' },
                 ],
+            },
+            {
+                question: 'Wo würdest du eher ein Wochenende verbringen?',
+                options: [
+                    { label: 'In einem Waldhaus', image: 'cabin' },
+                    { label: 'In einem Hotel', image: 'motel' },
+                ]
+            },
+            {
+                question: 'Mit welchem Tier würdest du eher schwimmen gehen?',
+                options: [
+                    { label: 'Delfin', image: 'dolphin' },
+                    { label: 'Robbe', image: 'seal' },
+                ]
+            },
+            {
+                question: 'Wen hättest du lieber als Präsident?',
+                options: [
+                    { label: 'Donald Trump', image: 'trump' },
+                    { label: 'Benjamin Netanyahu', image: 'netanyahu' },
+                ]
+            },
+            {
+                question: 'Wen würdest du eher in einem Kampf besiegen?',
+                options: [
+                    { label: 'Gorilla', image: 'gorilla' },
+                    { label: 'Löwe', image: 'lion' },
+                ]
+            },
+            {
+                question: 'Was würdest du eher studieren wollen?',
+                options: [
+                    { label: 'Jura', image: 'lawyer' },
+                    { label: 'Informatik', image: 'engineer' },
+                ]
             },
         ],
         answer: ['würde niemals diese Bildunterschrift posten:'],
