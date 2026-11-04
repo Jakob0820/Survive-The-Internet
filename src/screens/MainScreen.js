@@ -1,4 +1,6 @@
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { use, useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
 import { SERVER_URL } from '../constants/config';
 import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
@@ -12,28 +14,24 @@ export default function MainScreen ({
 {
   const { t } = useLanguage();
 
-  async function testPing() {
-    try {
-      const res = await fetch(`${SERVER_URL}/ping`);
-      const data = await res.json();
-      Alert.alert('Server sagt', data.message);
-    } catch (err) {
-      Alert.alert('Fehler', String(err));
-    }
-  }
+  const [socket, setSocket] = useState(null);
+  const [lastMessage, setLastMessage] = useState('');
 
-  async function testAnswer() {
-    try {
-      await fetch(`${SERVER_URL}/answer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player: 'Spieler 1', text: 'Hallo Server!' }),
-      });
-      Alert.alert('Gesendet', 'Schau ins Server-Terminal');
-    } catch (err) {
-      Alert.alert('Fehler', String(err));
+  useEffect(() => {
+    const s = io(SERVER_URL, { transports: ['websocket'] });
+
+    s.on('connect', () => {
+      console.log('Socket verbunden:', s.id);
+    }),
+    s.on('message', (msg) => {
+      setLastMessage(`${msg.from.slice(0, 4)}: ${msg.text}`);
+    });
+
+    setSocket(s);
+    return () => {
+      s.disconnect();   // Verbindung trennen, wenn der Screen verschwindet
     }
-  }
+  }, []);
 
   return (
           <View style={styles.screenContainer}>
@@ -77,20 +75,16 @@ export default function MainScreen ({
               >
                 <Text style={styles.btnSecondaryText}>{t('main.options')}</Text>
               </TouchableOpacity>
-              {/*Server Test*/}
+              {/* Socket-Test */}
               <TouchableOpacity
                 style={[styles.btn, styles.btnSecondary]}
-                onPress={testPing} 
+                onPress={() => (
+                  socket?.emit('message', 'Hallo von der App!',
+                ))}
               >
-                <Text style={styles.btnSecondaryText}>Server testen</Text>
+                <Text style={styles.btnSecondaryText}>Socket senden</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.btn, styles.btnSecondary]}
-                onPress={testAnswer}
-
-              >
-                <Text style={styles.btnSecondaryText}>Antwort senden</Text>
-              </TouchableOpacity>
+              <Text style={styles.btnSecondaryText}>{lastMessage}</Text>
             </View>
           </View>
     )
