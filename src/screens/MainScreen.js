@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { SERVER_URL } from '../constants/config';
 import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
 
@@ -10,6 +11,29 @@ export default function MainScreen ({
 
 {
   const { t } = useLanguage();
+
+  async function testPing() {
+    try {
+      const res = await fetch(`${SERVER_URL}/ping`);
+      const data = await res.json();
+      Alert.alert('Server sagt', data.message);
+    } catch (err) {
+      Alert.alert('Fehler', String(err));
+    }
+  }
+
+  async function testAnswer() {
+    try {
+      await fetch(`${SERVER_URL}/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player: 'Spieler 1', text: 'Hallo Server!' }),
+      });
+      Alert.alert('Gesendet', 'Schau ins Server-Terminal');
+    } catch (err) {
+      Alert.alert('Fehler', String(err));
+    }
+  }
 
   return (
           <View style={styles.screenContainer}>
@@ -52,6 +76,20 @@ export default function MainScreen ({
                 }}
               >
                 <Text style={styles.btnSecondaryText}>{t('main.options')}</Text>
+              </TouchableOpacity>
+              {/*Server Test*/}
+              <TouchableOpacity
+                style={[styles.btn, styles.btnSecondary]}
+                onPress={testPing} 
+              >
+                <Text style={styles.btnSecondaryText}>Server testen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.btn, styles.btnSecondary]}
+                onPress={testAnswer}
+
+              >
+                <Text style={styles.btnSecondaryText}>Antwort senden</Text>
               </TouchableOpacity>
             </View>
           </View>
