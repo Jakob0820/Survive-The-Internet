@@ -42,7 +42,10 @@ export const FACEBOOK_IMAGES = {
     engineer: require('../../assets/facebook_images/engineerImage.png'),
     gorilla: require('../../assets/facebook_images/gorillaImage.png'),
     lion: require('../../assets/facebook_images/lionImage.png'),
-
+    hogrider: require('../../assets/facebook_images/hogriderImage.png'),
+    angrybirds: require('../../assets/facebook_images/angrybirdsImage.png'),
+    bicycle: require('../../assets/facebook_images/bicycleImage.png'),
+    scooter : require('../../assets/facebook_images/scooterImage.png'),
 };
 
 // Fragen und Antworttexte einer Runde in der gewählten Sprache
@@ -403,6 +406,20 @@ export const QUESTIONS = [
                 options: [
                     { label: 'Jura', image: 'lawyer' },
                     { label: 'Informatik', image: 'engineer' },
+                ]
+            },
+            {
+                question: 'Welches Spiel würdest du eher auf einer langen Bahnfahrt spielen?',
+                options: [
+                    { label: 'Angry Birds', image: 'angrybirds' },
+                    { label: 'Clash of Clans', image: 'hogrider' },
+                ]
+            },
+            {
+                question: 'Womit würdest du lieber zur Arbeit fahren?',
+                options: [
+                    { label: 'Fahrrad', image: 'bicycle' },
+                    { label: 'E-Scooter', image: 'scooter' },
                 ]
             },
         ],
