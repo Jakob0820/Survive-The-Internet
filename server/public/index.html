@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Socket-Test</title>
+</head>
+<body>
+  <h1>Socket-Test</h1>
+  <p id="count">Verbunden: 0</p>
+  <button id="send">Nachricht senden</button>
+  <input type="text" id="messageInput" placeholder="Nachricht eingeben...">
+  <ul id="log"></ul>
+
+  <!-- Diese Datei liefert Socket.IO automatisch aus -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const log = document.getElementById('log');
+    const input = document.getElementById('messageInput');
+
+    socket.on('message', (msg) => {
+      const li = document.createElement('li');
+      li.textContent = `${msg.from.slice(0, 4)}: ${msg.text}`;
+      log.appendChild(li);
+    });
+
+    socket.on('playerCount', (count) => {
+        document.getElementById('count').textContent = `Verbunden: ${count}`;
+    });
+
+    document.getElementById('send').onclick = () => {
+      socket.emit('message', input.value);
+      input.value = '';
+
+    };
+
+  </script>
+</body>
+</html>

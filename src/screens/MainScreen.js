@@ -1,4 +1,7 @@
-import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { use, useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
+import { SERVER_URL } from '../constants/config';
 import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
 
@@ -10,6 +13,25 @@ export default function MainScreen ({
 
 {
   const { t } = useLanguage();
+
+  const [socket, setSocket] = useState(null);
+  const [lastMessage, setLastMessage] = useState('');
+
+  useEffect(() => {
+    const s = io(SERVER_URL, { transports: ['websocket'] });
+
+    s.on('connect', () => {
+      console.log('Socket verbunden:', s.id);
+    }),
+    s.on('message', (msg) => {
+      setLastMessage(`${msg.from.slice(0, 4)}: ${msg.text}`);
+    });
+
+    setSocket(s);
+    return () => {
+      s.disconnect();   // Verbindung trennen, wenn der Screen verschwindet
+    }
+  }, []);
 
   return (
           <View style={styles.screenContainer}>
@@ -53,6 +75,16 @@ export default function MainScreen ({
               >
                 <Text style={styles.btnSecondaryText}>{t('main.options')}</Text>
               </TouchableOpacity>
+              {/* Socket-Test */}
+              <TouchableOpacity
+                style={[styles.btn, styles.btnSecondary]}
+                onPress={() => (
+                  socket?.emit('message', 'Hallo von der App!',
+                ))}
+              >
+                <Text style={styles.btnSecondaryText}>Socket senden</Text>
+              </TouchableOpacity>
+              <Text style={styles.btnSecondaryText}>{lastMessage}</Text>
             </View>
           </View>
     )
