@@ -7,13 +7,10 @@ import RoundSelectionScreen from './RoundSelectionScreen';
 import { useLanguage } from '../constants/translations';
 
 export default function GameSettingsScreen({
-    isOnline,
     duration,
     setDuration,
     playerCount,
     setPlayerCount,
-    onNextCreate,
-    onNextJoin,
     onNext,
     onBack,
     roundColors,
@@ -59,83 +56,54 @@ export default function GameSettingsScreen({
                   />
                 </View>
 
-                {!isOnline && (
-                    <View style={styles.optionRow}>
-                        <Text style={styles.optionLabel}>{t('settings.playerCount')}</Text>
-                    
-                        <View style={styles.playerControlGroup}>
-                        <TouchableOpacity
-                        style={styles.playerBtn}
-                        onPress={() => {
-                          setPlayerCount(Math.max(3, playerCount - 1 ));
-                          playClickSound();
-                        }}
-                        >
-                          <Ionicons name="chevron-back" size={16} color="#000000"/>
-                        </TouchableOpacity>
-                        <Text style={styles.optionValue}>{playerCount}</Text>
-                        <TouchableOpacity
-                        style={styles.playerBtn}
-                        onPress={() => {
-                          setPlayerCount(Math.min(8, playerCount + 1 ));
-                          playClickSound();
-                        }}
-                        >
-                          <Ionicons name="chevron-forward" size={16} color="#000000"/>
-                        </TouchableOpacity>
-                        </View>
+                <View style={styles.optionRow}>
+                    <Text style={styles.optionLabel}>{t('settings.playerCount')}</Text>
+                
+                    <View style={styles.playerControlGroup}>
+                    <TouchableOpacity
+                    style={styles.playerBtn}
+                    onPress={() => {
+                      setPlayerCount(Math.max(3, playerCount - 1 ));
+                      playClickSound();
+                    }}
+                    >
+                      <Ionicons name="chevron-back" size={16} color="#000000"/>
+                    </TouchableOpacity>
+                    <Text style={styles.optionValue}>{playerCount}</Text>
+                    <TouchableOpacity
+                    style={styles.playerBtn}
+                    onPress={() => {
+                      setPlayerCount(Math.min(8, playerCount + 1 ));
+                      playClickSound();
+                    }}
+                    >
+                      <Ionicons name="chevron-forward" size={16} color="#000000"/>
+                    </TouchableOpacity>
                     </View>
-                )}
+                </View>
 
-                {isOnline && (
-                    <View>
+                <View>
+                    <TouchableOpacity
+                        style={[styles.btn, styles.btnPrimary, { marginTop: 5}]}
+                        activeOpacity={0.8}
+                        onPress={() => {
+                          onNext();
+                          playClickSound();
+                        }}
+                    >
+                        <Text style={styles.btnPrimaryText}>{t('settings.next')}</Text>
+                    </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.btn, styles.btnPrimary, { marginTop: 15}]}
                         activeOpacity={0.8}
                         onPress={() => {
-                          onNextCreate();
                           playClickSound();
+                          setShowConfirm(true);
                         }}
                     >
-                        <Text style={styles.btnPrimaryText}>{t('settings.createRoom')}</Text>
+                        <Text style={styles.btnPrimaryText}>{t('settings.gameMode')}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.btn, styles.btnPrimary, { marginTop: 20}]}
-                        activeOpacity={0.8}
-                        onPress={() => {
-                          onNextJoin();
-                          playClickSound();
-                        }}
-                    >
-                        <Text style={styles.btnPrimaryText}>{t('settings.joinRoom')}</Text>
-                    </TouchableOpacity>
-                    </View>
-                )}
-
-                {!isOnline && (
-                    <View>
-                        <TouchableOpacity
-                            style={[styles.btn, styles.btnPrimary, { marginTop: 5}]}
-                            activeOpacity={0.8}
-                            onPress={() => {
-                              onNext();
-                              playClickSound();
-                            }}
-                        >
-                            <Text style={styles.btnPrimaryText}>{t('settings.next')}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.btn, styles.btnPrimary, { marginTop: 15}]}
-                            activeOpacity={0.8}
-                            onPress={() => {
-                              playClickSound();
-                              setShowConfirm(true);
-                            }}
-                        >
-                            <Text style={styles.btnPrimaryText}>{t('settings.gameMode')}</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
+                </View>
 
                 <TouchableOpacity
                     style={[styles.btn, styles.btnSecondary, { marginTop: 5}]}

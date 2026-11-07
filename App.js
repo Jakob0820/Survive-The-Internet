@@ -16,6 +16,8 @@ import { COLOR_OPTIONS, COLOR_IMAGES } from './src/constants/colors';
 import MainScreen from './src/screens/MainScreen';
 import OptionsScreen from './src/screens/OptionsScreen';
 import GameSettingsScreen from './src/screens/GameSettingsScreen';
+import GameSettingsScreenOnline from './src/screens/GameSettingsScreenOnline';
+import RoomSettingsScreen from './src/screens/RoomSettingsScreen';
 import PlayerSetupScreen from './src/screens/PlayerSetupScreen';
 import GameScreen from './src/screens/GameScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
@@ -50,6 +52,8 @@ export default function App() {
   const [playerName, setPlayerName] = useState(t('common.player', { number: currentPlayerIndex + 1 }));
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
   const [isOnline, setOnlineStatus] = useState(false);
+  const [onlineName, setOnlineName] = useState('');
+  const [roomPlayers, setRoomPlayers] = useState([]);
 
   //Logik für Antwort Setup
   const [firstAnswers, setFirstAnswer] = useState([]);
@@ -243,6 +247,8 @@ export default function App() {
     main: 'mainMenu',
     options: 'mainMenu',
     gameSettings: 'mainMenu',
+    gameSettingsOnline: 'mainMenu',
+    roomSettings: 'mainMenu',
     playerSetup: 'mainMenu',
     game: 'questionMenu',
     answer: 'questionMenu',
@@ -631,7 +637,7 @@ export default function App() {
               setOnlineStatus(false);
             }}
             online={() => {
-              setCurrentScreen('gameSettings');
+              setCurrentScreen('gameSettingsOnline');
               setOnlineStatus(true);
             }}
             options={() => setCurrentScreen('options')}
@@ -666,13 +672,10 @@ export default function App() {
  
         {currentScreen === 'gameSettings' && (
           <GameSettingsScreen
-            isOnline={isOnline}
             duration={duration}
             setDuration={setDuration}
             playerCount={playerCount}
             setPlayerCount={setPlayerCount}
-            onNextCreate={() => {}}
-            onNextJoin={() => {}}
             onNext={() => setCurrentScreen('playerSetup')}
             onBack={() => {
               resetPlayerSetup();
@@ -689,7 +692,49 @@ export default function App() {
             setRoundLength={setRoundLength}
           />
         )}
+
+        {currentScreen === 'gameSettingsOnline' && (
+          <GameSettingsScreenOnline
+            onNextCreate={() => {
+              setRoomPlayers([{ name: onlineName.trim(), color: COLOR_OPTIONS[0], isHost: true }]);
+              setCurrentScreen('roomSettings');
+            }}
+            onNextJoin={() => {}}
+            onBack={() => {
+              setOnlineStatus(false);
+              setCurrentScreen('main');
+            }}
+            playerName={onlineName}
+            setPlayerName={setOnlineName}
+            duration={duration}
+            setDuration={setDuration}
+            roundColors={QUESTIONS.map(question => question.color[0])}
+            roundNames={QUESTIONS.map(question => question.categoryName)}
+            randomRounds={randomRounds}
+            setRandomRounds={setRandomRounds}
+            roundLogos={QUESTIONS.map(question => question.logo)}
+            selectedRounds={selectedRounds}
+            setSelectedRounds={setSelectedRounds}
+            roundLength={roundLength}
+            setRoundLength={setRoundLength}
+          />
+        )}
  
+        {currentScreen === 'roomSettings' && (
+          <RoomSettingsScreen
+            players={roomPlayers}
+            ownPlayerIndex={0}
+            onChangeColor={(color) =>
+              setRoomPlayers((prev) => prev.map((p, i) => (i === 0 ? { ...p, color } : p)))
+            }
+            onStart={() => {}}
+            onLeave={() => {
+              setRoomPlayers([]);
+              setCurrentScreen('gameSettingsOnline');
+            }}
+          />
+        )}
+
         {currentScreen === 'game' && (
             <GameScreen
                 onBack={() => {

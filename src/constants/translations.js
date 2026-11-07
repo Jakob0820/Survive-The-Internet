@@ -56,6 +56,14 @@ const TRANSLATIONS = {
         'setup.startGame': 'SPIEL STARTEN ',
         'setup.prevPlayer': '◀ SPIELER ZURÜCK',
 
+        'room.title': 'Raumeinstellungen',
+        'room.host': 'Host',
+        'room.waiting': 'Warte auf Spieler...',
+        'room.start': 'SPIEL STARTEN',
+        'room.leave': 'RAUM VERLASSEN',
+        'room.leaveTitle': 'Raum verlassen?',
+        'room.leaveMessage': 'Möchtest du den Raum wirklich verlassen?',
+
         'game.turn': '{name} ist dran!',
         'game.question': 'Frage',
         'game.showQuestion': 'Frage anzeigen',
@@ -147,6 +155,14 @@ const TRANSLATIONS = {
         'setup.nextPlayer': 'NEXT PLAYER ▶',
         'setup.startGame': 'START GAME ',
         'setup.prevPlayer': '◀ PREVIOUS PLAYER',
+
+        'room.title': 'Room settings',
+        'room.host': 'Host',
+        'room.waiting': 'Waiting for players...',
+        'room.start': 'START GAME',
+        'room.leave': 'LEAVE ROOM',
+        'room.leaveTitle': 'Leave room?',
+        'room.leaveMessage': 'Do you really want to leave the room?',
 
         'game.turn': "{name}'s turn!",
         'game.question': 'Question',

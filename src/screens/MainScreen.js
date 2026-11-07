@@ -14,25 +14,6 @@ export default function MainScreen ({
 {
   const { t } = useLanguage();
 
-  const [socket, setSocket] = useState(null);
-  const [lastMessage, setLastMessage] = useState('');
-
-  useEffect(() => {
-    const s = io(SERVER_URL, { transports: ['websocket'] });
-
-    s.on('connect', () => {
-      console.log('Socket verbunden:', s.id);
-    }),
-    s.on('message', (msg) => {
-      setLastMessage(`${msg.from.slice(0, 4)}: ${msg.text}`);
-    });
-
-    setSocket(s);
-    return () => {
-      s.disconnect();   // Verbindung trennen, wenn der Screen verschwindet
-    }
-  }, []);
-
   return (
           <View style={styles.screenContainer}>
             {/* Titel-Header */}
@@ -75,7 +56,7 @@ export default function MainScreen ({
               >
                 <Text style={styles.btnSecondaryText}>{t('main.options')}</Text>
               </TouchableOpacity>
-              {/* Socket-Test */}
+              {/* Socket-Test
               <TouchableOpacity
                 style={[styles.btn, styles.btnSecondary]}
                 onPress={() => (
@@ -84,7 +65,7 @@ export default function MainScreen ({
               >
                 <Text style={styles.btnSecondaryText}>Socket senden</Text>
               </TouchableOpacity>
-              <Text style={styles.btnSecondaryText}>{lastMessage}</Text>
+              <Text style={styles.btnSecondaryText}>{lastMessage}</Text> */}
             </View>
           </View>
     )
