@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Animated, Easing, Modal } from 'react-native';
+import { io } from 'socket.io-client';
+import { SERVER_URL } from '../constants/config';
 import { COLOR_OPTIONS } from '../constants/colors';
 import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
@@ -9,10 +11,11 @@ const MIN_PLAYERS = 3; // Host + mindestens zwei weitere Spieler
 
 export default function RoomSettingsScreen({
     players,          // [{ name, color, isHost }]
-    ownPlayerIndex = 0,
+    ownPlayerIndex,
     onChangeColor,    // (color) => void, ändert die Farbe des eigenen Spielers
     onStart,
     onLeave,
+    roomCode,
 }) {
     const { t } = useLanguage();
     const [showColorPicker, setShowColorPicker] = useState(false);
@@ -30,6 +33,10 @@ export default function RoomSettingsScreen({
         <View style={styles.screenContainer}>
             <View style={styles.card}>
                 <Text style={styles.sectionTitle}>{t('room.title')}</Text>
+                <View style={styles.roomCodeRow}>
+                    <Text style={styles.roomCode}>{t('room.code')}</Text>
+                    <Text style={styles.roomCodeValue}>{roomCode}</Text>
+                </View>
 
                 <View style={styles.playerList}>
                     {players.map((player, index) => {
@@ -224,7 +231,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1c1c1e',
     textAlign: 'center',
-    marginBottom: 16,
     letterSpacing: 2,
   },
   playerList: {
@@ -362,5 +368,21 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  roomCodeRow: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  roomCode: {
+    fontSize: 16,
+    color: '#8a99ad',
+    fontWeight: 700,
+  },
+  roomCodeValue: {
+    fontSize: 16,
+    color:'#3799d1',
+    fontWeight: 900,
+    letterSpacing: 3,
   },
 });

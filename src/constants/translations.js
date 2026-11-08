@@ -63,6 +63,7 @@ const TRANSLATIONS = {
         'room.leave': 'RAUM VERLASSEN',
         'room.leaveTitle': 'Raum verlassen?',
         'room.leaveMessage': 'Möchtest du den Raum wirklich verlassen?',
+        'room.code': 'Raumcode: ',
 
         'game.turn': '{name} ist dran!',
         'game.question': 'Frage',
@@ -163,6 +164,7 @@ const TRANSLATIONS = {
         'room.leave': 'LEAVE ROOM',
         'room.leaveTitle': 'Leave room?',
         'room.leaveMessage': 'Do you really want to leave the room?',
+        'room.code': 'Roomcode: ',
 
         'game.turn': "{name}'s turn!",
         'game.question': 'Question',

@@ -1,7 +1,4 @@
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { use, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
-import { SERVER_URL } from '../constants/config';
 import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
 
@@ -56,16 +53,6 @@ export default function MainScreen ({
               >
                 <Text style={styles.btnSecondaryText}>{t('main.options')}</Text>
               </TouchableOpacity>
-              {/* Socket-Test
-              <TouchableOpacity
-                style={[styles.btn, styles.btnSecondary]}
-                onPress={() => (
-                  socket?.emit('message', 'Hallo von der App!',
-                ))}
-              >
-                <Text style={styles.btnSecondaryText}>Socket senden</Text>
-              </TouchableOpacity>
-              <Text style={styles.btnSecondaryText}>{lastMessage}</Text> */}
             </View>
           </View>
     )

@@ -30,6 +30,7 @@ import { createFakeStats } from './src/constants/stats';
 import ResultScreen from './src/screens/ResultScreen';
 import { setSoundsMuted, setSoundVolume, setHapticsEnabled } from './src/constants/sounds';
 import { playMusic, stopMusic, applyMusicEnabled, setMusicVolume } from './src/constants/music';
+import { socket } from './src/constants/socket';
  
 export default function App() {
   // Sprache
@@ -53,6 +54,7 @@ export default function App() {
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
   const [isOnline, setOnlineStatus] = useState(false);
   const [onlineName, setOnlineName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
   const [roomPlayers, setRoomPlayers] = useState([]);
 
   //Logik für Antwort Setup
@@ -277,6 +279,16 @@ export default function App() {
     setMusicVolume(volume / 100);
     setSoundVolume(volume / 100);
   }, [volume]);
+
+  //Raum aktualisiert sich von automatisch sobald jemand beitritt
+  useEffect(() => {
+    const handleRoomUpdate = (room) => {
+      setRoomPlayers(room.players);
+    };
+
+    socket.on('roomUpdate', handleRoomUpdate);
+    return () => socket.off('roomUpdate', handleRoomUpdate);
+  }, []);
     
   const resetPlayerSetup = () => {
     setPlayerCount(3);
@@ -637,6 +649,7 @@ export default function App() {
               setOnlineStatus(false);
             }}
             online={() => {
+              socket.connect();
               setCurrentScreen('gameSettingsOnline');
               setOnlineStatus(true);
             }}
@@ -696,11 +709,19 @@ export default function App() {
         {currentScreen === 'gameSettingsOnline' && (
           <GameSettingsScreenOnline
             onNextCreate={() => {
-              setRoomPlayers([{ name: onlineName.trim(), color: COLOR_OPTIONS[0], isHost: true }]);
-              setCurrentScreen('roomSettings');
+              socket.emit('createRoom', { name: onlineName }, (response) => {
+                if (response.ok) {
+                  setRoomCode(response.code);
+                  setCurrentScreen('roomSettings');
+                } else {
+                  Alert.alert('Fehler', response.error);
+                }
+              });
             }}
+
             onNextJoin={() => {}}
             onBack={() => {
+              socket.disconnect();
               setOnlineStatus(false);
               setCurrentScreen('main');
             }}
@@ -723,15 +744,18 @@ export default function App() {
         {currentScreen === 'roomSettings' && (
           <RoomSettingsScreen
             players={roomPlayers}
-            ownPlayerIndex={0}
+            ownPlayerIndex={roomPlayers.findIndex((p) => p.id === socket.id)}
             onChangeColor={(color) =>
               setRoomPlayers((prev) => prev.map((p, i) => (i === 0 ? { ...p, color } : p)))
             }
             onStart={() => {}}
             onLeave={() => {
               setRoomPlayers([]);
+              socket.emit('leaveRoom');
+              setRoomCode('');
               setCurrentScreen('gameSettingsOnline');
             }}
+            roomCode={roomCode}
           />
         )}
 

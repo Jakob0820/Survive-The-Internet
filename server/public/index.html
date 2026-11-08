@@ -1,40 +1,598 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Socket-Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#3799d1">
+  <title>Survive The Internet</title>
+  <style>
+    :root {
+      --blue: #3799d1;
+      --blue-dark: #1f6fa3;
+      --text: #1c1c1e;
+      --muted: #8a99ad;
+      --field: #f2f2f7;
+      --border: #e5e5ea;
+      --error: #d40e0e;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* Auch beim Über-Scrollen (Wegziehen der Seite) blau statt weiß */
+    html {
+      background-color: var(--blue);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    /* Farbverlauf als feste Ebene hinter der Seite: Sie bewegt sich beim
+       Über-Scrollen nicht mit, daher ist auch der weggezogene Bereich ein Verlauf */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100lvh;
+      z-index: -1;
+      background: radial-gradient(circle at 30% 20%, #5ab4e6 0%, var(--blue) 45%, var(--blue-dark) 100%);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+      color: #ffffff;
+    }
+
+    .title {
+      margin: 0 0 8px;
+      font-size: clamp(32px, 9vw, 45px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      line-height: 1.1;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .subtitle {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      opacity: 0.9;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    .room-code {
+      margin: -12px 0 4px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .room-code strong {
+      color: var(--blue);
+      letter-spacing: 3px;
+    }
+
+    label {
+      display: block;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      background: var(--field);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    input:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    #codeInput {
+      text-transform: uppercase;
+      letter-spacing: 4px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: 12px;
+      border: none;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s;
+    }
+
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #ffffff;
+    }
+
+    .btn-secondary {
+      background: var(--field);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .error {
+      margin: 0;
+      min-height: 20px;
+      color: var(--error);
+      font-weight: 600;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* Spielerliste – wie RoomSettingsScreen */
+    .player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .player-box {
+      min-height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-radius: 12px;
+      background: var(--field);
+      border: 1px solid var(--border);
+    }
+
+    .player-box.own { border: 2px solid var(--blue); }
+
+    .player-text {
+      flex: 1;
+      min-width: 0;
+      margin-right: 12px;
+    }
+
+    .player-name {
+      font-size: 16px;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player-subtitle {
+      margin-top: 2px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue);
+    }
+
+    .color-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      flex-shrink: 0;
+    }
+
+    button.color-circle {
+      padding: 0;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    button.color-circle:active { transform: scale(0.92); }
+
+    /* Farbauswahl-Popup */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 44px);
+      justify-content: space-around;
+      gap: 12px;
+      margin: 10px 0 20px;
+    }
+
+    .picker-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      color: #ffffff;
+      font-size: 22px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+      transition: transform 0.1s;
+    }
+
+    .picker-circle.selected {
+      border: 3px solid var(--text);
+      transform: scale(1.1);
+    }
+
+    .picker-circle:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .player-box.waiting {
+      border-style: dashed;
+      border-color: #c7c7cc;
+    }
+
+    .waiting-text {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .host-hint {
+      margin: 4px 0 0;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Bestätigungs-Popup – wie ConfirmationScreen */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-card {
+      width: 85%;
+      max-width: 340px;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-title {
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .modal-message {
+      margin: 0 0 24px;
+      color: #8e8e93;
+      font-size: 15px;
+      line-height: 20px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-buttons .btn {
+      padding: 14px;
+      font-size: 15px;
+      letter-spacing: 1px;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } }
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } }
+
+    /* Nur auf dem Handy (schmale Bildschirme): Karte schmaler und kompakter */
+    @media (max-width: 480px) {
+      .card {
+        width: 88%;
+        padding: 22px;
+        gap: 14px;
+      }
+
+      .header { margin-bottom: 24px; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Socket-Test</h1>
-  <p id="count">Verbunden: 0</p>
-  <button id="send">Nachricht senden</button>
-  <input type="text" id="messageInput" placeholder="Nachricht eingeben...">
-  <ul id="log"></ul>
+  <div class="header">
+    <h1 class="title">SURVIVE THE<br>INTERNET</h1>
+    <p class="subtitle">GOONER EDITION</p>
+  </div>
+
+  <!-- Ansicht 1: Raum beitreten -->
+  <form id="joinView" class="card" autocomplete="off">
+    <h2 class="section-title">Raum beitreten</h2>
+
+    <div>
+      <label for="nameInput">Name:</label>
+      <input type="text" id="nameInput" placeholder="Namen eingeben" maxlength="12">
+    </div>
+
+    <div>
+      <label for="codeInput">Raumcode:</label>
+      <input type="text" id="codeInput" placeholder="ABCD" maxlength="4">
+    </div>
+
+    <p id="joinError" class="error"></p>
+
+    <button type="submit" id="joinButton" class="btn btn-primary">RAUM BEITRETEN</button>
+  </form>
+
+  <!-- Ansicht 2: Raum mit allen Spielern -->
+  <div id="roomView" class="card hidden">
+    <h2 class="section-title">Raumeinstellungen</h2>
+    <p class="room-code">Raumcode: <strong id="roomCode"></strong></p>
+
+    <div id="playerList" class="player-list"></div>
+
+    <p class="host-hint">Warte, bis der Host das Spiel startet...</p>
+
+    <button type="button" id="leaveButton" class="btn btn-secondary">RAUM VERLASSEN</button>
+  </div>
+
+  <!-- Bestätigung beim Verlassen -->
+  <div id="leaveConfirm" class="overlay hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Raum verlassen?</h3>
+      <p class="modal-message">Möchtest du den Raum wirklich verlassen?</p>
+      <div class="modal-buttons">
+        <button type="button" id="confirmYes" class="btn btn-primary">JA</button>
+        <button type="button" id="confirmNo" class="btn btn-secondary">NEIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Farbauswahl -->
+  <div id="colorPicker" class="overlay hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Farbe wählen:</h3>
+      <div id="colorGrid" class="color-grid"></div>
+      <button type="button" id="colorPickerBack" class="btn btn-secondary">ZURÜCK</button>
+    </div>
+  </div>
 
   <!-- Diese Datei liefert Socket.IO automatisch aus -->
   <script src="/socket.io/socket.io.js"></script>
   <script>
+    const MIN_PLAYERS = 3; // Host + mindestens zwei weitere Spieler
+
+    // Kopie der Farben aus colors.js
+    const COLORS = [
+      '#d40e0e', '#ff8000', '#dde01b', '#28b428',
+      '#37b5d4', '#2e579e', '#642590', '#c860ca',
+    ];
+
+    let currentRoom = null;
+
     const socket = io();
-    const log = document.getElementById('log');
-    const input = document.getElementById('messageInput');
 
-    socket.on('message', (msg) => {
-      const li = document.createElement('li');
-      li.textContent = `${msg.from.slice(0, 4)}: ${msg.text}`;
-      log.appendChild(li);
+    const joinView = document.getElementById('joinView');
+    const roomView = document.getElementById('roomView');
+    const nameInput = document.getElementById('nameInput');
+    const codeInput = document.getElementById('codeInput');
+    const joinError = document.getElementById('joinError');
+    const joinButton = document.getElementById('joinButton');
+    const playerList = document.getElementById('playerList');
+    const leaveConfirm = document.getElementById('leaveConfirm');
+    const colorPicker = document.getElementById('colorPicker');
+    const colorGrid = document.getElementById('colorGrid');
+
+    function showJoinView(errorText = '') {
+      roomView.classList.add('hidden');
+      joinView.classList.remove('hidden');
+      joinError.textContent = errorText;
+      joinButton.disabled = false;
+    }
+
+    function showRoomView() {
+      joinView.classList.add('hidden');
+      roomView.classList.remove('hidden');
+    }
+
+    function renderRoom(room) {
+      currentRoom = room;
+      document.getElementById('roomCode').textContent = room.code;
+      playerList.innerHTML = '';
+
+      room.players.forEach((player) => {
+        const box = document.createElement('div');
+        box.className = 'player-box' + (player.id === socket.id ? ' own' : '');
+
+        const text = document.createElement('div');
+        text.className = 'player-text';
+
+        const name = document.createElement('div');
+        name.className = 'player-name';
+        name.textContent = player.name;   // textContent: kein HTML aus Namen
+        text.appendChild(name);
+
+        const subtitleParts = [];
+        if (player.isHost) subtitleParts.push('Host');
+        if (player.id === socket.id) subtitleParts.push('Du');
+        if (subtitleParts.length) {
+          const subtitle = document.createElement('div');
+          subtitle.className = 'player-subtitle';
+          subtitle.textContent = subtitleParts.join(' · ');
+          text.appendChild(subtitle);
+        }
+
+        // Nur der eigene Farbkreis ist anklickbar
+        const isOwn = player.id === socket.id;
+        const circle = document.createElement(isOwn ? 'button' : 'div');
+        circle.className = 'color-circle';
+        circle.style.backgroundColor = player.color;
+        if (isOwn) {
+          circle.type = 'button';
+          circle.setAttribute('aria-label', 'Farbe wählen');
+          circle.onclick = openColorPicker;
+        }
+
+        box.append(text, circle);
+        playerList.appendChild(box);
+      });
+
+      // Offenes Farbauswahl-Popup aktuell halten (z. B. wenn jemand anderes eine Farbe nimmt)
+      if (!colorPicker.classList.contains('hidden')) renderColorGrid();
+
+      // "Warte auf Spieler"-Boxen, bis die Mindestanzahl erreicht ist
+      const waitingSlots = Math.max(0, MIN_PLAYERS - room.players.length);
+      for (let i = 0; i < waitingSlots; i++) {
+        const box = document.createElement('div');
+        box.className = 'player-box waiting';
+        box.innerHTML = '<span class="waiting-text">Warte auf Spieler...</span><div class="spinner"></div>';
+        playerList.appendChild(box);
+      }
+    }
+
+    function renderColorGrid() {
+      const me = currentRoom.players.find((p) => p.id === socket.id);
+      const takenColors = currentRoom.players
+        .filter((p) => p.id !== socket.id)
+        .map((p) => p.color);
+
+      colorGrid.innerHTML = '';
+      COLORS.forEach((color) => {
+        const isTaken = takenColors.includes(color);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'picker-circle' + (me && me.color === color ? ' selected' : '');
+        button.style.backgroundColor = color;
+        button.disabled = isTaken;
+        button.textContent = isTaken ? '✕' : '';
+        button.onclick = () => {
+          socket.emit('changeColor', { color });
+          closeColorPicker();
+        };
+        colorGrid.appendChild(button);
+      });
+    }
+
+    function openColorPicker() {
+      if (!currentRoom) return;
+      renderColorGrid();
+      colorPicker.classList.remove('hidden');
+    }
+
+    function closeColorPicker() {
+      colorPicker.classList.add('hidden');
+    }
+
+    document.getElementById('colorPickerBack').onclick = closeColorPicker;
+
+    joinView.addEventListener('submit', (event) => {
+      event.preventDefault();
+      joinError.textContent = '';
+      joinButton.disabled = true;
+
+      const name = nameInput.value;
+      const code = codeInput.value.trim().toUpperCase();
+
+      socket.emit('joinRoom', { name, code }, (response) => {
+        if (response.ok) {
+          showRoomView();
+        } else {
+          showJoinView(response.error);
+        }
+      });
     });
 
-    socket.on('playerCount', (count) => {
-        document.getElementById('count').textContent = `Verbunden: ${count}`;
+    socket.on('roomUpdate', (room) => {
+      renderRoom(room);
     });
 
-    document.getElementById('send').onclick = () => {
-      socket.emit('message', input.value);
-      input.value = '';
+    socket.on('roomClosed', () => {
+      leaveConfirm.classList.add('hidden');
+      closeColorPicker();
+      showJoinView('Der Host hat den Raum geschlossen');
+    });
 
+    socket.on('disconnect', () => {
+      if (!roomView.classList.contains('hidden')) {
+        closeColorPicker();
+        showJoinView('Verbindung zum Server verloren');
+      }
+    });
+
+    document.getElementById('leaveButton').onclick = () => {
+      leaveConfirm.classList.remove('hidden');
     };
 
+    document.getElementById('confirmNo').onclick = () => {
+      leaveConfirm.classList.add('hidden');
+    };
+
+    document.getElementById('confirmYes').onclick = () => {
+      leaveConfirm.classList.add('hidden');
+      socket.emit('leaveRoom');
+      showJoinView();
+    };
   </script>
 </body>
 </html>
