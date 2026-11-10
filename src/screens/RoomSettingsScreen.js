@@ -5,7 +5,9 @@ import { SERVER_URL } from '../constants/config';
 import { COLOR_OPTIONS } from '../constants/colors';
 import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
+import { Ionicons } from '@expo/vector-icons';
 import ConfirmationScreen from './ConfirmationScreen';
+import RoomCreateScreen from './RoomCreateScreen';
 
 const MIN_PLAYERS = 3; // Host + mindestens zwei weitere Spieler
 
@@ -16,10 +18,22 @@ export default function RoomSettingsScreen({
     onStart,
     onLeave,
     roomCode,
+    duration,
+    setDuration,
+    roundColors,
+    roundNames,
+    randomRounds,
+    setRandomRounds,
+    roundLogos,
+    selectedRounds,
+    setSelectedRounds,
+    roundLength,
+    setRoundLength,
 }) {
     const { t } = useLanguage();
     const [showColorPicker, setShowColorPicker] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [showRoomSettings, setShowRoomSettings] = useState(false);
 
     // So viele "Warte auf Spieler"-Boxen, bis die Mindestanzahl erreicht ist
     const waitingSlots = Math.max(0, MIN_PLAYERS - players.length);
@@ -34,6 +48,17 @@ export default function RoomSettingsScreen({
             <View style={styles.card}>
                 <Text style={styles.sectionTitle}>{t('room.title')}</Text>
                 <View style={styles.roomCodeRow}>
+                    <TouchableOpacity
+                        style={styles.settingsButton}
+                        activeOpacity={0.7}
+                        hitSlop={10}
+                        onPress={() => {
+                            playClickSound();
+                            setShowRoomSettings(true);
+                        }}
+                    >
+                        <Ionicons name="settings-sharp" size={22} color="#ffffff" />
+                    </TouchableOpacity>
                     <Text style={styles.roomCode}>{t('room.code')}</Text>
                     <Text style={styles.roomCodeValue}>{roomCode}</Text>
                 </View>
@@ -103,6 +128,25 @@ export default function RoomSettingsScreen({
                         onLeave();
                     }}
                     onNo={() => setShowLeaveConfirm(false)}
+                />
+            )}
+
+            {showRoomSettings && (
+                <RoomCreateScreen
+                    isCreated={true}
+                    onClose={() => setShowRoomSettings(false)}
+                    playerName={players[ownPlayerIndex]?.name ?? ''}
+                    duration={duration}
+                    setDuration={setDuration}
+                    roundColors={roundColors}
+                    roundNames={roundNames}
+                    randomRounds={randomRounds}
+                    setRandomRounds={setRandomRounds}
+                    roundLogos={roundLogos}
+                    selectedRounds={selectedRounds}
+                    setSelectedRounds={setSelectedRounds}
+                    roundLength={roundLength}
+                    setRoundLength={setRoundLength}
                 />
             )}
 
@@ -372,7 +416,22 @@ const styles = StyleSheet.create({
   roomCodeRow: {
     alignSelf: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 10,
+  },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#3799d1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   roomCode: {
     fontSize: 16,

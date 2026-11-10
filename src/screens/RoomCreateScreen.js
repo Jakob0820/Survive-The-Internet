@@ -6,6 +6,7 @@ import { useLanguage } from '../constants/translations';
 import RoundSelectionScreen from './RoundSelectionScreen';
 
 export default function RoomCreateScreen({
+    isCreated = false, // true: Raum existiert bereits -> Name & "Raum erstellen" ausblenden
     onCreate,
     onClose,
     playerName,
@@ -77,7 +78,8 @@ export default function RoomCreateScreen({
       <Animated.View style={[styles.modalCard, { transform: [{ scale: scaleAnim }] }]}>
         <Text style={styles.title}>{t('settings.title')}</Text>
 
-        {/* Namensfeld */}
+        {/* Namensfeld (nur vor dem Erstellen des Raums) */}
+        {!isCreated && (
         <View style={styles.section}>
           <Text style={styles.optionLabel}>{t('setup.name')}</Text>
           <TextInput
@@ -89,6 +91,7 @@ export default function RoomCreateScreen({
             maxLength={12}
           />
         </View>
+        )}
 
         {/* Rundendauer */}
         <View style={styles.optionRow}>
@@ -128,7 +131,8 @@ export default function RoomCreateScreen({
           <Text style={styles.btnPrimaryText}>{t('settings.gameMode')}</Text>
         </TouchableOpacity>
 
-        {/* Raum erstellen */}
+        {/* Raum erstellen (nur vor dem Erstellen des Raums) */}
+        {!isCreated && (
         <TouchableOpacity
           style={[styles.btn, styles.btnPrimary, { marginTop: 12 }, !canCreate && styles.btnDisabled]}
           activeOpacity={0.8}
@@ -140,6 +144,7 @@ export default function RoomCreateScreen({
         >
           <Text style={styles.btnPrimaryText}>{t('settings.createRoom')}</Text>
         </TouchableOpacity>
+        )}
 
         {/* Zurück */}
         <TouchableOpacity

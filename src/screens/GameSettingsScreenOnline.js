@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
 import RoomCreateScreen from './RoomCreateScreen';
+import RoomJoinScreen from './RoomJoinScreen';
 
 export default function GameSettingsScreenOnline({
     onNextCreate,
@@ -21,9 +22,12 @@ export default function GameSettingsScreenOnline({
     setSelectedRounds,
     roundLength,
     setRoundLength,
+    roomCode,
+    setRoomCode,
 }) {
     const { t } = useLanguage();
     const [showRoomCreate, setShowRoomCreate] = useState(false);
+    const [showRoomJoin, setShowRoomJoin] = useState(false);
 
     return (
         <View style={styles.screenContainer}>
@@ -45,7 +49,7 @@ export default function GameSettingsScreenOnline({
                         style={[styles.btn, styles.btnPrimary, { marginTop: 20}]}
                         activeOpacity={0.8}
                         onPress={() => {
-                          onNextJoin();
+                          setShowRoomJoin(true);
                           playClickSound();
                         }}
                     >
@@ -66,6 +70,7 @@ export default function GameSettingsScreenOnline({
             </View>
             {showRoomCreate && (
                 <RoomCreateScreen
+                    isCreated={false}
                     onCreate={() => {
                         setShowRoomCreate(false);
                         onNextCreate();
@@ -85,6 +90,18 @@ export default function GameSettingsScreenOnline({
                     roundLength={roundLength}
                     setRoundLength={setRoundLength}
                 />
+            )}
+            {showRoomJoin && (
+              <RoomJoinScreen
+                onJoin={onNextJoin}
+                onClose={() => {
+                  setShowRoomJoin(false);
+                }}
+                playerName={playerName}
+                setPlayerName={setPlayerName}
+                roomCode={roomCode}
+                setRoomCode={setRoomCode}
+              />
             )}
         </View>
     );

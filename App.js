@@ -719,7 +719,23 @@ export default function App() {
               });
             }}
 
-            onNextJoin={() => {}}
+            // Gibt ein Promise mit der Server-Antwort zurück, damit der
+            // RoomJoinScreen eine Fehlermeldung direkt im Popup anzeigen kann
+            onNextJoin={() =>
+              new Promise((resolve) => {
+                socket.timeout(5000).emit('joinRoom', { code: roomCode, name: onlineName }, (err, response) => {
+                  if (err) {
+                    resolve({ ok: false, error: 'Server nicht erreichbar' });
+                    return;
+                  }
+                  if (response.ok) {
+                    setRoomCode(response.code);
+                    setCurrentScreen('roomSettings');
+                  }
+                  resolve(response);
+                });
+              })
+            }
             onBack={() => {
               socket.disconnect();
               setOnlineStatus(false);
@@ -738,6 +754,8 @@ export default function App() {
             setSelectedRounds={setSelectedRounds}
             roundLength={roundLength}
             setRoundLength={setRoundLength}
+            roomCode={roomCode}
+            setRoomCode={setRoomCode}
           />
         )}
  
@@ -756,6 +774,17 @@ export default function App() {
               setCurrentScreen('gameSettingsOnline');
             }}
             roomCode={roomCode}
+            duration={duration}
+            setDuration={setDuration}
+            roundColors={QUESTIONS.map(question => question.color[0])}
+            roundNames={QUESTIONS.map(question => question.categoryName)}
+            randomRounds={randomRounds}
+            setRandomRounds={setRandomRounds}
+            roundLogos={QUESTIONS.map(question => question.logo)}
+            selectedRounds={selectedRounds}
+            setSelectedRounds={setSelectedRounds}
+            roundLength={roundLength}
+            setRoundLength={setRoundLength}
           />
         )}
 
