@@ -296,6 +296,141 @@
       font-size: 14px;
     }
 
+    /* Spiel – wie GameScreen */
+    .game-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .game-title {
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+      font-size: 22px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      overflow-wrap: anywhere;
+    }
+
+    .timer {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+    }
+
+    .timer svg { transform: rotate(-90deg); }
+
+    .timer-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .question-box {
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .question-label {
+      margin: 0;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .question-text {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: none;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    textarea::placeholder { color: var(--muted); }
+    textarea:focus { outline: none; border-color: var(--player-color, var(--blue)); }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .option-btn::after {
+      content: '';
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #c7c7cc;
+      flex-shrink: 0;
+    }
+
+    .option-btn.selected {
+      background: var(--player-color);
+      border-color: var(--player-color);
+      color: #ffffff;
+    }
+
+    .option-btn.selected::after {
+      border-color: #ffffff;
+      background: #ffffff;
+      box-shadow: inset 0 0 0 3px var(--player-color);
+    }
+
+    .game-waiting {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 40px 0;
+    }
+
+    .game-waiting .spinner {
+      width: 40px;
+      height: 40px;
+      border-width: 4px;
+      border-top-color: var(--player-color, var(--blue));
+    }
+
     .hidden { display: none !important; }
 
     /* Bestätigungs-Popup – wie ConfirmationScreen */
@@ -397,6 +532,38 @@
     <button type="button" id="leaveButton" class="btn btn-secondary">RAUM VERLASSEN</button>
   </div>
 
+  <!-- Ansicht 3: Spiel – eigene Frage beantworten (wie GameScreen im Online-Modus) -->
+  <div id="gameView" class="card hidden">
+    <div class="game-header">
+      <h2 id="gameTitle" class="game-title"></h2>
+      <div id="timer" class="timer">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="24" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="4"></circle>
+          <circle id="timerRing" cx="26" cy="26" r="24" fill="none" stroke-width="4" stroke-linecap="round"></circle>
+        </svg>
+        <span id="timerText" class="timer-text"></span>
+      </div>
+    </div>
+
+    <!-- Frage + Eingabe -->
+    <form id="answerForm" autocomplete="off">
+      <div id="questionBox" class="question-box">
+        <p class="question-label">Frage</p>
+        <p id="questionText" class="question-text"></p>
+        <textarea id="answerInput" maxlength="100" placeholder="Kommentar schreiben..."></textarea>
+        <div id="facebookOptions" class="options hidden"></div>
+        <button type="submit" id="submitAnswerButton" class="btn btn-secondary">FERTIGSTELLEN</button>
+      </div>
+      <p id="gameError" class="error"></p>
+    </form>
+
+    <!-- Nach dem Abschicken -->
+    <div id="gameWaiting" class="game-waiting hidden">
+      <div class="spinner"></div>
+      <p class="host-hint">Warte auf die anderen Spieler...</p>
+    </div>
+  </div>
+
   <!-- Bestätigung beim Verlassen -->
   <div id="leaveConfirm" class="overlay hidden">
     <div class="modal-card">
@@ -431,6 +598,12 @@
 
     let currentRoom = null;
 
+    // Spielzustand (Fragephase)
+    let answerSubmitted = false;
+    let selectedFacebookOption = null;
+    let timerInterval = null;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * 24;
+
     const socket = io();
 
     const joinView = document.getElementById('joinView');
@@ -444,7 +617,19 @@
     const colorPicker = document.getElementById('colorPicker');
     const colorGrid = document.getElementById('colorGrid');
 
+    const gameView = document.getElementById('gameView');
+    const answerForm = document.getElementById('answerForm');
+    const answerInput = document.getElementById('answerInput');
+    const facebookOptions = document.getElementById('facebookOptions');
+    const submitAnswerButton = document.getElementById('submitAnswerButton');
+    const gameError = document.getElementById('gameError');
+    const gameWaiting = document.getElementById('gameWaiting');
+    const timerRing = document.getElementById('timerRing');
+    const timerText = document.getElementById('timerText');
+
     function showJoinView(errorText = '') {
+      stopTimer();
+      gameView.classList.add('hidden');
       roomView.classList.add('hidden');
       joinView.classList.remove('hidden');
       joinError.textContent = errorText;
@@ -546,6 +731,124 @@
 
     document.getElementById('colorPickerBack').onclick = closeColorPicker;
 
+    // ---------- Spiel: eigene Frage beantworten ----------
+
+    function showGameView(game) {
+      const myIndex = game.players.findIndex((p) => p.id === socket.id);
+      const me = game.players[myIndex];
+      if (!me) return;
+
+      closeColorPicker();
+      leaveConfirm.classList.add('hidden');
+      joinView.classList.add('hidden');
+      roomView.classList.add('hidden');
+      gameView.classList.remove('hidden');
+
+      // Eigene Farbe als Akzent (Frage-Box, Timer-Ring, Auswahl)
+      gameView.style.setProperty('--player-color', me.color);
+      document.getElementById('questionBox').style.backgroundColor = me.color + '33'; // 20 % Deckkraft
+      timerRing.setAttribute('stroke', me.color);
+
+      document.getElementById('gameTitle').textContent = me.name + ' ist dran!';
+      document.getElementById('questionText').textContent = game.questions[myIndex] ?? '';
+
+      answerSubmitted = false;
+      selectedFacebookOption = null;
+      answerInput.value = '';
+      gameError.textContent = '';
+      submitAnswerButton.disabled = false;
+      answerForm.classList.remove('hidden');
+      gameWaiting.classList.add('hidden');
+
+      // Facebook-Runde: Antwortmöglichkeiten statt Textfeld
+      const fbQuestion = game.facebookQuestions?.[myIndex];
+      const isFacebook = Boolean(fbQuestion?.options?.length);
+      answerInput.classList.toggle('hidden', isFacebook);
+      facebookOptions.classList.toggle('hidden', !isFacebook);
+      facebookOptions.innerHTML = '';
+      if (isFacebook) {
+        fbQuestion.options.forEach((option, index) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'option-btn';
+          button.textContent = option.label;
+          button.onclick = () => {
+            selectedFacebookOption = index;
+            [...facebookOptions.children].forEach((b, i) => b.classList.toggle('selected', i === index));
+          };
+          facebookOptions.appendChild(button);
+        });
+      }
+
+      startTimer(game.duration);
+    }
+
+    // Läuft wie in der App lokal herunter und schickt bei 0 automatisch ab (duration 0 = unbegrenzt)
+    function startTimer(duration) {
+      stopTimer();
+      const timer = document.getElementById('timer');
+      if (!duration) {
+        timer.classList.add('hidden');
+        return;
+      }
+      timer.classList.remove('hidden');
+
+      const endsAt = Date.now() + duration * 1000;
+      timerRing.setAttribute('stroke-dasharray', TIMER_CIRCUMFERENCE);
+
+      const tick = () => {
+        const leftMs = Math.max(0, endsAt - Date.now());
+        timerText.textContent = Math.ceil(leftMs / 1000);
+        timerRing.setAttribute('stroke-dashoffset', TIMER_CIRCUMFERENCE * (1 - leftMs / (duration * 1000)));
+        if (leftMs <= 0) {
+          stopTimer();
+          submitAnswer();
+        }
+      };
+      tick();
+      timerInterval = setInterval(tick, 250);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    function submitAnswer() {
+      if (answerSubmitted) return;
+      answerSubmitted = true;
+      submitAnswerButton.disabled = true;
+      gameError.textContent = '';
+
+      const isFacebook = !facebookOptions.classList.contains('hidden');
+      const payload = {
+        answer: isFacebook ? '' : answerInput.value,
+        facebookOption: isFacebook ? (selectedFacebookOption ?? 0) : null,
+      };
+
+      socket.timeout(5000).emit('submitAnswer', payload, (err, response) => {
+        if (err || !response.ok) {
+          // Nicht angekommen: wieder freigeben, damit man es erneut versuchen kann
+          answerSubmitted = false;
+          submitAnswerButton.disabled = false;
+          gameError.textContent = err ? 'Server nicht erreichbar' : response.error;
+          return;
+        }
+        stopTimer();
+        answerForm.classList.add('hidden');
+        gameWaiting.classList.remove('hidden');
+      });
+    }
+
+    answerForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      submitAnswer();
+    });
+
+    socket.on('gameStarted', (game) => {
+      showGameView(game);
+    });
+
     joinView.addEventListener('submit', (event) => {
       event.preventDefault();
       joinError.textContent = '';
@@ -574,7 +877,7 @@
     });
 
     socket.on('disconnect', () => {
-      if (!roomView.classList.contains('hidden')) {
+      if (!roomView.classList.contains('hidden') || !gameView.classList.contains('hidden')) {
         closeColorPicker();
         showJoinView('Verbindung zum Server verloren');
       }

@@ -12,17 +12,14 @@ export default function RoomJoinScreen({
     setPlayerName,
     roomCode,
     setRoomCode,
+    initialError = '', // z. B. "Der Host hat den Raum geschlossen"
 }) {
     const { t } = useLanguage();
     const [codeFocused, setCodeFocused] = useState(false);
     const codeInputRef = useRef(null);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(initialError);
     const [joining, setJoining] = useState(false);
 
-    // Fehlermeldung ausblenden, sobald Name oder Code geändert werden
-    useEffect(() => {
-        setError('');
-    }, [playerName, roomCode]);
 
     const handleJoin = async () => {
         setError('');
@@ -31,7 +28,7 @@ export default function RoomJoinScreen({
         // Bei Erfolg wechselt App.js den Screen, dieses Popup verschwindet dann von selbst
         if (!response?.ok) {
             setJoining(false);
-            setError(response?.error ?? 'Unbekannter Fehler');
+            setError(response?.error ?? t('room.unknownError'));
         }
     };
 
@@ -92,7 +89,10 @@ export default function RoomJoinScreen({
                         <TextInput
                         style={styles.textInput}
                         value={playerName}
-                        onChangeText={setPlayerName}
+                        onChangeText={(text) => {
+                            setError(''); // Fehlermeldung ausblenden, sobald etwas geändert wird
+                            setPlayerName(text);
+                        }}
                         placeholder={t('setup.namePlaceholder')}
                         placeholderTextColor="#8a99ad"
                         maxLength={12}
@@ -119,7 +119,10 @@ export default function RoomJoinScreen({
                                 style={styles.hiddenCodeInput}
                                 value={roomCode}
                                 // Nur Buchstaben zulassen und direkt in Großbuchstaben umwandeln
-                                onChangeText={(text) => setRoomCode(text.toUpperCase().replace(/[^A-Z]/g, '').slice(0, CODE_LENGTH))}
+                                onChangeText={(text) => {
+                                    setError(''); // Fehlermeldung ausblenden, sobald etwas geändert wird
+                                    setRoomCode(text.toUpperCase().replace(/[^A-Z]/g, '').slice(0, CODE_LENGTH));
+                                }}
                                 onFocus={() => setCodeFocused(true)}
                                 onBlur={() => setCodeFocused(false)}
                                 maxLength={CODE_LENGTH}

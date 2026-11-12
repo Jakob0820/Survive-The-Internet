@@ -24,10 +24,13 @@ export default function GameSettingsScreenOnline({
     setRoundLength,
     roomCode,
     setRoomCode,
+    joinMessage,       // Meldung, mit der der RoomJoinScreen direkt geöffnet wird (z. B. Raum geschlossen)
+    clearJoinMessage,
 }) {
     const { t } = useLanguage();
     const [showRoomCreate, setShowRoomCreate] = useState(false);
-    const [showRoomJoin, setShowRoomJoin] = useState(false);
+    // Wurde man aus einem Raum geworfen, direkt wieder den Beitreten-Dialog zeigen
+    const [showRoomJoin, setShowRoomJoin] = useState(!!joinMessage);
 
     return (
         <View style={styles.screenContainer}>
@@ -96,7 +99,9 @@ export default function GameSettingsScreenOnline({
                 onJoin={onNextJoin}
                 onClose={() => {
                   setShowRoomJoin(false);
+                  clearJoinMessage?.();
                 }}
+                initialError={joinMessage ? t(joinMessage) : ''}
                 playerName={playerName}
                 setPlayerName={setPlayerName}
                 roomCode={roomCode}

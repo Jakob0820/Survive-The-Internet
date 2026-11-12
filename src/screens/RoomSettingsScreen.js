@@ -18,6 +18,7 @@ export default function RoomSettingsScreen({
     onStart,
     onLeave,
     roomCode,
+    isHost,           // true, wenn man den Raum selbst erstellt hat
     duration,
     setDuration,
     roundColors,
@@ -48,6 +49,7 @@ export default function RoomSettingsScreen({
             <View style={styles.card}>
                 <Text style={styles.sectionTitle}>{t('room.title')}</Text>
                 <View style={styles.roomCodeRow}>
+                    {isHost && (
                     <TouchableOpacity
                         style={styles.settingsButton}
                         activeOpacity={0.7}
@@ -59,6 +61,7 @@ export default function RoomSettingsScreen({
                     >
                         <Ionicons name="settings-sharp" size={22} color="#ffffff" />
                     </TouchableOpacity>
+                    )}
                     <Text style={styles.roomCode}>{t('room.code')}</Text>
                     <Text style={styles.roomCodeValue}>{roomCode}</Text>
                 </View>
@@ -72,6 +75,9 @@ export default function RoomSettingsScreen({
                                     <Text style={styles.playerName} numberOfLines={1}>{player.name}</Text>
                                     {player.isHost && (
                                         <Text style={styles.playerSubtitle}>{t('room.host')}</Text>
+                                    )}
+                                    {isOwn && !isHost && (
+                                        <Text style={styles.playerSubtitle}>{t('room.you')}</Text>
                                     )}
                                 </View>
                                 <TouchableOpacity
@@ -95,6 +101,7 @@ export default function RoomSettingsScreen({
                     ))}
                 </View>
 
+                {isHost ? (
                 <TouchableOpacity
                     style={[styles.btn, styles.btnPrimary, { marginTop: 10 }, !canStart && styles.btnDisabled]}
                     activeOpacity={0.8}
@@ -106,6 +113,9 @@ export default function RoomSettingsScreen({
                 >
                     <Text style={styles.btnPrimaryText}>{t('room.start')}</Text>
                 </TouchableOpacity>
+                ) : (
+                    <Text style={styles.hostHint}>{t('room.waitForHost')}</Text>
+                )}
 
                 <TouchableOpacity
                     style={[styles.btn, styles.btnSecondary]}
@@ -418,6 +428,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
+  },
+  hostHint: {
+    marginTop: 4,
+    textAlign: 'center',
+    color: '#8a99ad',
+    fontWeight: '600',
+    fontSize: 14,
   },
   settingsButton: {
     width: 40,

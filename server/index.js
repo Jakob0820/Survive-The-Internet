@@ -10,6 +10,7 @@ const io = new Server(server, {
 });
 const PORT = 3000;
 let connectionCount = 0;
+const MIN_PLAYERS = 3;
 
 // Alle Räume: Raumcode → Raum-Objekt
 const rooms = new Map();
@@ -217,6 +218,95 @@ io.on('connection', (socket) => {
 
     callback({ ok: true });
     io.to(room.code).emit('roomUpdate', room);
+  });
+
+  // Der Host schickt die bereits gemischten Runden und Fragen mit, der Server verteilt sie an alle
+  socket.on('startGame', (data = {}, callback = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    const { rounds, questions, facebookQuestions = [], duration } = data;
+
+    if(!room){
+      callback({ ok: false, error: 'Der Raum existiert nicht mehr'});
+      return;
+    }
+    if(room.hostId !== socket.id){
+      callback({ ok: false, error: 'Du bist nicht der Host'});
+      return;
+    }
+    if(room.players.length < MIN_PLAYERS){
+      callback({ ok: false, error: 'Zu wenige Spieler'});
+      return;
+    }
+    if(room.phase !== 'lobby'){
+      callback({ ok: false, error: 'Spiel wurde bereits gestartet'});
+      return;
+    }
+    // Für jeden Spieler muss genau eine Frage dabei sein
+    if(!Array.isArray(rounds) || rounds.length === 0 || !Array.isArray(questions) || questions.length !== room.players.length){
+      callback({ ok: false, error: 'Ungültige Spieldaten'});
+      return;
+    }
+
+    room.phase = 'question';
+    room.game = {
+      rounds,
+      roundIndex: 0,
+      questions,          // questions[i] gehört room.players[i]
+      facebookQuestions,
+      duration,
+      answers: Array(room.players.length).fill(null),        // answers[i] stammt von room.players[i]
+      facebookOptions: Array(room.players.length).fill(null),
+      submitted: Array(room.players.length).fill(false),
+    };
+    console.log(`Spiel in Raum ${room.code} gestartet`);
+
+    //An alle Geräte in diesem Raum weiterleiten, inkl. Spielerliste für die Index-Zuordnung
+    callback({ ok: true });
+    io.to(room.code).emit('gameStarted', { phase: room.phase, ...room.game, players: room.players });
+  });
+
+  // Ein Spieler schickt seine Antwort (per Knopf oder weil sein Timer abgelaufen ist)
+  socket.on('submitAnswer', ({ answer, facebookOption } = {}, callback = () => {}) => {
+    const room = rooms.get(socket.data.roomCode);
+    if (!room || !room.game) {
+      callback({ ok: false, error: 'Du bist in keinem laufenden Spiel' });
+      return;
+    }
+    if (room.phase !== 'question') {
+      callback({ ok: false, error: 'Gerade werden keine Antworten angenommen' });
+      return;
+    }
+    const index = room.players.findIndex((p) => p.id === socket.id);
+    if (index === -1) {
+      callback({ ok: false, error: 'Du bist nicht in diesem Raum' });
+      return;
+    }
+    if (room.game.submitted[index]) {
+      callback({ ok: true }); // doppelt geschickt: einfach ignorieren
+      return;
+    }
+
+    room.game.answers[index] = String(answer ?? '').slice(0, 100);
+    room.game.facebookOptions[index] = Number.isInteger(facebookOption) ? facebookOption : null;
+    room.game.submitted[index] = true;
+    callback({ ok: true });
+    console.log(`Raum ${room.code}: Antwort von ${room.players[index].name}`);
+
+    // Alle fertig? Dann allen Geräten die gesammelten Antworten schicken
+    if (room.game.submitted.every(Boolean)) {
+      room.phase = 'answer';
+
+      // Facebook: Bild-Key der gewählten Option je Spieler (ohne Auswahl die erste)
+      const facebookImages = room.game.answers.map((_, i) => {
+        const options = room.game.facebookQuestions[i]?.options || [];
+        return options[room.game.facebookOptions[i] ?? 0]?.image ?? null;
+      });
+
+      io.to(room.code).emit('allAnswersSubmitted', {
+        answers: room.game.answers,
+        facebookImages,
+      });
+    }
   });
 
 });
