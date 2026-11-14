@@ -7,6 +7,7 @@
     "@react-native-community/slider": "5.2.0",
     "expo": "~57.0.26",
     "expo-audio": "~57.0.5",
+    "expo-constants": "~57.0.24",
     "expo-dev-client": "~57.0.19",
     "expo-haptics": "~57.0.3",
     "expo-status-bar": "~57.0.1",
@@ -17,6 +18,7 @@
     "react-native": "0.86.2",
     "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.2",
+    "socket.io-client": "^4.8.4",
     "tinycolor2": "^1.6.0"
   },
   "devDependencies": {

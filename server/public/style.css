@@ -1,0 +1,487 @@
+:root {
+  --blue: #3799d1;
+  --blue-dark: #1f6fa3;
+  --text: #1c1c1e;
+  --muted: #8a99ad;
+  --field: #f2f2f7;
+  --border: #e5e5ea;
+  --error: #d40e0e;
+}
+
+* { box-sizing: border-box; }
+
+/* Auch beim Über-Scrollen (Wegziehen der Seite) blau statt weiß */
+html {
+  background-color: var(--blue);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+/* Farbverlauf als feste Ebene hinter der Seite: Sie bewegt sich beim
+   Über-Scrollen nicht mit, daher ist auch der weggezogene Bereich ein Verlauf */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh;
+  z-index: -1;
+  background: radial-gradient(circle at 30% 20%, #5ab4e6 0%, var(--blue) 45%, var(--blue-dark) 100%);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+  color: #ffffff;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: clamp(32px, 9vw, 45px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  line-height: 1.1;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  opacity: 0.9;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.room-code {
+  margin: -12px 0 4px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.room-code strong {
+  color: var(--blue);
+  letter-spacing: 3px;
+}
+
+label {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+input {
+  width: 100%;
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+}
+
+input::placeholder { color: var(--muted); }
+
+input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+#codeInput {
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.btn {
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.15s;
+}
+
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+.btn-primary {
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: var(--field);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.error {
+  margin: 0;
+  min-height: 20px;
+  color: var(--error);
+  font-weight: 600;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* Spielerliste – wie RoomSettingsScreen */
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.player-box {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--field);
+  border: 1px solid var(--border);
+}
+
+.player-box.own { border: 2px solid var(--blue); }
+
+.player-text {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+}
+
+.player-name {
+  font-size: 16px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-subtitle {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.color-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+button.color-circle {
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+button.color-circle:active { transform: scale(0.92); }
+
+/* Farbauswahl-Popup */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 44px);
+  justify-content: space-around;
+  gap: 12px;
+  margin: 10px 0 20px;
+}
+
+.picker-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: transform 0.1s;
+}
+
+.picker-circle.selected {
+  border: 3px solid var(--text);
+  transform: scale(1.1);
+}
+
+.picker-circle:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.player-box.waiting {
+  border-style: dashed;
+  border-color: #c7c7cc;
+}
+
+.waiting-text {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.host-hint {
+  margin: 4px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Spiel – wie GameScreen */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.game-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  overflow-wrap: anywhere;
+}
+
+.timer {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.timer svg { transform: rotate(-90deg); }
+
+.timer-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.question-box {
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.question-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.question-text {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+textarea {
+  width: 100%;
+  min-height: 110px;
+  resize: none;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+}
+
+textarea::placeholder { color: var(--muted); }
+textarea:focus { outline: none; border-color: var(--player-color, var(--blue)); }
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.option-btn::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #c7c7cc;
+  flex-shrink: 0;
+}
+
+.option-btn.selected {
+  background: var(--player-color);
+  border-color: var(--player-color);
+  color: #ffffff;
+}
+
+.option-btn.selected::after {
+  border-color: #ffffff;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 3px var(--player-color);
+}
+
+.game-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 0;
+}
+
+.game-waiting .spinner {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+  border-top-color: var(--player-color, var(--blue));
+}
+
+.hidden { display: none !important; }
+
+/* Bestätigungs-Popup – wie ConfirmationScreen */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-card {
+  width: 85%;
+  max-width: 340px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.modal-message {
+  margin: 0 0 24px;
+  color: #8e8e93;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-buttons .btn {
+  padding: 14px;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } }
+
+/* Nur auf dem Handy (schmale Bildschirme): Karte schmaler und kompakter */
+@media (max-width: 480px) {
+  .card {
+    width: 88%;
+    padding: 22px;
+    gap: 14px;
+  }
+
+  .header { margin-bottom: 24px; }
+}

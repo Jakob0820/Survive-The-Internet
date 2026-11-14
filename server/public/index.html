@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#3799d1">
+  <title>Survive The Internet</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">SURVIVE THE<br>INTERNET</h1>
+    <p class="subtitle">GOONER EDITION</p>
+  </div>
+
+  <!-- Ansicht 1: Raum beitreten -->
+  <form id="joinView" class="card" autocomplete="off">
+    <h2 class="section-title">Raum beitreten</h2>
+
+    <div>
+      <label for="nameInput">Name:</label>
+      <input type="text" id="nameInput" placeholder="Namen eingeben" maxlength="12">
+    </div>
+
+    <div>
+      <label for="codeInput">Raumcode:</label>
+      <input type="text" id="codeInput" placeholder="ABCD" maxlength="4">
+    </div>
+    <p id="joinError" class="error"></p>
+
+    <button type="submit" id="joinButton" class="btn btn-primary">RAUM BEITRETEN</button>
+  </form>
+
+  <!-- Ansicht 2: Raum mit allen Spielern -->
+  <div id="roomView" class="card hidden">
+    <h2 class="section-title">Raumeinstellungen</h2>
+    <p class="room-code">Raumcode: <strong id="roomCode"></strong></p>
+
+    <div id="playerList" class="player-list"></div>
+
+    <p class="host-hint">Warte, bis der Host das Spiel startet...</p>
+
+    <button type="button" id="leaveButton" class="btn btn-secondary">RAUM VERLASSEN</button>
+  </div>
+
+  <!-- Ansicht 3: Spiel – eigene Frage beantworten (wie GameScreen im Online-Modus) -->
+  <div id="gameView" class="card hidden">
+    <div class="game-header">
+      <h2 id="gameTitle" class="game-title"></h2>
+      <div id="timer" class="timer">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="24" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="4"></circle>
+          <circle id="timerRing" cx="26" cy="26" r="24" fill="none" stroke-width="4" stroke-linecap="round"></circle>
+        </svg>
+        <span id="timerText" class="timer-text"></span>
+      </div>
+    </div>
+
+    <!-- Frage + Eingabe -->
+    <form id="answerForm" autocomplete="off">
+      <div id="questionBox" class="question-box">
+        <p class="question-label">Frage</p>
+        <p id="questionText" class="question-text"></p>
+        <textarea id="answerInput" maxlength="100" placeholder="Kommentar schreiben..."></textarea>
+        <div id="facebookOptions" class="options hidden"></div>
+        <button type="submit" id="submitAnswerButton" class="btn btn-secondary">FERTIGSTELLEN</button>
+      </div>
+      <p id="gameError" class="error"></p>
+    </form>
+
+    <!-- Nach dem Abschicken -->
+    <div id="gameWaiting" class="game-waiting hidden">
+      <div class="spinner"></div>
+      <p class="host-hint">Warte auf die anderen Spieler...</p>
+    </div>
+  </div>
+
+  <!-- Bestätigung beim Verlassen -->
+  <div id="leaveConfirm" class="overlay hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Raum verlassen?</h3>
+      <p class="modal-message">Möchtest du den Raum wirklich verlassen?</p>
+      <div class="modal-buttons">
+        <button type="button" id="confirmYes" class="btn btn-primary">JA</button>
+        <button type="button" id="confirmNo" class="btn btn-secondary">NEIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Farbauswahl -->
+  <div id="colorPicker" class="overlay hidden">
+    <div class="modal-card">
+      <h3 class="modal-title">Farbe wählen:</h3>
+      <div id="colorGrid" class="color-grid"></div>
+      <button type="button" id="colorPickerBack" class="btn btn-secondary">ZURÜCK</button>
+    </div>
+  </div>
+
+  <!-- Diese Datei liefert Socket.IO automatisch aus -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
