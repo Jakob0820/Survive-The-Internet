@@ -663,23 +663,6 @@ export default function App() {
       return false;
     } else return true;
   }
-
-  //Vote Test
-
-  /*React.useEffect(() => {
-    const totalVotes = voteCount.reduce((a, b) => a + b, 0);
-    const totalBurns = burnCount.reduce((a, b) => a + b, 0);
-
-    // Nur loggen, wenn alle Stimmen einer Runde verbraucht sind
-    if (totalVotes === 0 || totalVotes % playerCount !== 0) return;
-
-    console.log('--- Alle Stimmen verbraucht ---');
-    players.forEach((p, i) => {
-        console.log(`${p.name}: ${voteCount[i]} Votes, ${burnCount[i]} Burns`);
-    });
-    console.log(`Summe Votes: ${totalVotes}, Summe Burns: ${totalBurns}`);
-  }, [voteCount, burnCount]); */
-  
  
     return (
       <LanguageContext.Provider value={languageContext}>
@@ -870,11 +853,19 @@ export default function App() {
           <RoomSettingsScreen
             players={roomPlayers}
             ownPlayerIndex={roomPlayers.findIndex((p) => p.id === socket.id)}
-            onChangeColor={(color) =>
-              setRoomPlayers((prev) => prev.map((p, i) => (i === 0 ? { ...p, color } : p)))
-            }
+            onChangeColor={(color) => {
+              socket.timeout(5000).emit('changeColor', { color }, (err, response) => {
+                if (err) {
+                  Alert.alert(t('room.error'), t('room.serverUnreachable'));
+                  return;
+                }
+                if (!response.ok) {
+                  Alert.alert(t('room.error'), response.error);
+                }
+              });
+            }}
             onStart={() => {
-              // Nicht verbunden: sofort melden, statt die Anfrage zu puffern
+              // Wenn der Server nicht erreichbar ist sende einen Alert
               if (!socket.connected) {
                 Alert.alert(t('room.error'), t('room.serverUnreachable'));
                 return;
@@ -884,7 +875,8 @@ export default function App() {
               const rounds = generateGameRounds(roundLength);
               const { questions, facebookQuestions } = buildRoundQuestions(rounds[0], roomPlayers.length);
 
-              // Bei Erfolg wechselt der 'gameStarted'-Listener für alle den Screen
+              // Fehler werden hier gemeldet (auch nach 5 s ohne Antwort).
+              // Bei Erfolg wechselt der 'gameStarted'-Listener für alle den Screen.
               socket.timeout(5000).emit('startGame', { rounds, questions, facebookQuestions, duration }, (err, response) => {
                 if (err) {
                   Alert.alert(t('room.error'), t('room.serverUnreachable'));

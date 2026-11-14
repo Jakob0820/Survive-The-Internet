@@ -8,7 +8,7 @@ const server = http.createServer(app);   // Express in einen HTTP-Server packen
 const io = new Server(server, {
   cors: { origin: '*' },                 // nur für die Web-Version nötig
 });
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;   // Hoster geben den Port per Umgebungsvariable vor
 let connectionCount = 0;
 const MIN_PLAYERS = 3;
 
