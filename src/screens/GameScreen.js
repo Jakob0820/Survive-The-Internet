@@ -1,6 +1,6 @@
 GameScreen.js
 import React, { useState, useEffect, useRef, useReducer } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image, ActivityIndicator } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
@@ -10,6 +10,8 @@ import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
 
 export default function GameScreen({
+    isOnline = false,  // true: jeder beantwortet auf seinem eigenen Gerät nur seine eigene Frage
+    isWaiting = false, // Online: eigene Antwort ist abgeschickt, warten auf die anderen
     onBack,
     duration,
     players,
@@ -199,6 +201,13 @@ export default function GameScreen({
                             </View>
                         )}
                     </View>
+                        {isOnline && isWaiting ? (
+                            // Online: eigene Antwort ist abgeschickt
+                            <View style={styles.waitingContainer}>
+                                <ActivityIndicator size="large" color={playerColor} />
+                                <Text style={styles.waitingText}>{t('game.waitForPlayers')}</Text>
+                            </View>
+                        ) : (
                         <View style={[
                             styles.accordionContainer,
                             ]}>
@@ -327,13 +336,14 @@ export default function GameScreen({
                                         }}
                                     >
                                         <Text style={styles.btnSecondaryText}>
-                                            {currentPlayerIndex < playerCount - 1 ? t('game.nextPlayer') : t('game.finish')}
+                                            {isOnline || currentPlayerIndex >= playerCount - 1 ? t('game.finish') : t('game.nextPlayer')}
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
                             </Animated.View>
                         </View>
                     </View>
+                        )}
                 </View>
 
                 <TouchableOpacity
@@ -374,6 +384,18 @@ const styles = StyleSheet.create({
         padding: 10,
         paddingVertical: 30,
         flex: 1,
+    },
+    waitingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 16,
+    },
+    waitingText: {
+        color: '#8a99ad',
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center',
     },
     accordionContainer: {
         width: '100%',

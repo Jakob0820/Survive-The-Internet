@@ -9,6 +9,7 @@ import {
   StatusBar,
   Platform,
   AppState,
+  Alert,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
  
@@ -16,6 +17,8 @@ import { COLOR_OPTIONS, COLOR_IMAGES } from './src/constants/colors';
 import MainScreen from './src/screens/MainScreen';
 import OptionsScreen from './src/screens/OptionsScreen';
 import GameSettingsScreen from './src/screens/GameSettingsScreen';
+import GameSettingsScreenOnline from './src/screens/GameSettingsScreenOnline';
+import RoomSettingsScreen from './src/screens/RoomSettingsScreen';
 import PlayerSetupScreen from './src/screens/PlayerSetupScreen';
 import GameScreen from './src/screens/GameScreen';
 import ConfirmationScreen from './src/screens/ConfirmationScreen';
@@ -28,6 +31,7 @@ import { createFakeStats } from './src/constants/stats';
 import ResultScreen from './src/screens/ResultScreen';
 import { setSoundsMuted, setSoundVolume, setHapticsEnabled } from './src/constants/sounds';
 import { playMusic, stopMusic, applyMusicEnabled, setMusicVolume } from './src/constants/music';
+import { socket } from './src/constants/socket';
  
 export default function App() {
   // Sprache
@@ -50,6 +54,11 @@ export default function App() {
   const [playerName, setPlayerName] = useState(t('common.player', { number: currentPlayerIndex + 1 }));
   const [selectedColor, setSelectedColor] = useState(COLOR_OPTIONS[0]);
   const [isOnline, setOnlineStatus] = useState(false);
+  const [onlineName, setOnlineName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
+  const [roomPlayers, setRoomPlayers] = useState([]);
+  const [joinMessage, setJoinMessage] = useState('');
+  const [onlineAnswerSubmitted, setOnlineAnswerSubmitted] = useState(false); // Online: eigene Antwort abgeschickt // Übersetzungs-Key, z. B. 'room.closed'
 
   //Logik für Antwort Setup
   const [firstAnswers, setFirstAnswer] = useState([]);
@@ -243,6 +252,8 @@ export default function App() {
     main: 'mainMenu',
     options: 'mainMenu',
     gameSettings: 'mainMenu',
+    gameSettingsOnline: 'mainMenu',
+    roomSettings: 'mainMenu',
     playerSetup: 'mainMenu',
     game: 'questionMenu',
     answer: 'questionMenu',
@@ -271,6 +282,77 @@ export default function App() {
     setMusicVolume(volume / 100);
     setSoundVolume(volume / 100);
   }, [volume]);
+
+  //Raum aktualisiert sich von automatisch sobald jemand beitritt
+  useEffect(() => {
+    const handleRoomUpdate = (room) => {
+      setRoomPlayers(room.players);
+    };
+
+    // Host hat den Raum geschlossen: zurück zum Beitreten-Dialog mit Hinweis
+    const handleRoomClosed = () => {
+      setRoomPlayers([]);
+      setRoomCode('');
+      setJoinMessage('room.closed');
+      setCurrentScreen('gameSettingsOnline');
+    };
+
+    socket.on('roomUpdate', handleRoomUpdate);
+    socket.on('roomClosed', handleRoomClosed);
+    return () => {
+      socket.off('roomUpdate', handleRoomUpdate);
+      socket.off('roomClosed', handleRoomClosed);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Kommt auf allen Geräten im Raum an. Die Runden und Fragen hat der Host
+    // bereits gemischt, hier wird nur übernommen (nur Setter, daher reicht [] als Abhängigkeit).
+    const handleGameStarted = (data) => {
+      // Spieler wie im Offline-Modus aufbauen; das Bild ergibt sich aus der Farbe
+      const gamePlayers = data.players.map((p) => ({
+        ...p,
+        image: COLOR_IMAGES[COLOR_OPTIONS.indexOf(p.color)],
+      }));
+
+      setPlayers(gamePlayers);
+      setPlayerCount(gamePlayers.length);
+      // Eigener Index = Position in der Spielerliste des Servers (auf allen Geräten gleich)
+      setCurrentPlayerIndex(gamePlayers.findIndex((p) => p.id === socket.id));
+
+      setGameRounds(data.rounds);
+      setCurrentRoundIndex(0);
+      setVoteCount(Array(gamePlayers.length).fill(0));
+      setBurnCount(Array(gamePlayers.length).fill(0));
+
+      setSelectedFacebookOption(null);
+      setFacebookImages([]);
+      setShuffledFacebookImages([]);
+      setFacebookQuestions(data.facebookQuestions);
+      setCurrentQuestions(data.questions);
+
+      setFirstAnswer([]);
+      setOnlineAnswerSubmitted(false);
+
+      setDuration(data.duration);
+      setCurrentScreen('transition');
+    }
+
+    // Alle Spieler haben geantwortet (oder ihr Timer ist abgelaufen). Der Server schickt
+    // alle Antworten in Spieler-Reihenfolge: answers[i] stammt von players[i].
+    const handleAllAnswersSubmitted = (data) => {
+      setFirstAnswer(data.answers);
+      setFacebookImages(data.facebookImages.map((key) => (key ? FACEBOOK_IMAGES[key] : null)));
+      // TODO: nächster Schritt – Antworten mischen und zum AnswerScreen wechseln
+    }
+
+    socket.on('gameStarted', handleGameStarted);
+    socket.on('allAnswersSubmitted', handleAllAnswersSubmitted);
+    return () => {
+      socket.off('gameStarted', handleGameStarted);
+      socket.off('allAnswersSubmitted', handleAllAnswersSubmitted);
+    }
+  }, []);
     
   const resetPlayerSetup = () => {
     setPlayerCount(3);
@@ -433,20 +515,25 @@ export default function App() {
     return Array.from({ length: count }, (_, i) => shuffledQuestions[i % shuffledQuestions.length]);
   }
 
+  // Erzeugt die gemischten Fragen für eine Runde, ohne State zu setzen.
+  // Online schickt der Host das Ergebnis an den Server, der es an alle verteilt.
+  const buildRoundQuestions = (roundType, count = playerCount) => {
+    if (roundType === ROUND_TYPE.FACEBOOK) {
+      const fbQuestions = generateFacebookQuestions(count);
+      return { questions: fbQuestions.map((q) => q.question), facebookQuestions: fbQuestions };
+    }
+    return { questions: generateQuestions(roundType, count), facebookQuestions: [] };
+  }
+
   // Setzt die Fragen für eine Runde; in der Facebook-Runde zusätzlich die Antwortmöglichkeiten
   const setupRoundQuestions = (roundType, count = playerCount) => {
     setSelectedFacebookOption(null);
     setFacebookImages([]);
     setShuffledFacebookImages([]);
 
-    if (roundType === ROUND_TYPE.FACEBOOK) {
-      const fbQuestions = generateFacebookQuestions(count);
-      setFacebookQuestions(fbQuestions);
-      setCurrentQuestions(fbQuestions.map((q) => q.question));
-    } else {
-      setFacebookQuestions([]);
-      setCurrentQuestions(generateQuestions(roundType, count));
-    }
+    const { questions, facebookQuestions } = buildRoundQuestions(roundType, count);
+    setFacebookQuestions(facebookQuestions);
+    setCurrentQuestions(questions);
   }
  
   const shuffleArray = (array) => {
@@ -497,6 +584,26 @@ export default function App() {
       setCurrentPlayerIndex(0);
       setCurrentScreen('answer');
     }
+  };
+
+  // Online: eigene Antwort an den Server schicken; wird auch vom Timer aufgerufen
+  const submitOnlineAnswer = () => {
+    if (onlineAnswerSubmitted) return; // schon abgeschickt (z. B. Timer läuft nach dem Klick ab)
+    setOnlineAnswerSubmitted(true);
+
+    const answer = textValue;
+    const facebookOption = isFacebookMode ? (selectedFacebookOption ?? 0) : null;
+
+    socket.timeout(5000).emit('submitAnswer', { answer, facebookOption }, (err, response) => {
+      if (err || !response.ok) {
+        // Nicht angekommen: wieder bearbeitbar machen, damit man es erneut versuchen kann
+        setOnlineAnswerSubmitted(false);
+        Alert.alert(t('room.error'), err ? t('room.serverUnreachable') : response.error);
+        return;
+      }
+      setTextValue('');
+      setSelectedFacebookOption(null);
+    });
   };
 
   const nextAnswer = () => {
@@ -556,23 +663,6 @@ export default function App() {
       return false;
     } else return true;
   }
-
-  //Vote Test
-
-  /*React.useEffect(() => {
-    const totalVotes = voteCount.reduce((a, b) => a + b, 0);
-    const totalBurns = burnCount.reduce((a, b) => a + b, 0);
-
-    // Nur loggen, wenn alle Stimmen einer Runde verbraucht sind
-    if (totalVotes === 0 || totalVotes % playerCount !== 0) return;
-
-    console.log('--- Alle Stimmen verbraucht ---');
-    players.forEach((p, i) => {
-        console.log(`${p.name}: ${voteCount[i]} Votes, ${burnCount[i]} Burns`);
-    });
-    console.log(`Summe Votes: ${totalVotes}, Summe Burns: ${totalBurns}`);
-  }, [voteCount, burnCount]); */
-  
  
     return (
       <LanguageContext.Provider value={languageContext}>
@@ -631,7 +721,8 @@ export default function App() {
               setOnlineStatus(false);
             }}
             online={() => {
-              setCurrentScreen('gameSettings');
+              socket.connect();
+              setCurrentScreen('gameSettingsOnline');
               setOnlineStatus(true);
             }}
             options={() => setCurrentScreen('options')}
@@ -666,13 +757,10 @@ export default function App() {
  
         {currentScreen === 'gameSettings' && (
           <GameSettingsScreen
-            isOnline={isOnline}
             duration={duration}
             setDuration={setDuration}
             playerCount={playerCount}
             setPlayerCount={setPlayerCount}
-            onNextCreate={() => {}}
-            onNextJoin={() => {}}
             onNext={() => setCurrentScreen('playerSetup')}
             onBack={() => {
               resetPlayerSetup();
@@ -689,9 +777,142 @@ export default function App() {
             setRoundLength={setRoundLength}
           />
         )}
+
+        {currentScreen === 'gameSettingsOnline' && (
+          <GameSettingsScreenOnline
+            onNextCreate={() => {
+              // Nicht verbunden: Melden, dass der Server unerreichbar ist.
+              if (!socket.connected) {
+                Alert.alert(t('room.error'), t('room.serverUnreachable'));
+                return;
+              }
+              // Ohne Antwort innerhalb von 5 Sekunden gilt der Server als offline
+              socket.timeout(5000).emit('createRoom', { name: onlineName }, (err, response) => {
+                if (err) {
+                  Alert.alert(t('room.error'), t('room.serverUnreachable'));
+                  return;
+                }
+                if (response.ok) {
+                  setRoomCode(response.code);
+                  setCurrentScreen('roomSettings');
+                } else {
+                  Alert.alert(t('room.error'), response.error);
+                }
+              });
+            }}
+
+            // Gibt ein Promise mit der Server-Antwort zurück, damit der
+            // RoomJoinScreen eine Fehlermeldung direkt im Popup anzeigen kann
+            onNextJoin={() =>
+              new Promise((resolve) => {
+                if (!socket.connected) {
+                  resolve({ ok: false, error: t('room.serverUnreachable') });
+                  return;
+                }
+                socket.timeout(5000).emit('joinRoom', { code: roomCode, name: onlineName }, (err, response) => {
+                  if (err) {
+                    resolve({ ok: false, error: t('room.serverUnreachable') });
+                    return;
+                  }
+                  if (response.ok) {
+                    setJoinMessage('');
+                    setRoomCode(response.code);
+                    setCurrentScreen('roomSettings');
+                  }
+                  resolve(response);
+                });
+              })
+            }
+            onBack={() => {
+              setJoinMessage('');
+              socket.disconnect();
+              setOnlineStatus(false);
+              setCurrentScreen('main');
+            }}
+            playerName={onlineName}
+            setPlayerName={setOnlineName}
+            duration={duration}
+            setDuration={setDuration}
+            roundColors={QUESTIONS.map(question => question.color[0])}
+            roundNames={QUESTIONS.map(question => question.categoryName)}
+            randomRounds={randomRounds}
+            setRandomRounds={setRandomRounds}
+            roundLogos={QUESTIONS.map(question => question.logo)}
+            selectedRounds={selectedRounds}
+            setSelectedRounds={setSelectedRounds}
+            roundLength={roundLength}
+            setRoundLength={setRoundLength}
+            roomCode={roomCode}
+            setRoomCode={setRoomCode}
+            joinMessage={joinMessage}
+            clearJoinMessage={() => setJoinMessage('')}
+          />
+        )}
  
+        {currentScreen === 'roomSettings' && (
+          <RoomSettingsScreen
+            players={roomPlayers}
+            ownPlayerIndex={roomPlayers.findIndex((p) => p.id === socket.id)}
+            onChangeColor={(color) => {
+              socket.timeout(5000).emit('changeColor', { color }, (err, response) => {
+                if (err) {
+                  Alert.alert(t('room.error'), t('room.serverUnreachable'));
+                  return;
+                }
+                if (!response.ok) {
+                  Alert.alert(t('room.error'), response.error);
+                }
+              });
+            }}
+            onStart={() => {
+              // Wenn der Server nicht erreichbar ist sende einen Alert
+              if (!socket.connected) {
+                Alert.alert(t('room.error'), t('room.serverUnreachable'));
+                return;
+              }
+              // Runden und Fragen nur einmal hier beim Host mischen; der Server verteilt sie an alle.
+              // questions[i] gehört dem Spieler an Position i in der Spielerliste des Servers.
+              const rounds = generateGameRounds(roundLength);
+              const { questions, facebookQuestions } = buildRoundQuestions(rounds[0], roomPlayers.length);
+
+              // Fehler werden hier gemeldet (auch nach 5 s ohne Antwort).
+              // Bei Erfolg wechselt der 'gameStarted'-Listener für alle den Screen.
+              socket.timeout(5000).emit('startGame', { rounds, questions, facebookQuestions, duration }, (err, response) => {
+                if (err) {
+                  Alert.alert(t('room.error'), t('room.serverUnreachable'));
+                  return;
+                }
+                if (!response.ok) {
+                  Alert.alert(t('room.error'), response.error);
+                }
+              });
+            }}
+            onLeave={() => {
+              setRoomPlayers([]);
+              socket.emit('leaveRoom');
+              setRoomCode('');
+              setCurrentScreen('gameSettingsOnline');
+            }}
+            roomCode={roomCode}
+            isHost={roomPlayers.find((p) => p.id === socket.id)?.isHost ?? false}
+            duration={duration}
+            setDuration={setDuration}
+            roundColors={QUESTIONS.map(question => question.color[0])}
+            roundNames={QUESTIONS.map(question => question.categoryName)}
+            randomRounds={randomRounds}
+            setRandomRounds={setRandomRounds}
+            roundLogos={QUESTIONS.map(question => question.logo)}
+            selectedRounds={selectedRounds}
+            setSelectedRounds={setSelectedRounds}
+            roundLength={roundLength}
+            setRoundLength={setRoundLength}
+          />
+        )}
+
         {currentScreen === 'game' && (
             <GameScreen
+                isOnline={isOnline}
+                isWaiting={onlineAnswerSubmitted}
                 onBack={() => {
                     resetPlayerSetup();
                     setCurrentScreen('main');
@@ -700,7 +921,7 @@ export default function App() {
                 players={players}
                 playerCount={playerCount}
                 currentPlayerIndex={currentPlayerIndex}
-                onNext={nextQuestion}
+                onNext={isOnline ? submitOnlineAnswer : nextQuestion}
                 textValue={textValue}
                 setTextValue={setTextValue}
                 currentQuestion={currentQuestions[currentPlayerIndex]}
