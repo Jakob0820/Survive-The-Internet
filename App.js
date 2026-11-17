@@ -1,13 +1,9 @@
 import React, {useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  TouchableOpacity, 
-  TextInput, 
-  SafeAreaView, 
+import {
+  StyleSheet,
+  View,
+  SafeAreaView,
   StatusBar,
-  Platform,
   AppState,
   Alert,
 } from 'react-native';
@@ -31,8 +27,32 @@ import { createFakeStats } from './src/constants/stats';
 import ResultScreen from './src/screens/ResultScreen';
 import { setSoundsMuted, setSoundVolume, setHapticsEnabled } from './src/constants/sounds';
 import { playMusic, stopMusic, applyMusicEnabled, setMusicVolume } from './src/constants/music';
-import { socket } from './src/constants/socket';
+import { socket, request } from './src/constants/socket';
+import {
+  TEST_MODE, TEST_SCREEN, TEST_PLAYERS, TEST_PLAYER_COUNT, TEST_ROUNDS,
+  TEST_VOTES, TEST_BURNS, TEST_FIRST_ANSWERS, TEST_RESPONSES,
+} from './src/dev/testData';
  
+// Feste Infos zu allen Rundentypen für die Einstellungs-Screens (ändern sich nie)
+const ROUND_INFO = {
+  roundColors: QUESTIONS.map((question) => question.color[0]),
+  roundNames: QUESTIONS.map((question) => question.categoryName),
+  roundLogos: QUESTIONS.map((question) => question.logo),
+};
+
+// Welche Musik auf welchem Screen läuft (Screens ohne Eintrag: keine Musik)
+const SCREEN_MUSIC = {
+  main: 'mainMenu',
+  options: 'mainMenu',
+  gameSettings: 'mainMenu',
+  gameSettingsOnline: 'mainMenu',
+  roomSettings: 'mainMenu',
+  playerSetup: 'mainMenu',
+  game: 'questionMenu',
+  answer: 'questionMenu',
+  evaluation: 'evaluationMenu',
+};
+
 export default function App() {
   // Sprache
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
@@ -57,12 +77,12 @@ export default function App() {
   const [onlineName, setOnlineName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [roomPlayers, setRoomPlayers] = useState([]);
-  const [joinMessage, setJoinMessage] = useState('');
-  const [onlineAnswerSubmitted, setOnlineAnswerSubmitted] = useState(false); // Online: eigene Antwort abgeschickt // Übersetzungs-Key, z. B. 'room.closed'
+  const [joinMessage, setJoinMessage] = useState(''); // Übersetzungs-Key, z. B. 'room.closed'
+  const [onlineAnswerSubmitted, setOnlineAnswerSubmitted] = useState(false); // Online: eigene Antwort abgeschickt
 
   //Logik für Antwort Setup
-  const [firstAnswers, setFirstAnswer] = useState([]);
-  const [secoundAnswers, setSecondAnswer] = useState([]);
+  const [firstAnswers, setFirstAnswers] = useState([]);
+  const [secondAnswers, setSecondAnswers] = useState([]);
   const [textValue, setTextValue] = useState('');
  
   const [gameRounds, setGameRounds] = useState([]);
@@ -77,11 +97,7 @@ export default function App() {
   const [currentQuestions, setCurrentQuestions ] = useState([]);
 
   // Facebook Modus: true, sobald die aktuelle Runde eine Facebook-Runde ist
-  const [isFacebookMode, setIsFacebookMode] = useState(false);
-
-  useEffect(() => {
-    setIsFacebookMode(currentType != null && currentType === ROUND_TYPE.FACEBOOK);
-  }, [currentType]);
+  const isFacebookMode = currentType === ROUND_TYPE.FACEBOOK;
 
   // Facebook Runde: Fragen mit Antwortmöglichkeiten und daraus resultierende Bilder
   const [facebookQuestions, setFacebookQuestions] = useState([]);
@@ -102,6 +118,23 @@ export default function App() {
   const [burnCount, setBurnCount] = useState([]);
   const [previousPoints, setPreviousPoints] = useState([]);
 
+  // Gemeinsame Props der drei Einstellungs-Screens (lokal, online, Raum)
+  const roundSettings = {
+    ...ROUND_INFO,
+    duration, setDuration,
+    randomRounds, setRandomRounds,
+    selectedRounds, setSelectedRounds,
+    roundLength, setRoundLength,
+  };
+
+  // Fehlertext für eine fehlgeschlagene Server-Anfrage (siehe request in socket.js)
+  const requestErrorText = (response) =>
+    response.unreachable ? t('room.serverUnreachable') : response.error;
+
+  const showRequestError = (response) => {
+    Alert.alert(t('room.error'), requestErrorText(response));
+  };
+
 
   // Die Optionen sind nur vom Hauptmenü aus erreichbar, also läuft beim Wechsel kein Spiel
   const languageContext = useMemo(() => ({
@@ -113,104 +146,34 @@ export default function App() {
     },
   }), [language, t]);
 
-  //Test Modus
-  const TEST_MODE = false;
-  const TEST_SCREEN = 'result';
-
+  // Test-Modus: springt mit Testdaten direkt in einen Screen (Daten in src/dev/testData.js)
   useEffect(() => {
     if (!TEST_MODE) return;
 
-    const testPlayers = [
-        {
-            name: 'Spieler 1',
-            color: COLOR_OPTIONS[0],
-            image: COLOR_IMAGES[0],
-        },
-        {
-            name: 'Spieler 2',
-            color: COLOR_OPTIONS[1],
-            image: COLOR_IMAGES[1],
-        },
-        {
-            name: 'Spieler 3',
-            color: COLOR_OPTIONS[6],
-            image: COLOR_IMAGES[6],
-        }, 
-        {
-            name: 'Spieler 4',
-            color: COLOR_OPTIONS[2],
-            image: COLOR_IMAGES[2],
-        },
-        
-        {
-            name: 'Spieler 5',
-            color: COLOR_OPTIONS[3],
-            image: COLOR_IMAGES[3],
-        },
-        /*{
-            name: 'Spieler 6',
-            color: COLOR_OPTIONS[4],
-            image: COLOR_IMAGES[4],
-        }, 
-        {
-            name: 'Spieler 7',
-            color: COLOR_OPTIONS[5],
-            image: COLOR_IMAGES[5],
-        },
-        {
-            name: 'Spieler 8',
-            color: COLOR_OPTIONS[7],
-            image: COLOR_IMAGES[7],
-        },*/
-    ];
-
-    const otherRounds = Object.values(ROUND_TYPE).filter((t) => t !== ROUND_TYPE.YOUTUBE);
-    //const testRounds = [ROUND_TYPE.REDDIT, ...shuffleArray(otherRounds).slice(0, 2)];
-    const testRounds = [ROUND_TYPE.GOFUNDME]
-
-    setPlayers(testPlayers);
-    setPlayerCount(3);
+    setPlayers(TEST_PLAYERS);
+    setPlayerCount(TEST_PLAYER_COUNT);
     setCurrentPlayerIndex(0);
 
-    setVoteCount([1, 2, 3, 2, 3, 1, 2, 1]);
-    setBurnCount([3, 2, 1, 1, 2, 4, 0, 0]);
+    setVoteCount(TEST_VOTES);
+    setBurnCount(TEST_BURNS);
 
-    setGameRounds(testRounds);
+    setGameRounds(TEST_ROUNDS);
     setCurrentRoundIndex(0);
+    setupRoundQuestions(TEST_ROUNDS[0], TEST_PLAYER_COUNT);
 
-    setupRoundQuestions(testRounds[0], 3);
+    setShuffledFirstAnswers(TEST_FIRST_ANSWERS);
+    setSecondAnswers(TEST_RESPONSES);
 
-    const testFirstAnswers = [
-        'Ultra geil, macht vor allem Spaß in der Badewanne zu benutzen',
-        'Wofür hast du die benutzt?',
-        'Entführe die Kinder von deinem Lehrer'
-    ];
-
-    const testResponses = [
-        'Turbo Thrustmaster 5000x mit extra Vibrationsfunktion',
-        'VR Brille mit cumstains',
-        'Kann mir jemand beim lernen meiner Mathearbeit helfen, ich verstehe das einfach nicht...',
-    ];
-
-    setShuffledFirstAnswers(testFirstAnswers);
-    setSecondAnswer(testResponses);
-
-    // NEU: evaluationData + evaluationOrder für den Test befüllen
-    const testCombined = [0, 1, 2].map((originalIndex, i) => ({
-        originalIndex,
-        originalAnswer: testFirstAnswers[i],
-        response: testResponses[i],
-        stats: createFakeStats(),
-    }));
-
-    setEvaluationData(testCombined);
-    setEvaluationOrder(shuffleArray([0, 1, 2]));
+    setEvaluationData(TEST_FIRST_ANSWERS.map((originalAnswer, i) => ({
+      originalIndex: i,
+      originalAnswer,
+      response: TEST_RESPONSES[i],
+      stats: createFakeStats(),
+    })));
+    setEvaluationOrder(shuffleArray(TEST_FIRST_ANSWERS.map((_, i) => i)));
 
     setCurrentScreen(TEST_SCREEN);
-
-}, []);
-
-  //Test Modus ende
+  }, []);
   
   const player = useVideoPlayer(
     require('./assets/background2_fixed.mp4'),
@@ -248,20 +211,8 @@ export default function App() {
     };
   }, [player]);
 
-  const screenMusic = {
-    main: 'mainMenu',
-    options: 'mainMenu',
-    gameSettings: 'mainMenu',
-    gameSettingsOnline: 'mainMenu',
-    roomSettings: 'mainMenu',
-    playerSetup: 'mainMenu',
-    game: 'questionMenu',
-    answer: 'questionMenu',
-    evaluation: 'evaluationMenu',
-  }
-
   useEffect(() => {
-    const track = screenMusic[currentScreen];
+    const track = SCREEN_MUSIC[currentScreen];
     if (track) playMusic(track);
     else stopMusic();
   }, [currentScreen]);
@@ -331,7 +282,7 @@ export default function App() {
       setFacebookQuestions(data.facebookQuestions);
       setCurrentQuestions(data.questions);
 
-      setFirstAnswer([]);
+      setFirstAnswers([]);
       setOnlineAnswerSubmitted(false);
 
       setDuration(data.duration);
@@ -341,7 +292,7 @@ export default function App() {
     // Alle Spieler haben geantwortet (oder ihr Timer ist abgelaufen). Der Server schickt
     // alle Antworten in Spieler-Reihenfolge: answers[i] stammt von players[i].
     const handleAllAnswersSubmitted = (data) => {
-      setFirstAnswer(data.answers);
+      setFirstAnswers(data.answers);
       setFacebookImages(data.facebookImages.map((key) => (key ? FACEBOOK_IMAGES[key] : null)));
       // TODO: nächster Schritt – Antworten mischen und zum AnswerScreen wechseln
     }
@@ -354,29 +305,50 @@ export default function App() {
     }
   }, []);
     
+  // Antworten und Auswertung der aktuellen Runde leeren (vor jeder neuen Runde)
+  const resetRoundState = () => {
+    setFirstAnswers([]);
+    setShuffledFirstAnswers([]);
+    setSecondAnswers([]);
+    setTextValue('');
+    setAnswerText('');
+    setShuffledIndices([]);
+    setEvaluationOrder([]);
+    setEvaluationData([]);
+    setIsEvaluating(false);
+  }
+
+  // Zurück ins Hauptmenü: alles vom letzten Spiel verwerfen
   const resetPlayerSetup = () => {
+    resetRoundState();
     setPlayerCount(3);
     setCurrentPlayerIndex(0);
     setCurrentRoundIndex(0);
     setPlayerName(t('common.player', { number: 1 }));
     setSelectedColor(COLOR_OPTIONS[0]);
     setPlayers([]);
-    setFirstAnswer([]);
-    setSecondAnswer([]);
-    setShuffledFirstAnswers([]);
-    setTextValue('');
-    setAnswerText('');
-    setShuffledIndices([]);
-    setEvaluationData([]);
-    setEvaluationOrder([]);
     setVoteCount([]);
     setBurnCount([]);
     setPreviousPoints([]);
-    setIsEvaluating(false);
     setFacebookQuestions([]);
     setSelectedFacebookOption(null);
     setFacebookImages([]);
     setShuffledFacebookImages([]);
+  }
+
+  // Neues Spiel mit denselben Spielern: Runden auslosen, Punkte auf 0, erste Runde starten
+  const startNewGame = () => {
+    const rounds = generateGameRounds(roundLength);
+    setGameRounds(rounds);
+    setCurrentRoundIndex(0);
+    setCurrentPlayerIndex(0);
+    setVoteCount(Array(playerCount).fill(0));
+    setBurnCount(Array(playerCount).fill(0));
+    setPreviousPoints([]);
+
+    setupRoundQuestions(rounds[0], playerCount);
+
+    setCurrentScreen('transition');
   }
  
   const handleNextPlayer = () => {
@@ -400,16 +372,7 @@ export default function App() {
     setSelectedColor(nextFreeColor);
     }
     else {
-      const rounds = generateGameRounds(roundLength);
-      setGameRounds(rounds);
-      setCurrentRoundIndex(0);
-      setCurrentPlayerIndex(0);
-      setVoteCount(Array(playerCount).fill(0));
-      setBurnCount(Array(playerCount).fill(0));
- 
-      setupRoundQuestions(rounds[0], playerCount);
- 
-      setCurrentScreen('transition');
+      startNewGame();
     }
   }
  
@@ -436,51 +399,23 @@ export default function App() {
   }
  
   const handleNextRound = () => {
+    resetRoundState();
+
     const nextIndex = currentRoundIndex + 1;
-    if (nextIndex < gameRounds.length){
-      setPreviousPoints(
-        players.map((_, i) => (voteCount[i] ?? 0) * 80 + (burnCount[i] ?? 0) * 30)
-      );
-      setCurrentRoundIndex(nextIndex);
-      setCurrentPlayerIndex(0);
- 
-      const nextRoundType = gameRounds[nextIndex];
-      setupRoundQuestions(nextRoundType, playerCount);
-
-      setFirstAnswer([]);
-      setShuffledFirstAnswers([]);
-      setSecondAnswer([]);
-      setTextValue('');
-      setAnswerText('');
-      setShuffledIndices([]);
-      setEvaluationOrder([]);
-      setEvaluationData([]);
-      setIsEvaluating(false);
- 
-      setCurrentScreen('transition');
-    } else {
-        setFirstAnswer([]);
-        setShuffledFirstAnswers([]);
-        setSecondAnswer([]);
-        setTextValue('');
-        setAnswerText('');
-        setShuffledIndices([]);
-        setEvaluationOrder([]);
-        setEvaluationData([]);
-        setVoteCount(Array(playerCount).fill(0));
-        setBurnCount(Array(playerCount).fill(0));
-        setPreviousPoints([]);
-        setIsEvaluating(false);
-
-        const rounds = generateGameRounds(roundLength);
-        setGameRounds(rounds);
-        setCurrentRoundIndex(0);
-
-        setupRoundQuestions(rounds[0], playerCount);
-
-        setCurrentPlayerIndex(0);
-        setCurrentScreen('transition');
+    // Letzte Runde vorbei: neues Spiel mit denselben Spielern
+    if (nextIndex >= gameRounds.length) {
+      startNewGame();
+      return;
     }
+
+    setPreviousPoints(
+      players.map((_, i) => (voteCount[i] ?? 0) * 80 + (burnCount[i] ?? 0) * 30)
+    );
+    setCurrentRoundIndex(nextIndex);
+    setCurrentPlayerIndex(0);
+    setupRoundQuestions(gameRounds[nextIndex], playerCount);
+
+    setCurrentScreen('transition');
   }
  
   const generateGameRounds = (count) => {
@@ -558,7 +493,7 @@ export default function App() {
  
   const nextQuestion = () => {
     const updatedAnswers = [...firstAnswers, textValue];
-    setFirstAnswer(updatedAnswers);
+    setFirstAnswers(updatedAnswers);
     setTextValue('');
 
     // Facebook: Bild anhand der gewählten Antwort festlegen (ohne Auswahl, z.B. Timer abgelaufen: erste Option)
@@ -587,28 +522,27 @@ export default function App() {
   };
 
   // Online: eigene Antwort an den Server schicken; wird auch vom Timer aufgerufen
-  const submitOnlineAnswer = () => {
+  const submitOnlineAnswer = async () => {
     if (onlineAnswerSubmitted) return; // schon abgeschickt (z. B. Timer läuft nach dem Klick ab)
     setOnlineAnswerSubmitted(true);
 
     const answer = textValue;
     const facebookOption = isFacebookMode ? (selectedFacebookOption ?? 0) : null;
 
-    socket.timeout(5000).emit('submitAnswer', { answer, facebookOption }, (err, response) => {
-      if (err || !response.ok) {
-        // Nicht angekommen: wieder bearbeitbar machen, damit man es erneut versuchen kann
-        setOnlineAnswerSubmitted(false);
-        Alert.alert(t('room.error'), err ? t('room.serverUnreachable') : response.error);
-        return;
-      }
-      setTextValue('');
-      setSelectedFacebookOption(null);
-    });
+    const response = await request('submitAnswer', { answer, facebookOption });
+    if (!response.ok) {
+      // Nicht angekommen: wieder bearbeitbar machen, damit man es erneut versuchen kann
+      setOnlineAnswerSubmitted(false);
+      showRequestError(response);
+      return;
+    }
+    setTextValue('');
+    setSelectedFacebookOption(null);
   };
 
   const nextAnswer = () => {
-    const updatedResponses = [...secoundAnswers, answerText];
-    setSecondAnswer(updatedResponses);
+    const updatedResponses = [...secondAnswers, answerText];
+    setSecondAnswers(updatedResponses);
     setAnswerText('');
 
     if (currentPlayerIndex < playerCount - 1) {
@@ -634,18 +568,14 @@ export default function App() {
   };
 
   const nextEvaluation = () => {
-    if(currentPlayerIndex < playerCount - 1) {
+    if (currentPlayerIndex < playerCount - 1) {
       setCurrentPlayerIndex(currentPlayerIndex + 1);
-    } else {
-      return;
     }
   }
 
   const previousEvaluation = () => {
-    if(currentPlayerIndex > 0) {
+    if (currentPlayerIndex > 0) {
       setCurrentPlayerIndex(currentPlayerIndex - 1);
-    } else {
-      return;
     }
   }
 
@@ -658,11 +588,7 @@ export default function App() {
     setBurnCount((prev) => prev.map((v, i) => (i === burner ? v + 1 : v)));
   };
 
-  const isLastRound = () => {
-    if(currentRoundIndex < gameRounds.length - 1) {
-      return false;
-    } else return true;
-  }
+  const isLastRound = currentRoundIndex >= gameRounds.length - 1;
  
     return (
       <LanguageContext.Provider value={languageContext}>
@@ -676,8 +602,6 @@ export default function App() {
             nativeControls={false}
         />
 
-        <View style={styles.videoOverlay} />
-      
       {currentScreen === 'evaluation' && (
         <EvaluationScreen
           onShowResult={() => setCurrentScreen('result')}
@@ -703,7 +627,7 @@ export default function App() {
           burnCount={burnCount}
           players={players}
           onNext={handleNextRound}
-          isLastRound={isLastRound()}
+          isLastRound={isLastRound}
           onBack={() => {
             resetPlayerSetup();
             setCurrentScreen('main');            
@@ -757,8 +681,6 @@ export default function App() {
  
         {currentScreen === 'gameSettings' && (
           <GameSettingsScreen
-            duration={duration}
-            setDuration={setDuration}
             playerCount={playerCount}
             setPlayerCount={setPlayerCount}
             onNext={() => setCurrentScreen('playerSetup')}
@@ -766,63 +688,34 @@ export default function App() {
               resetPlayerSetup();
               setCurrentScreen('main');
             }}
-            roundColors={QUESTIONS.map(question => question.color[0])}
-            roundNames={QUESTIONS.map(question => question.categoryName)}
-            randomRounds={randomRounds}
-            setRandomRounds={setRandomRounds}
-            roundLogos={QUESTIONS.map(question => question.logo)}
-            selectedRounds={selectedRounds}
-            setSelectedRounds={setSelectedRounds}
-            roundLength={roundLength}
-            setRoundLength={setRoundLength}
+            {...roundSettings}
           />
         )}
 
         {currentScreen === 'gameSettingsOnline' && (
           <GameSettingsScreenOnline
-            onNextCreate={() => {
-              // Nicht verbunden: Melden, dass der Server unerreichbar ist.
-              if (!socket.connected) {
-                Alert.alert(t('room.error'), t('room.serverUnreachable'));
+            onNextCreate={async () => {
+              const response = await request('createRoom', { name: onlineName });
+              if (!response.ok) {
+                showRequestError(response);
                 return;
               }
-              // Ohne Antwort innerhalb von 5 Sekunden gilt der Server als offline
-              socket.timeout(5000).emit('createRoom', { name: onlineName }, (err, response) => {
-                if (err) {
-                  Alert.alert(t('room.error'), t('room.serverUnreachable'));
-                  return;
-                }
-                if (response.ok) {
-                  setRoomCode(response.code);
-                  setCurrentScreen('roomSettings');
-                } else {
-                  Alert.alert(t('room.error'), response.error);
-                }
-              });
+              setRoomCode(response.code);
+              setCurrentScreen('roomSettings');
             }}
 
-            // Gibt ein Promise mit der Server-Antwort zurück, damit der
-            // RoomJoinScreen eine Fehlermeldung direkt im Popup anzeigen kann
-            onNextJoin={() =>
-              new Promise((resolve) => {
-                if (!socket.connected) {
-                  resolve({ ok: false, error: t('room.serverUnreachable') });
-                  return;
-                }
-                socket.timeout(5000).emit('joinRoom', { code: roomCode, name: onlineName }, (err, response) => {
-                  if (err) {
-                    resolve({ ok: false, error: t('room.serverUnreachable') });
-                    return;
-                  }
-                  if (response.ok) {
-                    setJoinMessage('');
-                    setRoomCode(response.code);
-                    setCurrentScreen('roomSettings');
-                  }
-                  resolve(response);
-                });
-              })
-            }
+            // Gibt die Server-Antwort zurück, damit der RoomJoinScreen
+            // eine Fehlermeldung direkt im Popup anzeigen kann
+            onNextJoin={async () => {
+              const response = await request('joinRoom', { code: roomCode, name: onlineName });
+              if (!response.ok) {
+                return { ok: false, error: requestErrorText(response) };
+              }
+              setJoinMessage('');
+              setRoomCode(response.code);
+              setCurrentScreen('roomSettings');
+              return response;
+            }}
             onBack={() => {
               setJoinMessage('');
               socket.disconnect();
@@ -831,17 +724,7 @@ export default function App() {
             }}
             playerName={onlineName}
             setPlayerName={setOnlineName}
-            duration={duration}
-            setDuration={setDuration}
-            roundColors={QUESTIONS.map(question => question.color[0])}
-            roundNames={QUESTIONS.map(question => question.categoryName)}
-            randomRounds={randomRounds}
-            setRandomRounds={setRandomRounds}
-            roundLogos={QUESTIONS.map(question => question.logo)}
-            selectedRounds={selectedRounds}
-            setSelectedRounds={setSelectedRounds}
-            roundLength={roundLength}
-            setRoundLength={setRoundLength}
+            {...roundSettings}
             roomCode={roomCode}
             setRoomCode={setRoomCode}
             joinMessage={joinMessage}
@@ -853,39 +736,20 @@ export default function App() {
           <RoomSettingsScreen
             players={roomPlayers}
             ownPlayerIndex={roomPlayers.findIndex((p) => p.id === socket.id)}
-            onChangeColor={(color) => {
-              socket.timeout(5000).emit('changeColor', { color }, (err, response) => {
-                if (err) {
-                  Alert.alert(t('room.error'), t('room.serverUnreachable'));
-                  return;
-                }
-                if (!response.ok) {
-                  Alert.alert(t('room.error'), response.error);
-                }
-              });
+            onChangeColor={async (color) => {
+              // Die Farbe wird erst angezeigt, wenn der Server sie per 'roomUpdate' bestätigt
+              const response = await request('changeColor', { color });
+              if (!response.ok) showRequestError(response);
             }}
-            onStart={() => {
-              // Wenn der Server nicht erreichbar ist sende einen Alert
-              if (!socket.connected) {
-                Alert.alert(t('room.error'), t('room.serverUnreachable'));
-                return;
-              }
+            onStart={async () => {
               // Runden und Fragen nur einmal hier beim Host mischen; der Server verteilt sie an alle.
               // questions[i] gehört dem Spieler an Position i in der Spielerliste des Servers.
               const rounds = generateGameRounds(roundLength);
               const { questions, facebookQuestions } = buildRoundQuestions(rounds[0], roomPlayers.length);
 
-              // Fehler werden hier gemeldet (auch nach 5 s ohne Antwort).
-              // Bei Erfolg wechselt der 'gameStarted'-Listener für alle den Screen.
-              socket.timeout(5000).emit('startGame', { rounds, questions, facebookQuestions, duration }, (err, response) => {
-                if (err) {
-                  Alert.alert(t('room.error'), t('room.serverUnreachable'));
-                  return;
-                }
-                if (!response.ok) {
-                  Alert.alert(t('room.error'), response.error);
-                }
-              });
+              // Bei Erfolg wechselt der 'gameStarted'-Listener für alle den Screen
+              const response = await request('startGame', { rounds, questions, facebookQuestions, duration });
+              if (!response.ok) showRequestError(response);
             }}
             onLeave={() => {
               setRoomPlayers([]);
@@ -895,17 +759,7 @@ export default function App() {
             }}
             roomCode={roomCode}
             isHost={roomPlayers.find((p) => p.id === socket.id)?.isHost ?? false}
-            duration={duration}
-            setDuration={setDuration}
-            roundColors={QUESTIONS.map(question => question.color[0])}
-            roundNames={QUESTIONS.map(question => question.categoryName)}
-            randomRounds={randomRounds}
-            setRandomRounds={setRandomRounds}
-            roundLogos={QUESTIONS.map(question => question.logo)}
-            selectedRounds={selectedRounds}
-            setSelectedRounds={setSelectedRounds}
-            roundLength={roundLength}
-            setRoundLength={setRoundLength}
+            {...roundSettings}
           />
         )}
 
@@ -964,7 +818,6 @@ export default function App() {
                 currentLogo={currentLogo}
                 primaryColor={currentRoundObj?.color[0]}
                 secondaryColor={currentRoundObj?.color[2]}
-                tertiaryColor={currentRoundObj?.color[3]}
                 currentRoundNumber={currentRoundIndex}
                 totalRounds={gameRounds.length}
                 evaluation={isEvaluating}
