@@ -44,6 +44,41 @@ export default function AnswerScreen({
 
     const [isEvaluating, setIsEvaluating] = useState(true);
 
+    // "Geschafft"-Einblendung: Halbkreise kommen von oben herein, Logo federt herein
+    const splashCircleAnim = useRef(new Animated.Value(0)).current;
+    const splashLogoAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (!(isEvaluating && currentPlayerIndex == 0)) return;
+
+        splashCircleAnim.setValue(0);
+        splashLogoAnim.setValue(0);
+        const anim = Animated.parallel([
+            Animated.timing(splashCircleAnim, {
+                toValue: 1,
+                duration: 650,
+                easing: Easing.bezier(0.22, 1, 0.36, 1), // schnelles Abbremsen
+                useNativeDriver: true,
+            }),
+            Animated.spring(splashLogoAnim, {
+                toValue: 1,
+                damping: 12,
+                stiffness: 140,
+                useNativeDriver: true,
+            }),
+        ]);
+        anim.start();
+        return () => anim.stop();
+    }, [isEvaluating, currentPlayerIndex]);
+
+    const splashCircleStyle = {
+        transform: [{ translateY: splashCircleAnim.interpolate({ inputRange: [0, 1], outputRange: [-140, 0] }) }],
+    };
+    const splashLogoStyle = {
+        opacity: splashLogoAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }),
+        transform: [{ scale: splashLogoAnim.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] }) }],
+    };
+
     const AnimatedCircle = Animated.createAnimatedComponent(Circle);
     const TIMER_SIZE = 52;
     const TIMER_STROKE = 4;
@@ -60,13 +95,15 @@ export default function AnswerScreen({
     }, [onNext]);
 
     useEffect(() => {
-        setIsEvaluating(true);
+        if(isEvaluating && currentPlayerIndex == 0){
+            setIsEvaluating(true);
 
-        const timer = setTimeout(() => {
-            setIsEvaluating(false);
-        }, 3000);
+            const timer = setTimeout(() => {
+                setIsEvaluating(false);
+            }, 3000);
 
-        return () => clearTimeout(timer);
+            return () => clearTimeout(timer);
+        }
     }, [currentPlayerIndex]);
 
     useEffect(() => {
@@ -168,7 +205,7 @@ export default function AnswerScreen({
         return (
             <View style={styles.screenContainer}>
                     <View style={[styles.evaluatingCard]}>
-                        <View style={styles.circleWrapper}>
+                        <Animated.View style={[styles.circleWrapper, splashCircleStyle]}>
                             <View style={[styles.circleBack, { backgroundColor: tertiaryColor }]}>
                                 <View style={styles.darkOverlay} />
                             </View>
@@ -193,14 +230,14 @@ export default function AnswerScreen({
                                     {t('answer.doneMessage')}
                                 </Text>
                             </View>
-                        </View>
-                        <View style={styles.logoBox}>
+                        </Animated.View>
+                        <Animated.View style={[styles.logoBox, splashLogoStyle]}>
                             <Image
                                 source={currentLogo}
                                 style={{ width: '100%', height: 150 }}
                                 resizeMode="contain"
                             />
-                        </View>
+                        </Animated.View>
                     </View>
             </View>
         );

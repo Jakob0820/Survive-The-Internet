@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Animated, Easing } from 'react-native';
 import LottieView from 'lottie-react-native';
 import shoppingCart from '../../assets/shoppingCart.json';
 import { playClickSound } from '../constants/sounds';
@@ -11,7 +11,6 @@ export default function GameTransitionScreen({
     currentLogo,
     primaryColor,
     secondaryColor,
-    tertiaryColor,
     currentRoundNumber,
     totalRounds,
     evaluation,
@@ -19,6 +18,37 @@ export default function GameTransitionScreen({
 }) {
     const { t } = useLanguage();
     const shoppingCartLottieRef = useRef(null);
+
+    // Hereinkommen direkt beim Anzeigen: Logo federt herein, Halbkreise steigen von unten auf
+    const logoAnim = useRef(new Animated.Value(0)).current;
+    const circleAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        const anim = Animated.parallel([
+            Animated.spring(logoAnim, {
+                toValue: 1,
+                damping: 12,
+                stiffness: 140,
+                useNativeDriver: true,
+            }),
+            Animated.timing(circleAnim, {
+                toValue: 1,
+                duration: 650,
+                easing: Easing.bezier(0.22, 1, 0.36, 1), // schnelles Abbremsen
+                useNativeDriver: true,
+            }),
+        ]);
+        anim.start();
+        return () => anim.stop();
+    }, []);
+
+    const logoStyle = {
+        opacity: logoAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }),
+        transform: [{ scale: logoAnim.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] }) }],
+    };
+    const circleStyle = {
+        transform: [{ translateY: circleAnim.interpolate({ inputRange: [0, 1], outputRange: [140, 0] }) }],
+    };
 
     useEffect(() => {
         if(evaluation) return;
@@ -66,14 +96,14 @@ export default function GameTransitionScreen({
                         color={primaryColor}
                     />
                 </View>
-                <View style={styles.logoBox}>
+                <Animated.View style={[styles.logoBox, logoStyle]}>
                     <Image
                         source={currentLogo}
                         style={{ width: '100%', height: 150 }}
                         resizeMode="contain"
                     />
-                </View>
-                <View style={styles.circleWrapper}>
+                </Animated.View>
+                <Animated.View style={[styles.circleWrapper, circleStyle]}>
                     <View style={[styles.circleBack, { backgroundColor: secondaryColor }]}>
                         <View style={styles.darkOverlay} />
                     </View>
@@ -86,7 +116,7 @@ export default function GameTransitionScreen({
                             style={styles.shoppingCartLottie}
                         />
                     </View>
-                </View>
+                </Animated.View>
             </View>
         );
     }
@@ -95,7 +125,7 @@ export default function GameTransitionScreen({
         return (
             <View style={styles.card}>
                 <View style={styles.header}>
-                    <View style={styles.logoBox}>
+                    <Animated.View style={[styles.logoBox, logoStyle]}>
                         <Image
                             source={currentLogo}
                             style={{ width: '100%', height: 130 }}
@@ -104,10 +134,10 @@ export default function GameTransitionScreen({
                         <Text style={styles.headerText}>
                             {t('transition.evaluation')}
                         </Text>
-                    </View>
+                    </Animated.View>
                 </View>
                 
-                <View style={styles.circleWrapper}>
+                <Animated.View style={[styles.circleWrapper, circleStyle]}>
                     <View style={[styles.circleBack, { backgroundColor: secondaryColor }]}>
                         <View style={styles.darkOverlay} />
                     </View>
@@ -131,7 +161,7 @@ export default function GameTransitionScreen({
                             {t('transition.showResult')}
                         </Text>
                     </TouchableOpacity>
-                </View>
+                </Animated.View>
             </View>
         );
     }
