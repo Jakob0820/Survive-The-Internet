@@ -43,7 +43,16 @@
     <button type="button" id="leaveButton" class="btn btn-secondary">RAUM VERLASSEN</button>
   </div>
 
-  <!-- Ansicht 3: Spiel – eigene Frage beantworten (wie GameScreen im Online-Modus) -->
+  <!-- Ansicht 3: Rundenübergang (wie GameTransitionScreen) -->
+  <div id="transitionView" class="card transition-card hidden">
+    <h2 id="transitionRound" class="transition-round"></h2>
+    <div id="transitionDots" class="dots-row"></div>
+    <div class="transition-logo-box">
+      <img id="transitionLogo" class="transition-logo" alt="">
+    </div>
+  </div>
+
+  <!-- Ansicht 4: Spiel – eigene Frage beantworten (wie GameScreen im Online-Modus) -->
   <div id="gameView" class="card hidden">
     <div class="game-header">
       <h2 id="gameTitle" class="game-title"></h2>
@@ -97,7 +106,6 @@
   </div>
 
   <!-- Diese Datei liefert Socket.IO automatisch aus -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="client.js"></script>
+  <script src="/socket.io/socket.io.js"></script>  <script src="client.js"></script>
 </body>
 </html>

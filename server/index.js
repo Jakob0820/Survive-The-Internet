@@ -54,6 +54,7 @@ function removePlayerFromRoom(socket) {
 
   // 4. Raum leer? Dann löschen
   if (room.players.length === 0) {
+    clearTimeout(room.timer);
     rooms.delete(code);
     console.log(`Raum ${code} gelöscht`);
     return;
@@ -63,6 +64,7 @@ function removePlayerFromRoom(socket) {
   if (room.hostId === socket.id) {
     io.to(code).emit('roomClosed');     // allen Bescheid geben
     io.in(code).socketsLeave(code);     // alle aus dem Socket.IO-Raum nehmen
+    clearTimeout(room.timer);           // Timer Löschen
     rooms.delete(code);
     return;
   }
@@ -71,9 +73,25 @@ function removePlayerFromRoom(socket) {
   io.to(code).emit('roomUpdate', room);
 }
 
+function finishQuestionPhase(room) {
+  if (room.phase !== 'question') return;
+
+  clearTimeout(room.timer);
+  room.timer = null;
+  room.phase = 'answer'
+
+  //Wer nichts abgeschickt hat schickt einen leeren Text
+  room.game.answers = room.game.answers.map((a) => a ?? '');
+
+  const facebookImages = room.game.answers.map((_, i) => {
+      const options = room.game.facebookQuestions[i]?.options || [];
+      return options[room.game.facebookOptions[i] ?? 0]?.image ?? null;
+    });
+  io.to(room.code).emit('allAnswersSubmitted', { answers: room.game.answers, facebookImages });
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));  // liefert die Test-Webseite aus
-
 app.get('/ping', (req, res) => {
   res.json({ message: 'pong', time: new Date().toISOString() });
 });
@@ -247,6 +265,9 @@ io.on('connection', (socket) => {
       return;
     }
 
+    const TRANSITION_MS = 3000;   // Puffer für die Transition in der App
+    const GRACE_MS = 2000;        // Puffer für Antworten, die genau bei 0 unterwegs sind
+
     room.phase = 'question';
     room.game = {
       rounds,
@@ -258,6 +279,13 @@ io.on('connection', (socket) => {
       facebookOptions: Array(room.players.length).fill(null),
       submitted: Array(room.players.length).fill(false),
     };
+
+    if (duration > 0){
+        const timeLeftMs = TRANSITION_MS + duration * 1000;
+        room.timer = setTimeout(() => finishQuestionPhase(room), timeLeftMs + GRACE_MS);
+        room.game.timeLeftMs = timeLeftMs;
+    }
+
     console.log(`Spiel in Raum ${room.code} gestartet`);
 
     //An alle Geräte in diesem Raum weiterleiten, inkl. Spielerliste für die Index-Zuordnung
@@ -294,18 +322,7 @@ io.on('connection', (socket) => {
 
     // Alle fertig? Dann allen Geräten die gesammelten Antworten schicken
     if (room.game.submitted.every(Boolean)) {
-      room.phase = 'answer';
-
-      // Facebook: Bild-Key der gewählten Option je Spieler (ohne Auswahl die erste)
-      const facebookImages = room.game.answers.map((_, i) => {
-        const options = room.game.facebookQuestions[i]?.options || [];
-        return options[room.game.facebookOptions[i] ?? 0]?.image ?? null;
-      });
-
-      io.to(room.code).emit('allAnswersSubmitted', {
-        answers: room.game.answers,
-        facebookImages,
-      });
+      finishQuestionPhase(room);
     }
   });
 

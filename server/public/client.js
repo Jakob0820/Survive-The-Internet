@@ -6,12 +6,30 @@ const COLORS = [
   '#37b5d4', '#2e579e', '#642590', '#c860ca',
 ];
 
+// Kopie aus questions.js: Logo und Hauptfarbe (color[0]) je Rundentyp für den Rundenübergang
+const ROUND_INFO = {
+  google_maps: { logo: 'logos/googlemaps.png', color: '#79acff' },
+  reddit:      { logo: 'logos/reddit.png',     color: '#ff9772' },
+  youtube:     { logo: 'logos/youtube.png',    color: '#ffb8b8' },
+  linkedin:    { logo: 'logos/linkedin.png',   color: '#8bd3ff' },
+  tagesschau:  { logo: 'logos/tagesschau.png', color: '#adccff' },
+  gutefrage:   { logo: 'logos/gutefrage.png',  color: '#6cceff' },
+  gofundme:    { logo: 'logos/gofundme.png',   color: '#59e59f' },
+  twitter:     { logo: 'logos/twitter.png',    color: '#ade0ff' },
+  ebay:        { logo: 'logos/ebay.png',       color: '#c8f364' },
+  facebook:    { logo: 'logos/facebook.png',   color: '#8fb3ff' },
+};
+
+// Fallback, falls der Server keine Restzeit schickt (Timer aus): so lange wie in der App
+const DEFAULT_TRANSITION_MS = 3000;
+
 let currentRoom = null;
 
 // Spielzustand (Fragephase)
 let answerSubmitted = false;
 let selectedFacebookOption = null;
 let timerInterval = null;
+let transitionTimeout = null;
 const TIMER_CIRCUMFERENCE = 2 * Math.PI * 24;
 
 const socket = io();
@@ -36,9 +54,11 @@ const gameError = document.getElementById('gameError');
 const gameWaiting = document.getElementById('gameWaiting');
 const timerRing = document.getElementById('timerRing');
 const timerText = document.getElementById('timerText');
+const transitionView = document.getElementById('transitionView');
 
 function showJoinView(errorText = '') {
   stopTimer();
+  stopTransition();
   gameView.classList.add('hidden');
   roomView.classList.add('hidden');
   joinView.classList.remove('hidden');
@@ -141,13 +161,55 @@ function closeColorPicker() {
 
 document.getElementById('colorPickerBack').onclick = closeColorPicker;
 
+// ---------- Rundenübergang (wie GameTransitionScreen) ----------
+
+function showTransitionView(game) {
+  const roundIndex = game.roundIndex ?? 0;
+  const info = ROUND_INFO[game.rounds[roundIndex]] ?? ROUND_INFO.google_maps;
+
+  closeColorPicker();
+  leaveConfirm.classList.add('hidden');
+  joinView.classList.add('hidden');
+  roomView.classList.add('hidden');
+  gameView.classList.add('hidden');
+
+  document.getElementById('transitionRound').textContent = 'Runde ' + (roundIndex + 1);
+  document.getElementById('transitionLogo').src = info.logo;
+
+  // Rundenfarbe für Logo-Fläche und Rahmen
+  transitionView.style.setProperty('--round-color', info.color);
+  transitionView.style.setProperty('--round-tint', info.color + '33'); // 20 % Deckkraft, wie die Frage-Box
+
+  // Fortschrittspunkte: erledigte und aktuelle Runde in der Rundenfarbe
+  const dots = document.getElementById('transitionDots');
+  dots.innerHTML = '';
+  game.rounds.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === roundIndex ? ' active' : '');
+    if (i <= roundIndex) dot.style.backgroundColor = info.color;
+    dots.appendChild(dot);
+  });
+
+  // Klasse kurz entfernen und neu setzen, damit die Logo-Animation jede Runde neu startet
+  transitionView.classList.add('hidden');
+  void transitionView.offsetWidth;
+  transitionView.classList.remove('hidden');
+}
+
+function stopTransition() {
+  clearTimeout(transitionTimeout);
+  transitionTimeout = null;
+  transitionView.classList.add('hidden');
+}
+
 // ---------- Spiel: eigene Frage beantworten ----------
 
-function showGameView(game) {
+function showGameView(game, timerEndsAt) {
   const myIndex = game.players.findIndex((p) => p.id === socket.id);
   const me = game.players[myIndex];
   if (!me) return;
 
+  stopTransition();
   closeColorPicker();
   leaveConfirm.classList.add('hidden');
   joinView.classList.add('hidden');
@@ -190,11 +252,11 @@ function showGameView(game) {
     });
   }
 
-  startTimer(game.duration);
+  startTimer(game.duration, timerEndsAt);
 }
 
-// Läuft wie in der App lokal herunter und schickt bei 0 automatisch ab (duration 0 = unbegrenzt)
-function startTimer(duration) {
+// Läuft bis zum Endzeitpunkt des Servers herunter und schickt bei 0 automatisch ab (duration 0 = unbegrenzt)
+function startTimer(duration, endsAt) {
   stopTimer();
   const timer = document.getElementById('timer');
   if (!duration) {
@@ -203,13 +265,15 @@ function startTimer(duration) {
   }
   timer.classList.remove('hidden');
 
-  const endsAt = Date.now() + duration * 1000;
+  const totalMs = duration * 1000;
+  const end = endsAt ?? Date.now() + totalMs;
   timerRing.setAttribute('stroke-dasharray', TIMER_CIRCUMFERENCE);
 
   const tick = () => {
-    const leftMs = Math.max(0, endsAt - Date.now());
+    // nie mehr als die volle Dauer anzeigen (falls der Übergang etwas früher endet)
+    const leftMs = Math.max(0, Math.min(totalMs, end - Date.now()));
     timerText.textContent = Math.ceil(leftMs / 1000);
-    timerRing.setAttribute('stroke-dashoffset', TIMER_CIRCUMFERENCE * (1 - leftMs / (duration * 1000)));
+    timerRing.setAttribute('stroke-dashoffset', TIMER_CIRCUMFERENCE * (1 - leftMs / totalMs));
     if (leftMs <= 0) {
       stopTimer();
       submitAnswer();
@@ -244,7 +308,6 @@ function submitAnswer() {
       gameError.textContent = err ? 'Server nicht erreichbar' : response.error;
       return;
     }
-    stopTimer();
     answerForm.classList.add('hidden');
     gameWaiting.classList.remove('hidden');
   });
@@ -256,7 +319,15 @@ answerForm.addEventListener('submit', (event) => {
 });
 
 socket.on('gameStarted', (game) => {
-  showGameView(game);
+  // Zeit beim Empfang festhalten: Der Server schickt die Restzeit inkl. Übergang,
+  // so endet der Timer im Browser zur selben Zeit wie in der App
+  const receivedAt = Date.now();
+  const timerEndsAt = game.timeLeftMs ? receivedAt + game.timeLeftMs : null;
+  const transitionMs = game.timeLeftMs ? game.timeLeftMs - game.duration * 1000 : DEFAULT_TRANSITION_MS;
+
+  showTransitionView(game);
+  clearTimeout(transitionTimeout);
+  transitionTimeout = setTimeout(() => showGameView(game, timerEndsAt), transitionMs);
 });
 
 joinView.addEventListener('submit', (event) => {
@@ -287,7 +358,8 @@ socket.on('roomClosed', () => {
 });
 
 socket.on('disconnect', () => {
-  if (!roomView.classList.contains('hidden') || !gameView.classList.contains('hidden')) {
+  const inRoom = [roomView, transitionView, gameView].some((view) => !view.classList.contains('hidden'));
+  if (inRoom) {
     closeColorPicker();
     showJoinView('Verbindung zum Server verloren');
   }

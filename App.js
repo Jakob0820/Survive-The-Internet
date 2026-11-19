@@ -65,6 +65,7 @@ export default function App() {
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [duration, setDuration] = useState(90);
+  const [timerEndsAt, setTimerEndsAt] = useState(null); //Online: Wann läuft der Server timer ab
   const [playerCount, setPlayerCount] = useState(3);
   const [isEvaluating, setIsEvaluating] = useState(false);
 
@@ -286,6 +287,7 @@ export default function App() {
       setOnlineAnswerSubmitted(false);
 
       setDuration(data.duration);
+      setTimerEndsAt(data.timeLeftMs ? Date.now() + data.timeLeftMs : null);
       setCurrentScreen('transition');
     }
 
@@ -294,6 +296,7 @@ export default function App() {
     const handleAllAnswersSubmitted = (data) => {
       setFirstAnswers(data.answers);
       setFacebookImages(data.facebookImages.map((key) => (key ? FACEBOOK_IMAGES[key] : null)));
+      console.log('Antworten:', data.answers);
       // TODO: nächster Schritt – Antworten mischen und zum AnswerScreen wechseln
     }
 
@@ -768,10 +771,18 @@ export default function App() {
                 isOnline={isOnline}
                 isWaiting={onlineAnswerSubmitted}
                 onBack={() => {
-                    resetPlayerSetup();
-                    setCurrentScreen('main');
-                }}
+                  if (isOnline) {
+                      socket.emit('leaveRoom');   // Server schließt den Raum, wenn der Host geht
+                      socket.disconnect();
+                      setOnlineStatus(false);
+                      setRoomPlayers([]);
+                      setRoomCode('');
+                  }
+                  resetPlayerSetup();
+                  setCurrentScreen('main');
+              }}
                 duration={duration}
+                endsAt={isOnline ? timerEndsAt : null}
                 players={players}
                 playerCount={playerCount}
                 currentPlayerIndex={currentPlayerIndex}

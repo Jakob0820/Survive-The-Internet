@@ -14,6 +14,7 @@ export default function GameScreen({
     isWaiting = false, // Online: eigene Antwort ist abgeschickt, warten auf die anderen
     onBack,
     duration,
+    endsAt,
     players,
     playerCount,
     currentPlayerIndex,
@@ -58,34 +59,38 @@ export default function GameScreen({
     useEffect(() => {
         if (duration === 0) return;
 
-        let left = duration;
-        setRemaining(duration);
+        const totalMs = duration * 1000;
+        // Online: Endzeitpunkt vom Server, offline: ab jetzt die volle Dauer
+        const end = endsAt ?? Date.now() + totalMs;
+        const leftAtStart = Math.max(0, end - Date.now());
 
         // Ring: eine Animation über die komplette Dauer
-        ringAnim.setValue(0);
+        ringAnim.setValue(Math.min(1, 1 - leftAtStart / totalMs));
         const anim = Animated.timing(ringAnim, {
             toValue: 1,
-            duration: duration * 1000,
+            duration: leftAtStart,
             easing: Easing.linear,
             useNativeDriver: false, // strokeDashoffset kann nicht nativ animiert werden
         });
         anim.start();
 
-        const interval = setInterval(() => {
-            left -= 1;
-            setRemaining(left);
-
-            if (left <= 0) {
+        const tick = () => {
+            const leftMs = Math.max(0, end - Date.now());
+            setRemaining(Math.ceil(leftMs / 1000));
+            if (leftMs <= 0) {
                 clearInterval(interval);
-                onNextRef.current();
+                onNextRef.current();   // online: submitOnlineAnswer, offline: nächster Spieler
             }
-        }, 1000);
+        };
+
+        const interval = setInterval(tick, 250);
+        tick();
 
         return () => {
             clearInterval(interval);
             anim.stop();
         };
-    }, [currentPlayerIndex, duration]);
+    }, [currentPlayerIndex, duration, endsAt]);
 
     const ringOffset = ringAnim.interpolate({
         inputRange: [0, 1],
