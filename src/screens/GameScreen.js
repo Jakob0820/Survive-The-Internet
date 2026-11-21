@@ -114,6 +114,7 @@ export default function GameScreen({
 
     }, [currentPlayerIndex]);
 
+    //Dropdown Animation
     const openQuestion = () => {
         if (isQuestionOpen) {
             return;
@@ -126,6 +127,13 @@ export default function GameScreen({
             }).start();
         }
     };
+
+    //Wenn Online, dann kann die Frage direkt angezeigt werden
+    useEffect(() => {
+        if (isOnline){
+            openQuestion();
+        }
+    },[isOnline])
 
     const cardWidth = animValue.interpolate({
         inputRange: [0, 1],
@@ -175,8 +183,9 @@ export default function GameScreen({
                                 duration === 0 && styles.sectionTitleCentered,
                             ]}
                         >
-                            {t('game.turn', { name: playerName })}
+                            {isOnline ? t('game.turnOnline') : t('game.turn', { name: playerName })}
                         </Text>
+                        {/*Wenn ein Zeitlimit eingestellt ist, dann Timer einblenden*/}
                         {duration != 0 && (                                
                             <View style={styles.timer}>
                                 <Svg width={TIMER_SIZE} height={TIMER_SIZE}>
@@ -207,7 +216,7 @@ export default function GameScreen({
                         )}
                     </View>
                         {isOnline && isWaiting ? (
-                            // Online: eigene Antwort ist abgeschickt
+                            // Wenn eigene Antwort abgeschickt wurde Warten
                             <View style={styles.waitingContainer}>
                                 <ActivityIndicator size="large" color={playerColor} />
                                 <Text style={styles.waitingText}>{t('game.waitForPlayers')}</Text>
@@ -254,7 +263,7 @@ export default function GameScreen({
                             >
                                 <View style={styles.dropdownInnerContent}>
                                     {isFacebookMode ? (
-                                        // Facebook-Modus: Frage mit Antwortmöglichkeiten
+                                        // Facebook-Modus zeigt Frage mit Antwortmöglichkeiten an
                                         <View style={styles.topContent}>
                                             <Text style={styles.questionText}>
                                                 {currentQuestion}
@@ -294,6 +303,7 @@ export default function GameScreen({
                                             </View>
                                         </View>
                                     ) : (
+                                    //Andere Spielmodi
                                     <View style={styles.topContent}>
                                         <Text style={styles.questionText}>
                                             {currentQuestion}
@@ -339,7 +349,7 @@ export default function GameScreen({
                                             onNext();
                                             playClickSound();
                                         }}
-                                    >
+                                    >   
                                         <Text style={styles.btnSecondaryText}>
                                             {isOnline || currentPlayerIndex >= playerCount - 1 ? t('game.finish') : t('game.nextPlayer')}
                                         </Text>

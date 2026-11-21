@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Animated, Easing, useWindowDimensions, TextInput, Image, ScrollView, ActivityIndicator } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import ConfirmationScreen from './ConfirmationScreen';
 import tinycolor from 'tinycolor2';
@@ -8,6 +8,9 @@ import { playClickSound } from '../constants/sounds';
 import { useLanguage } from '../constants/translations';
 
 export default function AnswerScreen({
+    isOnline = false,  // true: jeder kommentiert auf seinem eigenen Gerät nur die ihm zugeloste Antwort
+    isWaiting = false, // Online: eigener Kommentar ist abgeschickt, warten auf die anderen
+    endsAt,            // Online: Endzeitpunkt des Server-Timers (inkl. Einblendung)
     onBack,
     players,
     playerCount,
@@ -43,13 +46,15 @@ export default function AnswerScreen({
     const [contentWidth, setContentWidth] = useState(0);
 
     const [isEvaluating, setIsEvaluating] = useState(true);
+    // Lokal nur vor dem ersten Spieler, online auf jedem Gerät (dort ist currentPlayerIndex der eigene Index)
+    const showSplash = isEvaluating && (isOnline || currentPlayerIndex == 0);
 
     // "Geschafft"-Einblendung: Halbkreise kommen von oben herein, Logo federt herein
     const splashCircleAnim = useRef(new Animated.Value(0)).current;
     const splashLogoAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        if (!(isEvaluating && currentPlayerIndex == 0)) return;
+        if (!showSplash) return;
 
         splashCircleAnim.setValue(0);
         splashLogoAnim.setValue(0);
@@ -69,7 +74,7 @@ export default function AnswerScreen({
         ]);
         anim.start();
         return () => anim.stop();
-    }, [isEvaluating, currentPlayerIndex]);
+    }, [showSplash]);
 
     const splashCircleStyle = {
         transform: [{ translateY: splashCircleAnim.interpolate({ inputRange: [0, 1], outputRange: [-140, 0] }) }],
@@ -95,48 +100,54 @@ export default function AnswerScreen({
     }, [onNext]);
 
     useEffect(() => {
-        if(isEvaluating && currentPlayerIndex == 0){
-            setIsEvaluating(true);
+        if (!showSplash) return;
 
-            const timer = setTimeout(() => {
-                setIsEvaluating(false);
-            }, 3000);
+        // Online endet die Einblendung, wenn der Server-Timer die Spielzeit startet
+        const splashMs = isOnline && endsAt
+            ? Math.max(0, endsAt - duration * 1000 - Date.now())
+            : 3000;
+        const timer = setTimeout(() => {
+            setIsEvaluating(false);
+        }, splashMs);
 
-            return () => clearTimeout(timer);
-        }
+        return () => clearTimeout(timer);
     }, [currentPlayerIndex]);
 
     useEffect(() => {
-        if (duration != 0 && !isEvaluating){
-            let left = duration;
-            setRemaining(duration);
-    
-            // Ring: eine Animation über die komplette Dauer
-            ringAnim.setValue(0);
-            const anim = Animated.timing(ringAnim, {
-                toValue: 1,
-                duration: duration * 1000,
-                easing: Easing.linear,
-                useNativeDriver: false, // strokeDashoffset kann nicht nativ animiert werden
-            });
-            anim.start();
-    
-            const interval = setInterval(() => {
-                left -= 1;
-                setRemaining(left);
-    
-                if (left <= 0) {
-                    clearInterval(interval);
-                    onNextRef.current();
-                }
-            }, 1000);
-    
-            return () => {
+        if (duration === 0 || showSplash || (isOnline && isWaiting)) return;
+
+        const totalMs = duration * 1000;
+        // Online: Endzeitpunkt vom Server, offline: ab jetzt die volle Dauer
+        const end = endsAt ?? Date.now() + totalMs;
+        const leftAtStart = Math.max(0, Math.min(totalMs, end - Date.now()));
+
+        // Ring: eine Animation über die (restliche) Dauer
+        ringAnim.setValue(1 - leftAtStart / totalMs);
+        const anim = Animated.timing(ringAnim, {
+            toValue: 1,
+            duration: leftAtStart,
+            easing: Easing.linear,
+            useNativeDriver: false, // strokeDashoffset kann nicht nativ animiert werden
+        });
+        anim.start();
+
+        const tick = () => {
+            const leftMs = Math.max(0, Math.min(totalMs, end - Date.now()));
+            setRemaining(Math.ceil(leftMs / 1000));
+            if (leftMs <= 0) {
                 clearInterval(interval);
-                anim.stop();
-            };
-        }
-    }, [currentPlayerIndex, duration, isEvaluating]);
+                onNextRef.current();   // online: submitOnlineResponse, offline: nächster Spieler
+            }
+        };
+
+        const interval = setInterval(tick, 250);
+        tick();
+
+        return () => {
+            clearInterval(interval);
+            anim.stop();
+        };
+    }, [currentPlayerIndex, duration, endsAt, showSplash, isOnline && isWaiting]);
 
     const ringOffset = ringAnim.interpolate({
         inputRange: [0, 1],
@@ -173,6 +184,13 @@ export default function AnswerScreen({
         }
     };
 
+    //Wenn Online, dann kann die Frage direkt angezeigt werden
+    useEffect(() => {
+        if (isOnline){
+            openQuestion();
+        }
+    },[isOnline])
+
     const cardWidth = animValue.interpolate({
         inputRange: [0, 1],
         outputRange: ['90%', '100%'],
@@ -201,7 +219,7 @@ export default function AnswerScreen({
     const playerColor = activePlayer?.color;
     const lightPlayerColor = tinycolor(playerColor).lighten(25).brighten(10).toHexString();
 
-    if (isEvaluating && currentPlayerIndex == 0) {
+    if (showSplash) {
         return (
             <View style={styles.screenContainer}>
                     <View style={[styles.evaluatingCard]}>
@@ -262,7 +280,7 @@ return (
                                 duration === 0 && styles.sectionTitleCentered,
                             ]}
                         >
-                            {t('game.turn', { name: playerName })}
+                            {isOnline ? t('game.turnOnline') : t('game.turn', { name: playerName })}
                         </Text>
                         {duration != 0 && (                                
                             <View style={styles.timer}>
@@ -293,6 +311,13 @@ return (
                             </View>
                         )}
                     </View>
+                        {isOnline && isWaiting ? (
+                            // Online: eigener Kommentar ist abgeschickt
+                            <View style={styles.waitingContainer}>
+                                <ActivityIndicator size="large" color={playerColor} />
+                                <Text style={styles.waitingText}>{t('game.waitForPlayers')}</Text>
+                            </View>
+                        ) : (
                         <View style={[
                             styles.accordionContainer,
                             ]}>
@@ -417,13 +442,14 @@ return (
                                         }}
                                     >
                                         <Text style={styles.btnSecondaryText}>
-                                            {currentPlayerIndex < playerCount - 1 ? t('game.nextPlayer') : t('game.finish')}
+                                            {isOnline || currentPlayerIndex >= playerCount - 1 ? t('game.finish') : t('game.nextPlayer')}
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
                             </Animated.View>
                         </View>
                     </View>
+                        )}
                 </View>
 
                 <TouchableOpacity
@@ -470,6 +496,18 @@ const styles = StyleSheet.create({
         width: '100%',
         borderRadius: 16,
         flex: 1,
+    },
+    waitingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 16,
+    },
+    waitingText: {
+        color: '#8a99ad',
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center',
     },
     accordionWrapper: {
         width: '100%',

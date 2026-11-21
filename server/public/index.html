@@ -84,6 +84,49 @@
     </div>
   </div>
 
+  <!-- Ansicht 5: "Geschafft!"-Einblendung vor der Antwortphase (wie AnswerScreen) -->
+  <div id="answerSplashView" class="card splash-card hidden">
+    <div class="splash-circles">
+      <div class="splash-circle-back"></div>
+      <div class="splash-circle-front"></div>
+      <div class="splash-text">
+        <p class="splash-title">GESCHAFFT!</p>
+        <p class="splash-message">Jetzt ist es an der Zeit die Antworten aus dem Kontext zu reißen!</p>
+      </div>
+    </div>
+    <img id="splashLogo" class="splash-logo" alt="">
+  </div>
+
+  <!-- Ansicht 6: Zugeloste Antwort kommentieren (wie AnswerScreen im Online-Modus) -->
+  <div id="answerView" class="card hidden">
+    <div class="game-header">
+      <h2 class="game-title">Du bist dran!</h2>
+      <div id="answerTimer" class="timer">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle cx="26" cy="26" r="24" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="4"></circle>
+          <circle id="answerTimerRing" cx="26" cy="26" r="24" fill="none" stroke-width="4" stroke-linecap="round"></circle>
+        </svg>
+        <span id="answerTimerText" class="timer-text"></span>
+      </div>
+    </div>
+
+    <form id="responseForm" autocomplete="off">
+      <div id="responseBox" class="question-box">
+        <img id="answerImage" class="answer-image hidden" alt="">
+        <div id="answerBubble" class="bubble"><p id="answerBubbleText"></p></div>
+        <p id="answerPrompt" class="answer-prompt"></p>
+        <textarea id="responseInput" maxlength="100" placeholder="Schreibe einen Kommentar"></textarea>
+        <button type="submit" id="submitResponseButton" class="btn btn-secondary">FERTIGSTELLEN</button>
+      </div>
+      <p id="answerError" class="error"></p>
+    </form>
+
+    <div id="answerWaiting" class="game-waiting hidden">
+      <div class="spinner"></div>
+      <p class="host-hint">Warte auf die anderen Spieler...</p>
+    </div>
+  </div>
+
   <!-- Bestätigung beim Verlassen -->
   <div id="leaveConfirm" class="overlay hidden">
     <div class="modal-card">
@@ -106,6 +149,8 @@
   </div>
 
   <!-- Diese Datei liefert Socket.IO automatisch aus -->
-  <script src="/socket.io/socket.io.js"></script>  <script src="client.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.6.0/tinycolor.min.js"></script>
+  <script src="client.js"></script>
 </body>
 </html>

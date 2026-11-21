@@ -73,6 +73,7 @@ const TRANSLATIONS = {
         'room.codeEntry': 'A B C D',
 
         'game.turn': '{name} ist dran!',
+        'game.turnOnline': 'Du bist dran!',
         'game.question': 'Frage',
         'game.showQuestion': 'Frage anzeigen',
         'game.commentPlaceholder': 'Schreibe einen Kommentar',
@@ -182,6 +183,7 @@ const TRANSLATIONS = {
         'room.codeEntry': 'A B C D',
 
         'game.turn': "{name}'s turn!",
+        'game.turnOnline': 'Your turn!',
         'game.question': 'Question',
         'game.showQuestion': 'Show question',
         'game.commentPlaceholder': 'Write a comment',

@@ -125,7 +125,7 @@ export const QUESTIONS = [
             'Was denkst du über Leute, die im Kino laut mit der Popcorntüte rascheln?',
             'Was hältst du von der Mondlandung?',
             'Was würdest du gerne in den Grand Canyon rufen?',
-            'Wie beschreibst du das Gefühl nanch dem Sex?',
+            'Wie beschreibst du das Gefühl nach dem Sex?',
             'Was rufst du dem Richter zu nachdem er dich zu 5 Jahren Haft verurteilt hat?',
             'Was würdest du gerne deinem absoluten Hassprofessor sagen?',
             'Du triffst dein Idol, was ist das erste, was du ihm/ihr sagst?',

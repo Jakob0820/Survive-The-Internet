@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useMemo } from 'react';
+import React, {useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -80,6 +80,7 @@ export default function App() {
   const [roomPlayers, setRoomPlayers] = useState([]);
   const [joinMessage, setJoinMessage] = useState(''); // Übersetzungs-Key, z. B. 'room.closed'
   const [onlineAnswerSubmitted, setOnlineAnswerSubmitted] = useState(false); // Online: eigene Antwort abgeschickt
+  const [onlineResponseSubmitted, setOnlineResponseSubmitted] = useState(false); // Online: eigener Kommentar abgeschickt
 
   //Logik für Antwort Setup
   const [firstAnswers, setFirstAnswers] = useState([]);
@@ -118,6 +119,10 @@ export default function App() {
   const [voteCount, setVoteCount] = useState([]);
   const [burnCount, setBurnCount] = useState([]);
   const [previousPoints, setPreviousPoints] = useState([]);
+
+  // Aktuelle Werte für die Socket-Listener, die nur einmal (mit []) registriert werden
+  const latestRef = useRef({});
+  latestRef.current = { language, players, currentType };
 
   // Gemeinsame Props der drei Einstellungs-Screens (lokal, online, Raum)
   const roundSettings = {
@@ -269,7 +274,7 @@ export default function App() {
 
       setPlayers(gamePlayers);
       setPlayerCount(gamePlayers.length);
-      // Eigener Index = Position in der Spielerliste des Servers (auf allen Geräten gleich)
+      // Eigener Index
       setCurrentPlayerIndex(gamePlayers.findIndex((p) => p.id === socket.id));
 
       setGameRounds(data.rounds);
@@ -293,18 +298,67 @@ export default function App() {
 
     // Alle Spieler haben geantwortet (oder ihr Timer ist abgelaufen). Der Server schickt
     // alle Antworten in Spieler-Reihenfolge: answers[i] stammt von players[i].
-    const handleAllAnswersSubmitted = (data) => {
+    // Nur der Host mischt sie (wie im lokalen Modus) und schickt die Reihenfolge an den Server.
+    const handleAllAnswersSubmitted = async (data) => {
       setFirstAnswers(data.answers);
       setFacebookImages(data.facebookImages.map((key) => (key ? FACEBOOK_IMAGES[key] : null)));
-      console.log('Antworten:', data.answers);
-      // TODO: nächster Schritt – Antworten mischen und zum AnswerScreen wechseln
+
+      console.log('Kommentare:', data.answers);
+
+      const { language, players, currentType } = latestRef.current;
+      const isHost = players.find((p) => p.id === socket.id)?.isHost;
+      if (!isHost) return;
+
+      const shuffledIndices = shuffleAnswers(data.answers.map((_, i) => i));
+      // Der Antworttext kommt vom Host, damit ihn auch die Web-Version anzeigen kann
+      const round = getLocalizedRound(QUESTIONS.find((q) => q.type === currentType), language);
+      const response = await request('startAnswerPhase', {
+        shuffledIndices,
+        answerPrompt: round?.answer?.[0] ?? '',
+      });
+      if (!response.ok) {
+        Alert.alert(
+          translate(language, 'room.error'),
+          response.unreachable ? translate(language, 'room.serverUnreachable') : response.error,
+        );
+      }
     }
 
+    // Der Server hat die gemischte Reihenfolge verteilt: alle wechseln zum AnswerScreen.
+    // Spieler i kommentiert die Antwort von Spieler shuffledIndices[i].
+    const handleAnswerPhaseStarted = (data) => {
+      const images = (data.facebookImages || []).map((key) => (key ? FACEBOOK_IMAGES[key] : null));
+      const isFacebookRound = data.rounds[data.roundIndex] === ROUND_TYPE.FACEBOOK;
+
+      setFirstAnswers(data.answers);
+      setFacebookImages(images);
+      setShuffledIndices(data.shuffledIndices);
+      setShuffledFirstAnswers(data.shuffledIndices.map((i) => data.answers[i]));
+      setShuffledFacebookImages(isFacebookRound ? data.shuffledIndices.map((i) => images[i]) : []);
+
+      setAnswerText('');
+      setOnlineResponseSubmitted(false);
+      setTimerEndsAt(data.timeLeftMs != null ? Date.now() + data.timeLeftMs : null);
+      setCurrentScreen('answer');
+    }
+
+    // Alle Kommentare sind da: responses[i] stammt von players[i] (gleiche Reihenfolge wie lokal secondAnswers)
+    const handleAllResponsesSubmitted = (data) => {
+      setSecondAnswers(data.responses);
+      console.log('Kommentare:', data.responses);
+      // TODO: nächster Schritt – Auswertung (EvaluationScreen)
+    }
+
+    //Hier werden die Antworten von Server gehandled
     socket.on('gameStarted', handleGameStarted);
     socket.on('allAnswersSubmitted', handleAllAnswersSubmitted);
+    socket.on('answerPhaseStarted', handleAnswerPhaseStarted);
+    socket.on('allResponsesSubmitted', handleAllResponsesSubmitted);
     return () => {
       socket.off('gameStarted', handleGameStarted);
       socket.off('allAnswersSubmitted', handleAllAnswersSubmitted);
+      socket.off('answerPhaseStarted', handleAnswerPhaseStarted);
+      socket.off('allResponsesSubmitted', handleAllResponsesSubmitted);
     }
   }, []);
     
@@ -541,6 +595,20 @@ export default function App() {
     }
     setTextValue('');
     setSelectedFacebookOption(null);
+  };
+
+  // Online: eigenen Kommentar an den Server schicken; wird auch vom Timer aufgerufen
+  const submitOnlineResponse = async () => {
+    if (onlineResponseSubmitted) return;
+    setOnlineResponseSubmitted(true);
+
+    const response = await request('submitResponse', { response: answerText });
+    if (!response.ok) {
+      setOnlineResponseSubmitted(false);
+      showRequestError(response);
+      return;
+    }
+    setAnswerText('');
   };
 
   const nextAnswer = () => {
@@ -799,18 +867,28 @@ export default function App() {
 
         {currentScreen === 'answer' && (
           <AnswerScreen
+            isOnline={isOnline}
+            isWaiting={onlineResponseSubmitted}
             onBack={() => {
+              if (isOnline) {
+                  socket.emit('leaveRoom');   // Server schließt den Raum, wenn der Host geht
+                  socket.disconnect();
+                  setOnlineStatus(false);
+                  setRoomPlayers([]);
+                  setRoomCode('');
+              }
               resetPlayerSetup();
               setCurrentScreen('main');
             }}
             players = {players}
             playerCount = {playerCount}
             duration = {duration}
+            endsAt={isOnline ? timerEndsAt : null}
             currentPlayerIndex={currentPlayerIndex}
             answerText={answerText}
             setAnswerText={setAnswerText}
             shuffledAnswers={shuffledFirstAnswers}
-            onNext={nextAnswer}
+            onNext={isOnline ? submitOnlineResponse : nextAnswer}
             answerPrompt={currentRoundObj?.answer?.[0]}
             currentLogo={currentLogo}
             primaryColor={currentRoundObj?.color[0]}
