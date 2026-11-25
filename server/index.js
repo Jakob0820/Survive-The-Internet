@@ -185,7 +185,13 @@ function finishAnswerPhase(room) {
 
   room.game.responses = room.game.responses.map((r) => r ?? '');
   // responses[i] stammt von players[i] und kommentiert answers[shuffledIndices[i]]
-  io.to(room.code).emit('allResponsesSubmitted', { responses: room.game.responses });
+  io.to(room.code).emit('allResponsesSubmitted', {
+    responses: room.game.responses ,
+    answers: room.game.answers,
+    shuffledIndices: room.game.shuffledIndices,
+    facebookImages: room.game.facebookImages,
+    isFacebookRound: room.game.rounds[room.game.roundIndex] === 'facebook',
+  });
 }
 
 app.use(express.json());
@@ -528,6 +534,11 @@ io.on('connection', (socket) => {
 
     callback({ ok: true });
     recordResponse(room, index, response);
+  });
+
+  socket.on('nextRound', (data = {}, callback = () => {}) => {
+    return;
+    //TODO: nächste Runde beginnen
   });
 
 });

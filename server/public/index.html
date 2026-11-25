@@ -69,7 +69,7 @@
     <form id="answerForm" autocomplete="off">
       <div id="questionBox" class="question-box">
         <p class="question-label">Frage</p>
-        <p id="questionText" class="question-text"></p>
+        <p id="questionText"></p>
         <textarea id="answerInput" maxlength="100" placeholder="Kommentar schreiben..."></textarea>
         <div id="facebookOptions" class="options hidden"></div>
         <button type="submit" id="submitAnswerButton" class="btn btn-secondary">FERTIGSTELLEN</button>
@@ -99,8 +99,8 @@
 
   <!-- Ansicht 6: Zugeloste Antwort kommentieren (wie AnswerScreen im Online-Modus) -->
   <div id="answerView" class="card hidden">
-    <div class="game-header">
-      <h2 class="game-title">Du bist dran!</h2>
+    <div class="game-header" id="answerHeader">
+      <h2 class="game-title" id="answerTitle">Du bist dran!</h2>
       <div id="answerTimer" class="timer">
         <svg width="52" height="52" viewBox="0 0 52 52">
           <circle cx="26" cy="26" r="24" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="4"></circle>
@@ -124,6 +124,14 @@
     <div id="answerWaiting" class="game-waiting hidden">
       <div class="spinner"></div>
       <p class="host-hint">Warte auf die anderen Spieler...</p>
+    </div>
+  </div>
+
+  <!-- Ansicht 7: Warte auf Evaluation -->
+  <div id="evaluationWaiting" class="card hidden">
+    <div class="game-waiting">
+      <div class="spinner"></div>
+      <p class="host-hint">Schaue für die Evaluation auf das Host-Gerät</p>
     </div>
   </div>
 

@@ -81,6 +81,7 @@ const TRANSLATIONS = {
         'game.finish': 'Fertigstellen',
         'game.waitForPlayers': 'Warte auf die anderen Spieler...',
         'game.quit': 'SPIEL BEENDEN',
+        'evaluation.waitForHost': 'Schaue für die Evaluation auf das Host-Gerät',
 
         'answer.done': 'GESCHAFFT!',
         'answer.doneMessage': 'Jetzt ist es an der Zeit die Antworten aus dem Kontext zu reißen!',
@@ -191,6 +192,7 @@ const TRANSLATIONS = {
         'game.finish': 'Finish',
         'game.waitForPlayers': 'Waiting for the other players...',
         'game.quit': 'END GAME',
+        'evaluation.waitForHost': 'Look at the host device for the evaluation',
 
         'answer.done': 'DONE!',
         'answer.doneMessage': "Now it's time to take those answers out of context!",

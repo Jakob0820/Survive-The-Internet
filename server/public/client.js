@@ -80,8 +80,9 @@ const responseInput = document.getElementById('responseInput');
 const submitResponseButton = document.getElementById('submitResponseButton');
 const answerError = document.getElementById('answerError');
 const answerWaiting = document.getElementById('answerWaiting');
+const evaluationView = document.getElementById('evaluationWaiting');
 
-const ALL_VIEWS = [joinView, roomView, transitionView, gameView, answerSplashView, answerView];
+const ALL_VIEWS = [joinView, roomView, transitionView, gameView, answerSplashView, answerView, evaluationView];
 
 // Timer-Elemente der Frage- und der Antwortansicht
 const questionTimerUi = {
@@ -417,6 +418,7 @@ function showAnswerWaiting() {
   answerTimerUi.timer.classList.add('hidden');
   responseForm.classList.add('hidden');
   answerWaiting.classList.remove('hidden');
+  document.getElementById('answerTitle').textContent = 'Abgeschickt!';
 }
 
 function showAnswerView(game, myIndex, timerEndsAt) {
@@ -458,6 +460,7 @@ function showAnswerView(game, myIndex, timerEndsAt) {
   submitResponseButton.disabled = false;
   responseForm.classList.remove('hidden');
   answerWaiting.classList.add('hidden');
+  document.getElementById('answerTitle').textContent = 'Du bist dran!'; 
 
   // Nach dem Wiederbeitreten: schon abgeschickt oder Antwortphase vorbei → nur noch warten
   if (game.phase !== 'answer' || game.responseSubmitted?.[myIndex]) {
@@ -509,6 +512,13 @@ function submitResponse() {
   });
 }
 
+function showEvaluationWaiting(){
+  stopTimer();
+  stopTransition();
+  hideAllViews();
+  evaluationView.classList.remove('hidden');
+}
+
 responseForm.addEventListener('submit', (event) => {
   event.preventDefault();
   submitResponse();
@@ -518,8 +528,7 @@ socket.on('answerPhaseStarted', (game) => enterAnswerPhase(game));
 
 // Alle Kommentare sind da (oder Zeit um)
 socket.on('allResponsesSubmitted', () => {
-  if (!answerView.classList.contains('hidden')) showAnswerWaiting();
-  // TODO: nächster Schritt – Auswertung
+  showEvaluationWaiting();
 });
 
 // Bei jeder (Neu-)Verbindung: falls wir schon in einem Raum waren, wieder beitreten
@@ -535,10 +544,12 @@ socket.on('connect', () => {
     }
     renderRoom(response.room);
     const phase = response.room.phase;
-    if (response.game && (phase === 'answer' || phase === 'evaluation')) {
+    if (response.game && (phase === 'answer')) {
       enterAnswerPhase(response.game, 0);
     } else if (response.game && phase !== 'lobby') {
       enterGame(response.game, 0);
+    } else if(response.game && phase === 'evaluation'){
+      showEvaluationWaiting();
     } else {
       stopTimer();
       stopTransition();

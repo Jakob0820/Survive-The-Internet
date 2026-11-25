@@ -25,6 +25,7 @@ import AnswerScreen from './src/screens/AnswerScreen';
 import EvaluationScreen from './src/screens/EvaluationScreen';
 import { createFakeStats } from './src/constants/stats';
 import ResultScreen from './src/screens/ResultScreen';
+import EvaluationWaitingScreen from './src/screens/EvaluationWaitingScreen';
 import { setSoundsMuted, setSoundVolume, setHapticsEnabled } from './src/constants/sounds';
 import { playMusic, stopMusic, applyMusicEnabled, setMusicVolume } from './src/constants/music';
 import { socket, request } from './src/constants/socket';
@@ -345,8 +346,30 @@ export default function App() {
     // Alle Kommentare sind da: responses[i] stammt von players[i] (gleiche Reihenfolge wie lokal secondAnswers)
     const handleAllResponsesSubmitted = (data) => {
       setSecondAnswers(data.responses);
-      console.log('Kommentare:', data.responses);
-      // TODO: nächster Schritt – Auswertung (EvaluationScreen)
+      
+      const { players } = latestRef.current;
+      const isHost = players.find((p) => p.id === socket.id)?.isHost;
+
+      if (!isHost) {
+        setCurrentScreen('evaluationWaiting');
+        return;
+      }
+      
+      const combined = data.shuffledIndices.map((originalIndex, i) => ({
+        originalIndex,
+        originalAnswer: data.answers[originalIndex],
+        response: data.responses[i],
+        stats: createFakeStats(),
+        image: data.isFacebookRound ? (FACEBOOK_IMAGES[data.facebookImages[originalIndex]] ?? null) : null,
+      }));
+
+      setEvaluationData(combined);
+
+      const order = shuffleArray(combined.map((_, i) => i));
+      setEvaluationOrder(order);
+      setCurrentPlayerIndex(0);
+      setIsEvaluating(true);
+      setCurrentScreen('transition');
     }
 
     //Hier werden die Antworten von Server gehandled
@@ -471,6 +494,7 @@ export default function App() {
     setCurrentRoundIndex(nextIndex);
     setCurrentPlayerIndex(0);
     setupRoundQuestions(gameRounds[nextIndex], playerCount);
+    socket.emit('nextRound');
 
     setCurrentScreen('transition');
   }
@@ -912,6 +936,12 @@ export default function App() {
                 evaluation={isEvaluating}
                 onNext={() => setCurrentScreen('evaluation')}
             />
+        )}
+
+        {currentScreen === 'evaluationWaiting' && (
+          <EvaluationWaitingScreen
+              playerColor={roomPlayers.find((p) => p.id === socket.id)?.color}
+          />
         )}
  
       </View>
